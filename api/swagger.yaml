@@ -1,0 +1,1372 @@
+basePath: /
+definitions:
+  db.OrderRecipe:
+    properties:
+      created_at:
+        type: string
+      employee_id:
+        type: string
+      id:
+        type: string
+      order_id:
+        type: string
+      recipe_id:
+        type: string
+      removed_at:
+        type: string
+    type: object
+  employees.AttachRestaurantRequest:
+    properties:
+      code:
+        type: string
+      position:
+        type: string
+    type: object
+  employees.BatchRequest:
+    properties:
+      ids:
+        items:
+          type: string
+        type: array
+    type: object
+  employees.ComponentView:
+    properties:
+      brand:
+        type: string
+      flavour:
+        type: string
+      percent:
+        type: integer
+    type: object
+  employees.CreateRestaurantRequest:
+    properties:
+      name:
+        example: Bar One
+        type: string
+    type: object
+  employees.EmployeeResponse:
+    properties:
+      firstName:
+        type: string
+      id:
+        type: string
+      lastName:
+        type: string
+      middleName:
+        type: string
+      position:
+        type: string
+      shortName:
+        type: string
+    type: object
+  employees.ListByCodeRequest:
+    properties:
+      code:
+        type: string
+    type: object
+  employees.LoginResponse:
+    properties:
+      employees:
+        items:
+          $ref: '#/definitions/employees.EmployeeResponse'
+        type: array
+      restaurant:
+        $ref: '#/definitions/employees.RestaurantBrief'
+    type: object
+  employees.RateEmployeeRequest:
+    properties:
+      score:
+        example: 5
+        type: integer
+      userId:
+        type: string
+    type: object
+  employees.RatingAgg:
+    properties:
+      average:
+        type: number
+      count:
+        type: integer
+    type: object
+  employees.RatingItem:
+    properties:
+      score:
+        type: integer
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  employees.RecipeFeedbackItem:
+    properties:
+      components:
+        items:
+          $ref: '#/definitions/employees.ComponentView'
+        type: array
+      orderRecipeId:
+        type: string
+      recipeId:
+        type: string
+      recipeName:
+        type: string
+      review:
+        type: string
+      score:
+        type: integer
+      strength:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  employees.RegisterEmployeeRequest:
+    properties:
+      code:
+        example: SECRET123
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      middleName:
+        type: string
+      position:
+        example: Старший мастер
+        type: string
+      shortName:
+        type: string
+    type: object
+  employees.RegisterEmployeeResponse:
+    properties:
+      employee:
+        $ref: '#/definitions/employees.EmployeeResponse'
+      restaurantId:
+        type: string
+    type: object
+  employees.RestaurantBrief:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  employees.RestaurantResponse:
+    properties:
+      code:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  employees.SetShiftRequest:
+    properties:
+      code:
+        type: string
+      employeeIds:
+        items:
+          type: string
+        type: array
+    type: object
+  employees.ShiftMaster:
+    properties:
+      firstName:
+        type: string
+      id:
+        type: string
+      lastName:
+        type: string
+      middleName:
+        type: string
+      position:
+        type: string
+      rating:
+        type: number
+      ratingCount:
+        type: integer
+      shortName:
+        type: string
+    type: object
+  employees.UpdateEmployeeRequest:
+    properties:
+      firstName:
+        type: string
+      lastName:
+        type: string
+      middleName:
+        type: string
+      shortName:
+        type: string
+    type: object
+  health.Status:
+    properties:
+      status:
+        example: ok
+        type: string
+    type: object
+  httpx.APIError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  httpx.Envelope:
+    properties:
+      data: {}
+      error:
+        $ref: '#/definitions/httpx.APIError'
+    type: object
+  menu.CreateMenuRecipeRequest:
+    properties:
+      authorEmployeeId:
+        type: string
+      badge:
+        example: ХИТ
+        type: string
+      description:
+        type: string
+      name:
+        example: Negroni
+        type: string
+      price:
+        example: 550
+        type: number
+      rating:
+        example: 4.6
+        type: number
+      restaurantId:
+        type: string
+      strength:
+        example: 7
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  menu.ListMenuRequest:
+    properties:
+      restaurantId:
+        type: string
+    type: object
+  menu.MenuRecipeInput:
+    properties:
+      badge:
+        example: ХИТ
+        type: string
+      description:
+        type: string
+      name:
+        example: Negroni
+        type: string
+      price:
+        example: 550
+        type: number
+      rating:
+        example: 4.6
+        type: number
+      strength:
+        example: 7
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  menu.MenuRecipeView:
+    properties:
+      authorEmployeeId:
+        type: string
+      badge:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      rating:
+        type: number
+      restaurantId:
+        type: string
+      strength:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  orders.AttachRecipeRequest:
+    properties:
+      employeeId:
+        type: string
+      recipeId:
+        type: string
+    type: object
+  orders.ComponentView:
+    properties:
+      brand:
+        type: string
+      flavour:
+        type: string
+      percent:
+        type: integer
+    type: object
+  orders.FeedbackView:
+    properties:
+      orderRecipeId:
+        type: string
+      review:
+        type: string
+      score:
+        type: integer
+    type: object
+  orders.OpenRequest:
+    properties:
+      restaurantId:
+        type: string
+      tableId:
+        example: "12"
+        type: string
+      userId:
+        type: string
+    type: object
+  orders.OrderRecipeView:
+    properties:
+      authorFullName:
+        type: string
+      authorShortName:
+        type: string
+      components:
+        items:
+          $ref: '#/definitions/orders.ComponentView'
+        type: array
+      isSecret:
+        type: boolean
+      orderRecipeId:
+        type: string
+      recipeId:
+        type: string
+      recipeName:
+        type: string
+      strength:
+        type: integer
+    type: object
+  orders.OrderResponse:
+    properties:
+      closedAt:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      recipes:
+        items:
+          $ref: '#/definitions/orders.OrderRecipeView'
+        type: array
+      restaurantId:
+        type: string
+      tableId:
+        type: string
+      userId:
+        type: string
+    type: object
+  orders.RateOrderRecipeRequest:
+    properties:
+      score:
+        example: 5
+        type: integer
+      userId:
+        type: string
+    type: object
+  orders.ReviewOrderRecipeRequest:
+    properties:
+      review:
+        type: string
+      userId:
+        type: string
+    type: object
+  recipes.BatchRequest:
+    properties:
+      ids:
+        items:
+          type: string
+        type: array
+    type: object
+  recipes.ComponentInput:
+    properties:
+      brand:
+        example: DS
+        type: string
+      flavour:
+        example: apple
+        type: string
+      percent:
+        example: 20
+        type: integer
+    type: object
+  recipes.ComponentView:
+    properties:
+      brand:
+        type: string
+      flavour:
+        type: string
+      percent:
+        type: integer
+    type: object
+  recipes.CreateRecipeRequest:
+    properties:
+      components:
+        items:
+          $ref: '#/definitions/recipes.ComponentInput'
+        type: array
+      isSecret:
+        type: boolean
+      name:
+        example: Apple Mix
+        type: string
+      strength:
+        example: 6
+        type: integer
+    type: object
+  recipes.RecipeView:
+    properties:
+      components:
+        items:
+          $ref: '#/definitions/recipes.ComponentView'
+        type: array
+      id:
+        type: string
+      isSecret:
+        type: boolean
+      name:
+        type: string
+      strength:
+        type: integer
+    type: object
+  users.AddFavouriteRequest:
+    properties:
+      orderRecipeId:
+        type: string
+    type: object
+  users.ComponentView:
+    properties:
+      brand:
+        type: string
+      flavour:
+        type: string
+      percent:
+        type: integer
+    type: object
+  users.FavouriteView:
+    properties:
+      authorFullName:
+        type: string
+      authorShortName:
+        type: string
+      components:
+        items:
+          $ref: '#/definitions/users.ComponentView'
+        type: array
+      isSecret:
+        type: boolean
+      likedAt:
+        type: string
+      myReview:
+        type: string
+      myScore:
+        type: integer
+      orderRecipeId:
+        type: string
+      recipeId:
+        type: string
+      recipeName:
+        type: string
+      restaurantId:
+        type: string
+      restaurantName:
+        type: string
+      strength:
+        type: integer
+    type: object
+  users.RegisterRequest:
+    properties:
+      gender:
+        example: male
+        type: string
+      phoneNumber:
+        example: "+79991234567"
+        type: string
+    type: object
+  users.UserResponse:
+    properties:
+      createdAt:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      phoneNumber:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Backend for the mixMaster restaurant ordering / recipes app.
+  title: mixMaster API
+  version: 0.1.0
+paths:
+  /employees:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Employee data + restaurant code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/employees.RegisterEmployeeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/employees.RegisterEmployeeResponse'
+              type: object
+        "404":
+          description: unknown code
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Register an employee at a restaurant (by code)
+      tags:
+      - employees
+  /employees/{id}:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Employee ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to change
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/employees.UpdateEmployeeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/employees.EmployeeResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Update an employee (partial)
+      tags:
+      - employees
+  /employees/{id}/rating:
+    get:
+      parameters:
+      - description: Employee ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/employees.RatingAgg'
+              type: object
+      summary: Get a master's aggregate rating
+      tags:
+      - employees
+  /employees/{id}/ratings:
+    get:
+      parameters:
+      - description: Employee ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/employees.RatingItem'
+                  type: array
+              type: object
+      summary: List ratings given to a master (as an employee)
+      tags:
+      - employees
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Employee ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User + score
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/employees.RateEmployeeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/employees.RatingAgg'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Rate a master (1..5)
+      tags:
+      - employees
+  /employees/{id}/recipe-feedback:
+    get:
+      parameters:
+      - description: Employee ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/employees.RecipeFeedbackItem'
+                  type: array
+              type: object
+      summary: Reviews & scores on a master's recipes (with components)
+      tags:
+      - employees
+  /employees/{id}/restaurants:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Employee ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Restaurant code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/employees.AttachRestaurantRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Attach an employee to another restaurant (by code)
+      tags:
+      - employees
+  /employees/batch:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Employee ids
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/employees.BatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/employees.EmployeeResponse'
+                  type: array
+              type: object
+      summary: Get employees by ids (batch)
+      tags:
+      - employees
+  /health:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/health.Status'
+              type: object
+      summary: Liveness probe
+      tags:
+      - health
+  /menu:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Menu recipe
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/menu.CreateMenuRecipeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/menu.MenuRecipeView'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Create a menu recipe
+      tags:
+      - menu
+  /menu/{id}:
+    delete:
+      parameters:
+      - description: Menu recipe ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Remove a menu recipe (soft)
+      tags:
+      - menu
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Menu recipe ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New values
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/menu.MenuRecipeInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/menu.MenuRecipeView'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Edit a menu recipe (full replace of editable fields)
+      tags:
+      - menu
+  /menu/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Restaurant id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/menu.ListMenuRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/menu.MenuRecipeView'
+                  type: array
+              type: object
+      summary: List a restaurant's menu recipes
+      tags:
+      - menu
+  /order-recipes/{orderRecipeId}/rating:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: OrderRecipe ID
+        in: path
+        name: orderRecipeId
+        required: true
+        type: string
+      - description: User + score
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/orders.RateOrderRecipeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/orders.FeedbackView'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Rate an order recipe (1..5)
+      tags:
+      - orders
+  /order-recipes/{orderRecipeId}/review:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: OrderRecipe ID
+        in: path
+        name: orderRecipeId
+        required: true
+        type: string
+      - description: User + review
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/orders.ReviewOrderRecipeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/orders.FeedbackView'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Leave a text review on an order recipe
+      tags:
+      - orders
+  /orders/{id}/close:
+    post:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/orders.OrderResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Reset table (delete TableAssignment + set closed_at)
+      tags:
+      - orders
+  /orders/{id}/recipes:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Recipe + author
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/orders.AttachRecipeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/db.OrderRecipe'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+        "409":
+          description: order is closed
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Attach a recipe to an order
+      tags:
+      - orders
+  /orders/{id}/recipes/{orderRecipeId}:
+    delete:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: OrderRecipe ID
+        in: path
+        name: orderRecipeId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Remove/replace a recipe on an order (soft, removed_at)
+      tags:
+      - orders
+  /orders/open:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Restaurant + table
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/orders.OpenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: existing order
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/orders.OrderResponse'
+              type: object
+        "201":
+          description: new order
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/orders.OrderResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Open a table order (get-or-create, idempotent)
+      tags:
+      - orders
+  /recipes:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Recipe + components
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/recipes.CreateRecipeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/recipes.RecipeView'
+              type: object
+        "400":
+          description: validation (e.g. percent != 100)
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Create a recipe with components (must sum to 100%)
+      tags:
+      - recipes
+  /recipes/batch:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Recipe ids
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/recipes.BatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/recipes.RecipeView'
+                  type: array
+              type: object
+      summary: Get recipes by ids (batch), components included
+      tags:
+      - recipes
+  /restaurants:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Restaurant name
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/employees.CreateRestaurantRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/employees.RestaurantResponse'
+              type: object
+      summary: Create a restaurant and get its code
+      tags:
+      - restaurants
+  /restaurants/{restaurantId}/shift:
+    get:
+      parameters:
+      - description: Restaurant ID
+        in: path
+        name: restaurantId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/employees.ShiftMaster'
+                  type: array
+              type: object
+      summary: Today's masters on shift in a restaurant
+      tags:
+      - restaurants
+  /restaurants/employees:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Restaurant code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/employees.ListByCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/employees.LoginResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: List restaurant employees by code (for login)
+      tags:
+      - restaurants
+  /restaurants/shift:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Code + employee ids
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/employees.SetShiftRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/employees.ShiftMaster'
+                  type: array
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Set today's masters on shift (by restaurant code)
+      tags:
+      - restaurants
+  /users:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Guest data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/users.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/users.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Register a guest
+      tags:
+      - users
+  /users/{id}:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/users.UserResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.Envelope'
+      summary: Get guest data
+      tags:
+      - users
+  /users/{id}/favourites:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/users.FavouriteView'
+                  type: array
+              type: object
+      summary: 'List guest favourites (enriched: restaurant, components, author)'
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: OrderRecipe to like
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/users.AddFavouriteRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Add a recipe to favourites
+      tags:
+      - users
+  /users/{id}/favourites/{orderRecipeId}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: OrderRecipe ID
+        in: path
+        name: orderRecipeId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Remove a recipe from favourites
+      tags:
+      - users
+swagger: "2.0"

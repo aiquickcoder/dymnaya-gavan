@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mixmaster-postgres
+    environment:
+      POSTGRES_USER: mixmaster
+      POSTGRES_PASSWORD: mixmaster
+      POSTGRES_DB: mixmaster
+    ports:
+      - "5432:5432"
+    volumes:
+      - mixmaster_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mixmaster"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  mixmaster_pg:

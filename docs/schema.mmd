@@ -1,0 +1,117 @@
+erDiagram
+  RESTAURANT ||--o{ EMPLOYEE_RESTAURANT : "состоит"
+  EMPLOYEE ||--o{ EMPLOYEE_RESTAURANT : "работает"
+  RESTAURANT ||--o{ ORDERS : "имеет"
+  USERS ||--o{ ORDERS : "открыл"
+  RESTAURANT ||--o{ TABLE_ASSIGNMENT : "столы"
+  ORDERS ||--o| TABLE_ASSIGNMENT : "активен"
+  ORDERS ||--o{ ORDER_RECIPE : "содержит"
+  RECIPES ||--o{ ORDER_RECIPE : "использован"
+  EMPLOYEE ||--o{ ORDER_RECIPE : "автор"
+  RECIPES ||--o{ COMPONENTS : "состав"
+  USERS ||--o{ FAVOURITES : "сохранил"
+  ORDER_RECIPE ||--o{ FAVOURITES : "в избранном"
+  EMPLOYEE ||--o{ EMPLOYEE_RATINGS : "оценён"
+  USERS ||--o{ EMPLOYEE_RATINGS : "оценил мастера"
+  ORDER_RECIPE ||--o{ ORDER_RECIPE_FEEDBACK : "оценён/отзыв"
+  USERS ||--o{ ORDER_RECIPE_FEEDBACK : "оставил"
+  RESTAURANT ||--o{ SHIFTS : "смены"
+  EMPLOYEE ||--o{ SHIFTS : "на смене"
+  RESTAURANT ||--o{ MENU_RECIPES : "меню"
+  EMPLOYEE ||--o{ MENU_RECIPES : "автор меню"
+
+  RESTAURANT {
+    uuid id PK
+    string name
+    string code "секрет"
+  }
+  EMPLOYEE {
+    uuid id PK
+    string firstName
+    string lastName
+    string middleName
+    string shortName
+  }
+  EMPLOYEE_RESTAURANT {
+    uuid employeeId FK
+    uuid restaurantId FK
+    number rating "nullable, резерв"
+    string position "nullable, грейд"
+  }
+  RECIPES {
+    uuid id PK
+    string name "nullable"
+    int strength "1..10, nullable"
+    bool isSecret
+  }
+  COMPONENTS {
+    uuid id PK
+    uuid recipeId FK
+    string brand
+    string flavour
+    number percent
+  }
+  ORDERS {
+    uuid id PK
+    string tableId
+    uuid restaurantId FK
+    uuid userId FK "nullable"
+    timestamp createdAt
+    timestamp closedAt "nullable"
+  }
+  TABLE_ASSIGNMENT {
+    uuid id PK
+    uuid restaurantId FK
+    string tableId
+    uuid orderId FK
+    timestamp updatedAt
+  }
+  ORDER_RECIPE {
+    uuid id PK
+    uuid orderId FK
+    uuid recipeId FK
+    uuid employeeId FK
+    timestamp removedAt "nullable"
+  }
+  USERS {
+    uuid id PK
+    string phoneNumber "уникальный"
+    string gender
+  }
+  FAVOURITES {
+    uuid userId FK
+    uuid orderRecipeId FK
+    timestamp likedAt
+  }
+  EMPLOYEE_RATINGS {
+    uuid id PK
+    uuid employeeId FK
+    uuid userId FK
+    int score "1..5"
+  }
+  ORDER_RECIPE_FEEDBACK {
+    uuid id PK
+    uuid orderRecipeId FK
+    uuid userId FK
+    int score "1..5, nullable"
+    text review "nullable"
+  }
+  SHIFTS {
+    uuid id PK
+    uuid restaurantId FK
+    uuid employeeId FK
+    date shiftDate
+  }
+  MENU_RECIPES {
+    uuid id PK
+    uuid restaurantId FK
+    uuid authorEmployeeId FK
+    string name
+    string description
+    int strength "1..10"
+    float price
+    float rating "nullable"
+    string badge "nullable"
+    text_array tags "ровно 3"
+    timestamp removedAt "nullable"
+  }

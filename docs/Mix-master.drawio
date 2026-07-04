@@ -1,0 +1,177 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.4 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="26.0.4">
+  <diagram name="Страница — 1" id="oPN7A8KmvYRoEZ7IMmde">
+    <mxGraphModel dx="2304" dy="2577" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-1" target="GKtUWF_wpTLn1a-tOmkO-2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-1" value="&lt;b&gt;Users&lt;/b&gt;&lt;br&gt;(Гости - клиенты)" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="120" y="745" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-2" target="GKtUWF_wpTLn1a-tOmkO-42" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-2" value="Users" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="150" y="885" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-4" value="&lt;b&gt;Данные&lt;/b&gt;&lt;div&gt;- Id&lt;/div&gt;&lt;div&gt;- phoneNumber&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- gender&lt;/span&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="160" y="980" width="110" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-6" value="&lt;b&gt;Эндпоинты&lt;/b&gt;&lt;br&gt;1) Создание клиента (регистрация) → &lt;b&gt;POST /users&lt;/b&gt;&lt;br&gt;2) Получение данных клиента → &lt;b&gt;GET /users/{id}&lt;/b&gt;&lt;div&gt;3) Получение избранных рецептов клиента → &lt;b&gt;GET /users/{id}/favourites&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;с указанием в каком заведение его делали, какие в нем компоненты,&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;какой сотрудник делал (Его ФИО и shortName)&lt;br&gt;4) Изменение избранных клиента → &lt;b&gt;POST&lt;/b&gt; / &lt;b&gt;DELETE /users/{id}/favourites/{orderRecipeId}&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;(добавить рецепт в избранное, удалить рецепт из избранного)&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="90" y="585" width="560" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-7" target="GKtUWF_wpTLn1a-tOmkO-28" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-7" value="Recipes" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="950" y="75" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-10" target="GKtUWF_wpTLn1a-tOmkO-7" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-10" value="&lt;br&gt;&lt;b&gt;Recipes &lt;/b&gt;&lt;br&gt;(Рецепты)" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="920" y="-65" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-11" value="&lt;b&gt;Эндпоинты&lt;/b&gt;&lt;br&gt;1) Создание рецепта → &lt;b&gt;POST /recipes&lt;/b&gt;&lt;br&gt;2) Получение рецептов по id (batch) → &lt;b&gt;POST /recipes/batch&lt;/b&gt;&lt;br&gt;в ответе - компоненты рецепта&amp;nbsp;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="920" y="-160" width="470" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-13" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;-&amp;nbsp; id&lt;/div&gt;&lt;div&gt;- name (nullable)&lt;/div&gt;&lt;div&gt;- strength (1..10, null)&lt;/div&gt;&lt;div&gt;- is_secret&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1030" y="115" width="120" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-15" value="&lt;b&gt;Employee&lt;/b&gt;&lt;br&gt;(Сотрудники)" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="120" y="-55" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-16" value="&lt;b&gt;Эндпоинты&lt;/b&gt;&lt;br&gt;1) Создание сотрудника (регистрация в ресторане) → &lt;b&gt;POST /employees&lt;/b&gt;&lt;br&gt;2) Привязка сотрудника к ещё одному ресторану → &lt;b&gt;POST /employees/{id}/restaurants&lt;/b&gt;&lt;br&gt;3) Изменение сотрудника → &lt;b&gt;PATCH /employees/{id}&lt;/b&gt;&lt;br&gt;4) Получение сотрудников по id (batch) → &lt;b&gt;POST /employees/batch&lt;/b&gt;&lt;br&gt;5) Создание ресторана и получение кода → &lt;b&gt;POST /restaurants&lt;/b&gt;&lt;br&gt;6) Список сотрудников ресторана по коду (логин) → &lt;b&gt;POST /restaurants/employees&lt;/b&gt; (body: code)&lt;br&gt;&amp;nbsp;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="120" y="-185" width="640" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-17" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;- Id&lt;/div&gt;&lt;div&gt;- firstName&lt;/div&gt;&lt;div&gt;- lastName&lt;br&gt;- middleName&lt;/div&gt;&lt;div&gt;- shortName&lt;br&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="250" y="115" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-18" target="GKtUWF_wpTLn1a-tOmkO-35" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-18" value="Employee" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="150" y="75" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-15" target="GKtUWF_wpTLn1a-tOmkO-18" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-28" value="Components" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="950" y="210" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-30" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;- id&lt;/div&gt;&lt;div&gt;- recipeId&lt;/div&gt;&lt;div&gt;- brand:DS&lt;br&gt;- flavour:apple&lt;br&gt;- percent: 20&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1030" y="235" width="100" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-38" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-32" target="GKtUWF_wpTLn1a-tOmkO-35" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-32" value="Restaurant" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="150" y="440" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-33" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;- id&lt;br&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- name&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- c&lt;/span&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;ode (уникальный код,&amp;nbsp;&lt;br&gt;который дает доступ к редактированию сотрудников в нем&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="250" y="450" width="370" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-35" value="&lt;span style=&quot;text-wrap: nowrap;&quot;&gt;EmployeeRestaurant&lt;/span&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="150" y="250" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-36" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;- employeeId&lt;/div&gt;&lt;div&gt;- restaurantId&lt;/div&gt;&lt;div&gt;-&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;rating (nullable, рейтинг — пока не используется)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;- position (nullable, грейд)&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="250" y="275" width="260" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-42" value="Favourites" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="625" y="885" width="70" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GKtUWF_wpTLn1a-tOmkO-44" value="&lt;b&gt;Данные&lt;/b&gt;&lt;div&gt;- userId&lt;br&gt;- orderRecipeId&lt;br&gt;-&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;likedAt&lt;/span&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="610" y="990" width="110" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="sYyN6OLLel-qMtvyZuM0-2" target="sYyN6OLLel-qMtvyZuM0-8" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="sYyN6OLLel-qMtvyZuM0-2" target="sYyN6OLLel-qMtvyZuM0-12" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-2" value="&lt;span style=&quot;text-wrap: nowrap;&quot;&gt;Orders&lt;/span&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="950" y="590" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-4" value="&lt;br&gt;&lt;b&gt;Orders&lt;/b&gt;&lt;br&gt;(заказы)" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="920" y="450" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="sYyN6OLLel-qMtvyZuM0-4" target="sYyN6OLLel-qMtvyZuM0-2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-6" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;- id&lt;br&gt;&lt;/div&gt;&lt;div&gt;- tableId&lt;/div&gt;&lt;div&gt;-&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;restaurantId&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- userId (&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;nullable)&lt;/span&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- createdAt&lt;/span&gt;&lt;/div&gt;&lt;div&gt;- closedAt (nullable)&lt;/div&gt;&lt;div&gt;&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1050" y="520" width="120" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-8" value="&lt;span style=&quot;text-wrap: nowrap;&quot;&gt;OrderRecipe&lt;/span&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="945" y="735" width="70" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-10" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;-&amp;nbsp;&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;id&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;-&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;orderId&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;-&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;recipeId&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;-&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;employeeId&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;- removedAt (nullable)&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1050" y="760" width="130" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-12" value="&lt;span style=&quot;text-wrap: nowrap;&quot;&gt;TableAssignment&lt;/span&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="1200" y="585" width="70" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-13" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;-&amp;nbsp;&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;id&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;-&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;restaurantId&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;-&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;tableId&lt;br&gt;-&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;orderId&lt;br&gt;-&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;updatedAt&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1300" y="585" width="100" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=0;entryDy=60;entryPerimeter=0;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-7" target="sYyN6OLLel-qMtvyZuM0-8" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="890" y="140" />
+              <mxPoint x="890" y="795" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-16" value="&lt;b&gt;Эндпоинты&lt;/b&gt;&lt;br&gt;1) Создать/получить заказ на столе (get-or-create) → &lt;b&gt;POST /orders/open&lt;/b&gt;&lt;br&gt;2) Закрепить рецепт на заказе → &lt;b&gt;POST /orders/{id}/recipes&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;снять/заменить (soft) → &lt;b&gt;DELETE /orders/{id}/recipes/{orderRecipeId}&lt;/b&gt;&lt;br&gt;&lt;div&gt;3) Обнулить стол (удалить TableAssignment + closedAt) → &lt;b&gt;POST /orders/{id}/close&lt;/b&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1050" y="400" width="560" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="sYyN6OLLel-qMtvyZuM0-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="sYyN6OLLel-qMtvyZuM0-8" target="GKtUWF_wpTLn1a-tOmkO-42" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="980" y="925" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nx-title" value="&lt;b&gt;Оценки / Смены / Меню (v2)&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="300" y="1110" width="320" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="nx-er" value="EmployeeRatings" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="300" y="1150" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nx-erd" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;- id&lt;br&gt;- employeeId&lt;br&gt;- userId&lt;br&gt;- score (1..5)&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="390" y="1150" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nx-fb" value="OrderRecipeFeedback" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="640" y="1150" width="90" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="nx-fbd" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;- id&lt;br&gt;- orderRecipeId&lt;br&gt;- userId&lt;br&gt;- score (1..5, null)&lt;br&gt;- review (null)&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="740" y="1150" width="170" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="nx-sh" value="Shifts" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="1010" y="1150" width="70" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nx-shd" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;- id&lt;br&gt;- restaurantId&lt;br&gt;- employeeId&lt;br&gt;- shiftDate&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1090" y="1150" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nx-mn" value="MenuRecipes" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="1210" y="880" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="nx-mnd" value="&lt;b&gt;Данные в БД&lt;/b&gt;&lt;div&gt;- id&lt;br&gt;- restaurantId&lt;br&gt;- authorEmployeeId&lt;br&gt;- name / description&lt;br&gt;- strength (1..10)&lt;br&gt;- price&lt;br&gt;- rating (null)&lt;br&gt;- badge (null)&lt;br&gt;- tags[3]&lt;br&gt;- removedAt (null)&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1300" y="860" width="180" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="nx-ep" value="&lt;b&gt;Эндпоинты v2&lt;/b&gt;&lt;br&gt;POST /employees/{id}/ratings · GET /employees/{id}/rating|ratings|recipe-feedback&lt;br&gt;POST /order-recipes/{orderRecipeId}/rating|review&lt;br&gt;POST /restaurants/shift · GET /restaurants/{restaurantId}/shift&lt;br&gt;POST /menu · POST /menu/list · PATCH|DELETE /menu/{id}" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="300" y="1280" width="640" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="nx-e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-18" target="nx-er" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="nx-e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-2" target="nx-er" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="nx-e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" parent="1" source="sYyN6OLLel-qMtvyZuM0-8" target="nx-fb" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="nx-e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-2" target="nx-fb" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="nx-e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-32" target="nx-sh" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="nx-e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-18" target="nx-sh" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="nx-e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-32" target="nx-mn" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="nx-e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" parent="1" source="GKtUWF_wpTLn1a-tOmkO-18" target="nx-mn" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
