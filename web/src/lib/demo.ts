@@ -162,7 +162,7 @@ const FEEDBACK_BY_MASTER: Record<string, RecipeFeedbackItem[]> = {
   ],
 };
 
-const DEMO_USER: User = { id: "demo-user", phoneNumber: "+7 900 000-00-00", gender: null, createdAt: now };
+const DEMO_USER: User = { id: "demo-user", phoneNumber: "+7 903 555-21-40", gender: null, createdAt: now };
 const ok = <T>(v: T) => Promise.resolve(v);
 
 // Mirrors the shape of `api` in api.ts. Guest paths return seeded data; writes

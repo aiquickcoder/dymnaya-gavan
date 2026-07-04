@@ -12,7 +12,7 @@ if (DEMO) {
   if (!localStorage.getItem(KEYS.table))
     localStorage.setItem(KEYS.table, JSON.stringify({ restaurantId: DEMO_RID, tableId: DEMO_TABLE }));
   if (!localStorage.getItem(KEYS.guest))
-    localStorage.setItem(KEYS.guest, JSON.stringify({ userId: "demo-user", phoneNumber: "+7 900 000-00-00" }));
+    localStorage.setItem(KEYS.guest, JSON.stringify({ userId: "demo-user", phoneNumber: "+7 903 555-21-40" }));
 }
 
 // Under GitHub Pages the app is served from /<repo>/, so route relative to BASE_URL.

@@ -520,16 +520,23 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius
 .filters .search input { width: 100%; }
 .filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .filter-select {
-  flex: 1 1 140px;
-  min-width: 120px;
+  flex: 0 0 auto;
   width: auto;
-  padding: 9px 12px;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 9px 36px 9px 15px;
   font-size: 14px;
-  border-radius: 11px;
-  background: var(--surface-2);
+  font-weight: 500;
+  border-radius: 999px;
+  background: var(--surface-2)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c9a24a' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 14px center;
   border: 1px solid var(--border);
   color: var(--text);
+  cursor: pointer;
 }
+.filter-select:hover { border-color: var(--accent); }
 .filter-select:focus { outline: none; border-color: var(--accent); }
 
 /* ---- editorial (magazine) card ---- */
