@@ -11,6 +11,7 @@ import Build from "./pages/guest/Build";
 import Session from "./pages/guest/Session";
 import Tip from "./pages/guest/Tip";
 import Profile from "./pages/guest/Profile";
+import Master from "./pages/guest/Master";
 // staff (unchanged)
 import StaffLogin from "./pages/staff/Login";
 import StaffConsole from "./pages/staff/Console";
@@ -46,6 +47,7 @@ export default function App() {
       <Route path="/guest/auth" element={<Auth />} />
       <Route path="/guest/home" element={<Home />} />
       <Route path="/guest/mix/:id" element={<Mix />} />
+      <Route path="/guest/master/:id" element={<Master />} />
       <Route path="/guest/quiz" element={<Quiz />} />
       <Route path="/guest/build" element={<Build />} />
       <Route path="/guest/session" element={<Session />} />

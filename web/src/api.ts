@@ -9,6 +9,7 @@ import type {
   Order,
   RatingAgg,
   Recipe,
+  RecipeFeedbackItem,
   RegisterEmployeeResponse,
   Restaurant,
   ShiftMaster,
@@ -113,6 +114,8 @@ const realApi = {
     request<RatingAgg>("POST", `/employees/${employeeId}/ratings`, input),
   employeeRating: (employeeId: string) =>
     request<RatingAgg>("GET", `/employees/${employeeId}/rating`),
+  employeeRecipeFeedback: (id: string) =>
+    request<RecipeFeedbackItem[]>("GET", `/employees/${id}/recipe-feedback`),
 
   // users / favourites
   registerUser: (input: { phoneNumber: string; gender?: string }) =>

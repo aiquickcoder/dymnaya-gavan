@@ -1,5 +1,7 @@
+import type { MouseEvent } from "react";
 import type { MenuRecipeView } from "../types";
-import { heroBackground } from "../lib/mixImages";
+import { mixImageUrl } from "../lib/mixImages";
+import { haze } from "../lib/haze";
 
 export function badgeClass(badge?: string | null): string {
   const b = (badge ?? "").toLowerCase();
@@ -14,40 +16,66 @@ export default function MixCard({
   item,
   masterName,
   onClick,
+  onFav,
+  onOrder,
+  faved,
 }: {
   item: MenuRecipeView;
   masterName?: string;
   onClick?: () => void;
+  onFav?: () => void;
+  onOrder?: () => void;
+  faved?: boolean;
 }) {
+  const url = mixImageUrl(item.name, item.tags);
+  const rating = item.rating;
+
+  const stop = (fn?: () => void) => (e: MouseEvent) => {
+    e.stopPropagation();
+    fn?.();
+  };
+
   return (
     <div className="mix-card">
-      <div className="hero clickable" style={{ background: heroBackground(item.name, item.tags) }} onClick={onClick}>
-        {item.badge && <span className={`badge ${badgeClass(item.badge)}`}>{item.badge}</span>}
-        {item.rating != null && item.rating > 0 && (
-          <span className="rating">★ {item.rating.toFixed(1)}</span>
+      <div className="mix-hero clickable" onClick={onClick}>
+        {url ? (
+          <img className="mix-img" src={url} loading="lazy" alt={item.name} />
+        ) : (
+          <div className="mix-fallback" style={{ background: haze(item.tags) }} aria-hidden />
         )}
+        <div className="mix-scrim" aria-hidden />
+        {item.badge && <span className={`badge ${badgeClass(item.badge)}`}>{item.badge}</span>}
+        {rating != null && rating > 0 && <div className="rating">★ {rating.toFixed(1)}</div>}
+        <div className="mix-overlay">
+          <div>
+            <div className="mix-title display">{item.name}</div>
+            {masterName && <div className="muted small">Мастер {masterName}</div>}
+          </div>
+          <div className="mix-price">{Math.round(item.price)} ₽</div>
+        </div>
       </div>
-      <div className="body">
-        <div className="row between">
-          <div className="name display">{item.name}</div>
-        </div>
-        <div className="meta">
-          {masterName ? `Мастер ${masterName}` : item.description}
-        </div>
-        <div className="chips" style={{ marginTop: 10 }}>
-          {item.tags.map((t, i) => (
-            <span className="chip" key={i}>
-              {t}
-            </span>
-          ))}
-        </div>
-        <div className="foot">
-          <span className="price">{Math.round(item.price)} ₽</span>
-          <button className="sm" onClick={onClick}>
-            Открыть →
+      <div className="chips">
+        {item.tags.map((t, i) => (
+          <span className="chip" key={i}>
+            {t}
+          </span>
+        ))}
+      </div>
+      {(onFav || onOrder) && (
+        <div className="mix-quick">
+          <button
+            className="sm"
+            onClick={stop(onFav ?? onClick)}
+            disabled={faved}
+            aria-label={faved ? "В избранном" : "Добавить в избранное"}
+          >
+            {faved ? "♥ В избранном" : "♡ В избранное"}
+          </button>
+          <button className="sm primary" onClick={stop(onOrder ?? onClick)} aria-label="Заказать микс">
+            Заказать
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }

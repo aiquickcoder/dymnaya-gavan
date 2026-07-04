@@ -110,6 +110,19 @@ export interface Favourite {
   likedAt: string;
 }
 
+// A single review a guest left on a mix prepared by this master
+// (GET /employees/{id}/recipe-feedback).
+export interface RecipeFeedbackItem {
+  orderRecipeId: string;
+  recipeId: string;
+  recipeName?: string | null;
+  strength?: number | null;
+  score?: number | null;
+  review?: string | null;
+  updatedAt: string;
+  components: Component[];
+}
+
 // A menu position of a venue (POST /menu/list). NB: menu has no per-component
 // breakdown — only `tags` (3 flavour names) + free-text description.
 export interface MenuRecipeView {

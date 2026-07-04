@@ -118,7 +118,7 @@ a { color: var(--accent); text-decoration: none; cursor: pointer; }
 .back-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .back-header .back {
   display: inline-flex; align-items: center; gap: 5px;
-  height: 38px; padding: 0 14px 0 9px; border-radius: 999px;
+  height: 40px; padding: 0 14px 0 9px; border-radius: 999px;
   border: 1px solid var(--border); background: var(--surface);
   color: var(--text); font-size: 14px; cursor: pointer; flex-shrink: 0;
 }
@@ -202,7 +202,7 @@ button.primary:hover { filter: brightness(1.05); }
 button.ghost { background: transparent; }
 button.danger { color: var(--danger); border-color: transparent; background: transparent; }
 button.block { width: 100%; }
-button.sm { padding: 8px 12px; font-size: 13px; border-radius: 9px; }
+button.sm { padding: 8px 12px; font-size: 13px; border-radius: 9px; min-height: 40px; }
 button.lg { padding: 15px 18px; font-size: 16px; }
 
 /* ---- pills / chips / badges ---- */
@@ -329,7 +329,7 @@ button.lg { padding: 15px 18px; font-size: 16px; }
 
 /* ---- segmented control (tabs / theme toggle) ---- */
 .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 3px; }
-.seg button { background: transparent; border: none; padding: 8px 16px; border-radius: 999px; color: var(--muted); font-size: 14px; }
+.seg button { background: transparent; border: none; padding: 8px 16px; border-radius: 999px; color: var(--muted); font-size: 14px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
 .seg button.on { background: var(--surface); color: var(--accent); box-shadow: var(--glow); }
 .seg.block { display: flex; }
 .seg.block button { flex: 1; }
@@ -434,3 +434,181 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius
 .topbar .brand .mix { color: var(--accent); }
 
 .fade-in { animation: fadeIn .25s ease both; }
+
+/* ============================================================================
+   Главный экран v2 — общий фундамент (Foundation).
+   Скелетоны, карточка микса «поверх фото», фильтры, редакторская карточка,
+   страница мастера, a11y. Все токены совместимы с ember/smoke.
+   ========================================================================== */
+
+/* ---- skeletons (shimmer placeholders) ---- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.skeleton::after {
+  content: "";
+  position: absolute; inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+.skel-card { height: 232px; margin-bottom: 14px; }
+.skel-master { min-width: 158px; height: 92px; flex-shrink: 0; border-radius: 16px; }
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
+/* ---- mix card v2 (title & price over the photo) ---- */
+.mix-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color .15s, transform .1s;
+}
+.mix-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.mix-hero {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.mix-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mix-fallback { width: 100%; height: 100%; }
+.mix-scrim {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to top, rgba(6, 5, 3, 0.92) 0%, rgba(6, 5, 3, 0.5) 34%, rgba(6, 5, 3, 0) 66%);
+}
+.mix-hero .badge { z-index: 2; }
+.mix-hero .rating {
+  position: absolute; top: 12px; right: 12px; z-index: 2;
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  backdrop-filter: blur(4px);
+  background: rgba(20, 15, 8, 0.6); color: var(--accent-2); border: 1px solid var(--border);
+}
+.mix-overlay {
+  position: absolute; left: 14px; right: 14px; bottom: 12px; z-index: 2;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
+  pointer-events: none;
+}
+.mix-title {
+  font-family: var(--display);
+  text-transform: var(--display-tt);
+  letter-spacing: var(--display-ls);
+  font-weight: var(--display-fw);
+  font-size: 21px; line-height: 1.12; color: #fff;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6);
+}
+.mix-price {
+  flex-shrink: 0;
+  font-family: var(--display); font-weight: var(--display-fw);
+  font-size: 20px; color: var(--accent-2);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6);
+}
+.mix-card .chips { padding: 12px 12px 0; }
+.mix-quick {
+  display: flex; gap: 8px;
+  padding: 12px;
+}
+.mix-quick button { flex: 1; }
+
+/* ---- menu filters (search + strength / sort) ---- */
+.filters { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+.filters .search { position: relative; width: 100%; }
+.filters .search input { width: 100%; }
+.filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.filter-select {
+  flex: 1 1 140px;
+  min-width: 120px;
+  width: auto;
+  padding: 9px 12px;
+  font-size: 14px;
+  border-radius: 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.filter-select:focus { outline: none; border-color: var(--accent); }
+
+/* ---- editorial (magazine) card ---- */
+.editorial {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: border-color .15s, transform .1s;
+}
+.editorial:hover { border-color: var(--accent); transform: translateY(-1px); }
+.ed-hero { position: relative; height: 236px; overflow: hidden; }
+.ed-hero::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to top, rgba(6, 5, 3, 0.92) 0%, rgba(6, 5, 3, 0.4) 42%, rgba(6, 5, 3, 0) 72%);
+}
+.ed-hero .rating {
+  position: absolute; top: 12px; right: 12px; z-index: 2;
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  backdrop-filter: blur(4px);
+  background: rgba(20, 15, 8, 0.6); color: var(--accent-2); border: 1px solid var(--border);
+}
+.ed-title {
+  position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2;
+  font-family: var(--display);
+  text-transform: var(--display-tt);
+  letter-spacing: var(--display-ls);
+  font-weight: var(--display-fw);
+  font-size: 27px; line-height: 1.08; color: #fff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.65);
+}
+.ed-body { padding: 14px 16px 16px; }
+.ed-desc { color: var(--muted); font-size: 14px; line-height: 1.5; margin-bottom: 14px; }
+.ed-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* ---- master profile page ---- */
+.mp-hero {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 4px; padding: 6px 0 4px; margin-bottom: 10px;
+}
+.mp-avatar {
+  width: 108px; height: 108px; border-radius: 50%;
+  margin-bottom: 8px;
+  display: grid; place-items: center;
+  background-color: var(--surface-2);
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  border: 1px solid var(--border);
+  box-shadow: var(--glow);
+  font-family: var(--display); font-size: 44px; color: var(--accent-2);
+}
+.mp-name { font-family: var(--display); text-transform: var(--display-tt); letter-spacing: var(--display-ls); font-weight: var(--display-fw); font-size: 27px; line-height: 1.1; }
+.mp-role { color: var(--muted); font-size: 14px; }
+.mp-stats { display: flex; gap: 10px; width: 100%; margin-top: 12px; }
+.mp-stat {
+  flex: 1;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 8px; text-align: center;
+}
+.mp-stat b {
+  display: block;
+  font-family: var(--display); font-weight: var(--display-fw);
+  font-size: 22px; color: var(--accent-2);
+  font-variant-numeric: tabular-nums;
+}
+.mp-stat span { display: block; color: var(--muted); font-size: 11.5px; margin-top: 3px; }
+
+/* ---- review list (guest feedback on this master's mixes) ---- */
+.review-item {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; margin-bottom: 10px;
+}
+.review-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.review-text { color: var(--text); font-size: 14px; line-height: 1.5; }
+
+/* ---- a11y: visible keyboard focus ring ---- */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, .filter-select:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
