@@ -15,6 +15,15 @@ import Master from "./pages/guest/Master";
 // staff (unchanged)
 import StaffLogin from "./pages/staff/Login";
 import StaffConsole from "./pages/staff/Console";
+// admin CRM
+import AdminLayout from "./pages/admin/AdminLayout";
+import Dashboard from "./pages/admin/Dashboard";
+import Tables from "./pages/admin/Tables";
+import Menu from "./pages/admin/Menu";
+import Staff from "./pages/admin/Staff";
+import Clients from "./pages/admin/Clients";
+import Analytics from "./pages/admin/Analytics";
+import AdminLogin from "./pages/admin/Login";
 
 function StaffLayout() {
   const navigate = useNavigate();
@@ -59,6 +68,17 @@ export default function App() {
         <Route path="/staff" element={<StaffLogin />} />
         <Route path="/staff/console" element={<StaffConsole />} />
       </Route>
+
+      {/* admin CRM — "Дымная Гавань" */}
+      <Route element={<AdminLayout />}>
+        <Route path="/admin" element={<Dashboard />} />
+        <Route path="/admin/tables" element={<Tables />} />
+        <Route path="/admin/menu" element={<Menu />} />
+        <Route path="/admin/staff" element={<Staff />} />
+        <Route path="/admin/clients" element={<Clients />} />
+        <Route path="/admin/analytics" element={<Analytics />} />
+      </Route>
+      <Route path="/admin/login" element={<AdminLogin />} />
 
       <Route path="*" element={<Navigate to="/guest" replace />} />
     </Routes>

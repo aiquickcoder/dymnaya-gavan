@@ -1,9 +1,12 @@
 // Typed client for the mixMaster API. Unwraps the { data, error } envelope (R1.3).
 import type {
+  AnalyticsSummary,
   Component,
   Employee,
+  EmployeeFull,
   Favourite,
   FeedbackView,
+  GuestSummary,
   LoginResponse,
   MenuRecipeView,
   Order,
@@ -13,7 +16,10 @@ import type {
   RegisterEmployeeResponse,
   Restaurant,
   ShiftMaster,
+  TableView,
   User,
+  Visit,
+  Zone,
 } from "./types";
 import { DEMO, demoApi } from "./lib/demo";
 
@@ -26,6 +32,10 @@ export class ApiError extends Error {
     this.code = code;
   }
 }
+
+// Admin CRM endpoints do not exist on the Go backend yet; the admin ships in
+// demo mode. These stubs reject so a non-demo call fails loudly but compiles.
+const notImpl = <T>(): Promise<T> => Promise.reject(new ApiError("not_impl", "нет в реальном API"));
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(BASE + path, {
@@ -126,6 +136,30 @@ const realApi = {
     request<void>("POST", `/users/${userId}/favourites`, { orderRecipeId }),
   removeFavourite: (userId: string, orderRecipeId: string) =>
     request<void>("DELETE", `/users/${userId}/favourites/${orderRecipeId}`),
+
+  // ===== admin CRM — the deployed admin runs in demo mode, so the real backend
+  // has no matching endpoints yet. These stubs keep the `api` union type-safe. =====
+  adminTables: (_restaurantId: string): Promise<TableView[]> => notImpl(),
+  adminUpsertTable: (_t: Partial<TableView> & { restaurantId: string }): Promise<TableView> => notImpl(),
+  adminMoveTable: (_id: string, _x: number, _y: number): Promise<void> => notImpl(),
+  adminDeleteTable: (_id: string): Promise<void> => notImpl(),
+  adminZones: (_restaurantId: string): Promise<Zone[]> => notImpl(),
+  adminTableAddMix: (_tableId: string, _menuId: string, _employeeId: string): Promise<void> => notImpl(),
+  adminCloseTable: (_tableId: string): Promise<void> => notImpl(),
+
+  adminMenu: (_restaurantId: string): Promise<MenuRecipeView[]> => notImpl(),
+  adminUpsertMenu: (_m: Partial<MenuRecipeView> & { restaurantId: string }): Promise<MenuRecipeView> => notImpl(),
+  adminDeleteMenu: (_id: string): Promise<void> => notImpl(),
+  adminReorderMenu: (_ids: string[]): Promise<void> => notImpl(),
+
+  adminEmployees: (_restaurantId: string): Promise<EmployeeFull[]> => notImpl(),
+  adminUpsertEmployee: (_e: Partial<EmployeeFull> & { restaurantId: string }): Promise<EmployeeFull> => notImpl(),
+  adminSetShift: (_restaurantId: string, _employeeIds: string[]): Promise<void> => notImpl(),
+
+  adminGuests: (_restaurantId: string): Promise<GuestSummary[]> => notImpl(),
+  adminGuest: (_id: string): Promise<{ summary: GuestSummary; visits: Visit[] }> => notImpl(),
+
+  adminAnalytics: (_restaurantId: string, _days: number): Promise<AnalyticsSummary> => notImpl(),
 };
 
 // In the GitHub Pages / demo build there is no backend — serve seeded mock data.

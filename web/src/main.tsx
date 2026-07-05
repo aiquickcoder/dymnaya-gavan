@@ -13,6 +13,18 @@ if (DEMO) {
     localStorage.setItem(KEYS.table, JSON.stringify({ restaurantId: DEMO_RID, tableId: DEMO_TABLE }));
   if (!localStorage.getItem(KEYS.guest))
     localStorage.setItem(KEYS.guest, JSON.stringify({ userId: "demo-user", phoneNumber: "+7 903 555-21-40" }));
+  // Seed an admin session so /admin opens straight away without a manual login.
+  if (!localStorage.getItem(KEYS.admin))
+    localStorage.setItem(
+      KEYS.admin,
+      JSON.stringify({
+        restaurantId: DEMO_RID,
+        restaurantName: "Дымная Гавань",
+        employeeId: "m-timur",
+        employeeName: "Тимур",
+        code: "DEMO0000",
+      }),
+    );
 }
 
 // Under GitHub Pages the app is served from /<repo>/, so route relative to BASE_URL.

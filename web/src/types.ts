@@ -137,4 +137,111 @@ export interface MenuRecipeView {
   badge?: string | null;
   tags: string[];
   createdAt: string;
+  // Admin-only optional extensions (guest ignores them; kept nullable-safe).
+  category?: string;
+  available?: boolean;
+  sortOrder?: number;
+  components?: Component[];
+  imageSlug?: string | null;
+}
+
+// ===== Admin CRM ("Дымная Гавань") view models =====
+// All of the following are consumed by the /admin/* section pages via `api.admin*`.
+// In the demo build they are backed by the mutable demoStore singleton.
+
+export type TableStatus = "free" | "occupied";
+
+export interface Zone {
+  id: string;
+  name: string;
+}
+
+export interface TableView {
+  id: string;
+  restaurantId: string;
+  label: string;
+  x: number; // 0..100 (% of floor canvas width)
+  y: number; // 0..100 (% of floor canvas height)
+  seats: number;
+  shape: "round" | "square" | "rect";
+  zone: string; // Zone.id
+  status: TableStatus;
+  orderId?: string | null;
+  openedAt?: string | null;
+  minutes?: number | null;
+  total?: number | null;
+  guests?: number | null;
+}
+
+export interface EmployeeFull {
+  id: string;
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  shortName: string;
+  position: string;
+  phone?: string | null;
+  rating: number;
+  ratingCount: number;
+  onShift: boolean;
+  status: "active" | "inactive";
+}
+
+export interface Visit {
+  orderId: string;
+  date: string;
+  tableLabel?: string | null;
+  mixes: string[];
+  master?: string | null;
+  total: number;
+  score?: number | null;
+}
+
+export interface GuestSummary {
+  id: string;
+  name?: string | null;
+  phoneNumber: string;
+  visits: number;
+  lastVisit?: string | null;
+  favouriteMix?: string | null;
+  avgScore?: number | null;
+  ltv: number;
+  createdAt: string;
+}
+
+export interface TimePoint {
+  label: string;
+  value: number;
+}
+
+export interface TopItem {
+  name: string;
+  value: number;
+}
+
+export interface HourLoad {
+  hour: number;
+  value: number;
+}
+
+export interface AnalyticsSummary {
+  days: number;
+  kpis: {
+    revenue: number;
+    orders: number;
+    avgCheck: number;
+    guests: number;
+    occupancy: string;
+    avgRating: number;
+    revenueDelta?: number;
+    ordersDelta?: number;
+  };
+  revenue: TimePoint[];
+  orders: TimePoint[];
+  byDow: TimePoint[];
+  topMixes: TopItem[];
+  flavours: TopItem[];
+  hourLoad: HourLoad[];
+  masters: { name: string; mixes: number; rating: number }[];
+  clients: { newC: number; returning: number; retention: number; avgLtv: number };
 }

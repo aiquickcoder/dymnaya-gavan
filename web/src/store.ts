@@ -20,6 +20,16 @@ export interface TableContext {
   tableId: string;
 }
 
+// Admin CRM session (kept separate from StaffSession so the legacy staff console
+// and the new /admin area don't clobber each other).
+export interface AdminSession {
+  restaurantId: string;
+  restaurantName: string;
+  employeeId: string;
+  employeeName: string;
+  code: string;
+}
+
 export type ThemeName = "ember" | "smoke";
 
 function read<T>(key: string): T | null {
@@ -43,6 +53,7 @@ export function useStored<T>(key: string): [T | null, (v: T | null) => void] {
 export const KEYS = {
   guest: "mm.guest",
   staff: "mm.staff",
+  admin: "mm.admin",
   table: "mm.table",
   theme: "mm.theme",
 } as const;
