@@ -20,6 +20,9 @@ const IMAGE_SLUGS: { slug: string; label: string }[] = [
 
 const CATEGORIES = ["Хиты", "Классика", "Лёгкие", "Крепкие", "Лимитки", "Секретные", "Промо", "Прочее"];
 
+// Kitchen-bar categories (fixed set — guest groups foodMenu by these).
+const FOOD_CATEGORIES = ["Закуски", "Горячее", "Напитки", "Десерты"];
+
 // Пресеты бейджа — value сохраняется в menu.badge, каждый чип рисует настоящий .badge-превью.
 const BADGE_PRESETS: { value: string; label: string }[] = [
   { value: "", label: "нет" },
@@ -57,6 +60,7 @@ export default function MenuEditor({
   item,
   employees,
   restaurantId,
+  defaultKind = "hookah",
   onClose,
   onSaved,
 }: {
@@ -64,9 +68,11 @@ export default function MenuEditor({
   item: MenuRecipeView | null;
   employees: EmployeeFull[];
   restaurantId: string;
+  defaultKind?: "hookah" | "kitchen";
   onClose: () => void;
   onSaved: (m: MenuRecipeView) => void;
 }) {
+  const [kind, setKind] = useState<"hookah" | "kitchen">("hookah");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [strength, setStrength] = useState(5);
@@ -87,43 +93,60 @@ export default function MenuEditor({
     setErr("");
     setSaving(false);
     if (item) {
+      const k = item.kind ?? "hookah";
+      setKind(k);
       setName(item.name);
       setDescription(item.description ?? "");
       setStrength(item.strength ?? 5);
       setPrice(String(item.price ?? 1200));
       setBadge(item.badge ?? "");
       setTags(padTags(item.tags ?? []));
-      setCategory(item.category ?? "Прочее");
+      setCategory(item.category ?? (k === "kitchen" ? "Закуски" : "Прочее"));
       setAvailable(item.available ?? true);
       setAuthor(item.authorEmployeeId || employees[0]?.id || "");
       setImageSlug(item.imageSlug ?? "");
       setRows(toRows(item.components));
     } else {
+      setKind(defaultKind);
       setName("");
       setDescription("");
       setStrength(5);
-      setPrice("1200");
+      setPrice(defaultKind === "kitchen" ? "650" : "1200");
       setBadge("");
       setTags(["", "", ""]);
-      setCategory("Прочее");
+      setCategory(defaultKind === "kitchen" ? "Закуски" : "Прочее");
       setAvailable(true);
       setAuthor(employees[0]?.id ?? "");
       setImageSlug("");
       setRows([{ brand: "", flavour: "", percent: "" }]);
     }
-  }, [open, item, employees]);
+  }, [open, item, employees, defaultKind]);
 
+  const isKitchen = kind === "kitchen";
   const sum = rows.reduce((s, r) => s + (Number(r.percent) || 0), 0);
   const filled = rows
     .map((r) => ({ brand: r.brand.trim(), flavour: r.flavour.trim(), percent: r.percent.trim() }))
     .filter((r) => r.brand || r.flavour || r.percent);
   const compValid =
+    isKitchen ||
     filled.length === 0 ||
     (filled.every((r) => r.brand && r.flavour && Number(r.percent) > 0) && sum === 100);
   const preview: Component[] = filled
     .filter((r) => r.flavour && Number(r.percent) > 0)
     .map((r) => ({ brand: r.brand, flavour: r.flavour, percent: Number(r.percent) }));
   const valid = name.trim().length > 0 && Number(price) > 0 && compValid;
+
+  // Switching type resets the category to a sensible default for that type so the
+  // hookah free-text category never leaks into the kitchen select (and vice-versa).
+  function changeKind(next: "hookah" | "kitchen") {
+    if (next === kind) return;
+    setKind(next);
+    if (next === "kitchen") {
+      if (!FOOD_CATEGORIES.includes(category)) setCategory("Закуски");
+    } else if (!CATEGORIES.includes(category)) {
+      setCategory("Прочее");
+    }
+  }
 
   function editRow(i: number, key: keyof CompRow, value: string) {
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, [key]: value } : r)));
@@ -153,15 +176,17 @@ export default function MenuEditor({
       }));
       const payload: Partial<MenuRecipeView> & { restaurantId: string } = {
         restaurantId,
+        kind,
         name: name.trim(),
         description: description.trim(),
-        strength,
+        // Kitchen positions carry no strength / flavour tags / component breakdown.
+        strength: isKitchen ? 0 : strength,
         price: Number(price) || 0,
         badge: badge.trim() || null,
-        tags: tags.map((t) => t.trim()).filter(Boolean),
-        category: category.trim() || "Прочее",
+        tags: isKitchen ? [] : tags.map((t) => t.trim()).filter(Boolean),
+        category: category.trim() || (isKitchen ? "Закуски" : "Прочее"),
         available,
-        components,
+        components: isKitchen ? [] : components,
         imageSlug: imageSlug || null,
       };
       if (author) payload.authorEmployeeId = author;
@@ -190,6 +215,27 @@ export default function MenuEditor({
     <Modal open={open} onClose={onClose} title={item ? "Редактировать позицию" : "Новая позиция"} footer={footer}>
       {err && <div className="banner error" style={{ marginBottom: 14 }}>{err}</div>}
 
+      <div className="kind-toggle">
+        <div className="seg" role="group" aria-label="Тип позиции">
+          <button
+            type="button"
+            className={!isKitchen ? "on" : ""}
+            aria-pressed={!isKitchen}
+            onClick={() => changeKind("hookah")}
+          >
+            Кальян
+          </button>
+          <button
+            type="button"
+            className={isKitchen ? "on" : ""}
+            aria-pressed={isKitchen}
+            onClick={() => changeKind("kitchen")}
+          >
+            Кухня-бар
+          </button>
+        </div>
+      </div>
+
       <div className="form-grid">
         <div className="field full">
           <label>Название</label>
@@ -201,11 +247,13 @@ export default function MenuEditor({
           <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
 
-        <div className="field full">
-          <label>Крепость</label>
-          <input type="range" min={1} max={10} value={strength} onChange={(e) => setStrength(+e.target.value)} />
-          <StrengthScale value={strength} />
-        </div>
+        {!isKitchen && (
+          <div className="field full">
+            <label>Крепость</label>
+            <input type="range" min={1} max={10} value={strength} onChange={(e) => setStrength(+e.target.value)} />
+            <StrengthScale value={strength} />
+          </div>
+        )}
 
         <div className="field">
           <label>Цена, ₽</label>
@@ -214,12 +262,24 @@ export default function MenuEditor({
 
         <div className="field">
           <label>Категория</label>
-          <input list="menu-categories" value={category} onChange={(e) => setCategory(e.target.value)} />
-          <datalist id="menu-categories">
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
+          {isKitchen ? (
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {FOOD_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <>
+              <input list="menu-categories" value={category} onChange={(e) => setCategory(e.target.value)} />
+              <datalist id="menu-categories">
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </>
+          )}
         </div>
 
         <div className="field">
@@ -310,26 +370,29 @@ export default function MenuEditor({
           </div>
         </div>
 
-        <div className="field full">
-          <label>Вкусы (теги)</label>
-          <div className="row">
-            {[0, 1, 2].map((i) => (
-              <input
-                key={i}
-                list="menu-flavours"
-                value={tags[i]}
-                placeholder={`тег ${i + 1}`}
-                onChange={(e) => setTag(i, e.target.value)}
-              />
-            ))}
+        {!isKitchen && (
+          <div className="field full">
+            <label>Вкусы (теги)</label>
+            <div className="row">
+              {[0, 1, 2].map((i) => (
+                <input
+                  key={i}
+                  list="menu-flavours"
+                  value={tags[i]}
+                  placeholder={`тег ${i + 1}`}
+                  onChange={(e) => setTag(i, e.target.value)}
+                />
+              ))}
+            </div>
+            <datalist id="menu-flavours">
+              {PALETTE.map((f) => (
+                <option key={f.name} value={f.name} />
+              ))}
+            </datalist>
           </div>
-          <datalist id="menu-flavours">
-            {PALETTE.map((f) => (
-              <option key={f.name} value={f.name} />
-            ))}
-          </datalist>
-        </div>
+        )}
 
+        {!isKitchen && (
         <div className="field full">
           <label>Состав (сумма процентов = 100)</label>
           {rows.map((r, i) => (
@@ -377,6 +440,7 @@ export default function MenuEditor({
             </div>
           )}
         </div>
+        )}
       </div>
     </Modal>
   );

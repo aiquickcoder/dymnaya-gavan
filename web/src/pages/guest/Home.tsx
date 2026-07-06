@@ -159,6 +159,19 @@ export default function Home() {
         <ActionCard icon={<SecretIcon />} label="Секрет" onClick={openSecret} />
       </div>
 
+      {/* kitchen-bar link */}
+      <div className="card clickable" style={{ marginTop: 12 }} onClick={() => navigate("/guest/kitchen")}>
+        <div className="row between">
+          <div>
+            <div className="display" style={{ fontSize: 18 }}>
+              Кухня-бар
+            </div>
+            <div className="muted small">Закуски, горячее, напитки и десерты</div>
+          </div>
+          <span className="pill accent">Открыть →</span>
+        </div>
+      </div>
+
       {/* active session */}
       {activeMix && (
         <div className="card clickable glow" style={{ marginTop: 16 }} onClick={() => navigate("/guest/session")}>

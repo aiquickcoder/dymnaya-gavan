@@ -676,6 +676,190 @@
   backdrop-filter: none;
 }
 
+/* ================================================= 8c. ТИП ПОЗИЦИИ / КАТЕГОРИИ */
+/* Переключатель кальян / кухня-бар над редактором меню — обёртка над .seg. */
+.kind-toggle { margin-bottom: 16px; }
+.kind-toggle .seg { display: flex; }
+.kind-toggle .seg button { flex: 1; }
+
+/* Чипы категорий кухни (Закуски/Горячее/Напитки/Десерты) — фильтр/выбор. */
+.food-cats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.food-cat {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; min-height: 36px;
+  border-radius: 999px; font-size: 13.5px; font-weight: 500;
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--muted);
+  cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.food-cat:hover { border-color: var(--accent); color: var(--text); }
+.food-cat.on { color: var(--accent); border-color: var(--accent); background: var(--gold-soft); }
+
+/* ================================================= 8d. БРОНИ (reservations) */
+.resv-filters {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+  margin-bottom: 16px;
+}
+.resv-filters input[type="date"] {
+  width: auto; height: 42px;
+  font-variant-numeric: tabular-nums;
+}
+
+.resv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 14px;
+}
+.resv-card {
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.15s, transform 0.1s;
+  animation: admPop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.resv-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.resv-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.resv-head .rh-name {
+  font-family: var(--display);
+  font-weight: var(--display-fw);
+  font-size: 18px; line-height: 1.12;
+  color: var(--text);
+}
+.resv-head .rh-phone {
+  font-size: 12.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums; margin-top: 2px;
+}
+
+/* статус-бейдж брони */
+.resv-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.resv-status.new { color: var(--accent-2); border-color: var(--accent); background: var(--gold-soft); }
+.resv-status.confirmed { color: var(--accent); border-color: var(--accent); background: var(--gold-soft); }
+.resv-status.seated { color: var(--success); border-color: rgba(123, 185, 138, 0.45); background: rgba(123, 185, 138, 0.1); }
+.resv-status.cancelled { color: var(--danger); border-color: rgba(224, 104, 95, 0.4); background: rgba(224, 104, 95, 0.1); }
+
+/* мета-строки: дата/время · стол+зона · гостей */
+.resv-meta {
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 13.5px; color: var(--muted);
+}
+.resv-meta .rm-row { display: flex; align-items: center; gap: 8px; }
+.resv-meta .rm-row svg { width: 15px; height: 15px; color: var(--accent-2); flex-shrink: 0; }
+.resv-meta b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.resv-actions {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding-top: 2px;
+}
+.resv-actions button {
+  padding: 7px 12px; font-size: 12.5px; min-height: 36px; border-radius: 9px;
+}
+
+/* ================================================= 8e. ВЫЗОВЫ (calls) */
+.calls-list { display: flex; flex-direction: column; gap: 10px; }
+.call-row {
+  position: relative;
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.15s;
+  animation: admPop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* «новые» вызовы подсвечиваем золотой рамкой + мягким свечением */
+.call-row.is-new {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 18px rgba(201, 162, 74, 0.14);
+}
+.call-ico {
+  display: grid; place-items: center;
+  width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--gold-soft);
+  border: 1px solid var(--border);
+  color: var(--accent-2);
+}
+.call-ico svg { width: 21px; height: 21px; }
+.call-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.call-type {
+  font-family: var(--display);
+  font-weight: var(--display-fw);
+  font-size: 17px; line-height: 1.1;
+  color: var(--text);
+}
+.call-table { font-size: 13px; color: var(--muted); }
+.call-time {
+  font-size: 12px; color: var(--muted);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.call-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.call-status.new { color: var(--accent-2); border-color: var(--accent); background: var(--gold-soft); }
+.call-status.ack { color: var(--accent); border-color: var(--accent); background: var(--gold-soft); }
+.call-status.done { color: var(--success); border-color: rgba(123, 185, 138, 0.45); background: rgba(123, 185, 138, 0.1); }
+.call-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.call-actions button {
+  padding: 7px 12px; font-size: 12.5px; min-height: 36px; border-radius: 9px;
+}
+
+/* ================================================= 8f. ТОСТ О ВЫЗОВЕ */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(24px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+.toast-host {
+  position: fixed; top: 16px; right: 16px; z-index: 200;
+  display: flex; flex-direction: column; gap: 10px;
+  max-width: min(360px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.toast {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), var(--glow);
+  pointer-events: auto;
+}
+.toast.enter { animation: toastIn 0.26s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.toast .toast-ico {
+  display: grid; place-items: center;
+  width: 36px; height: 36px; flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--gold-soft);
+  border: 1px solid var(--border);
+  color: var(--accent-2);
+}
+.toast .toast-ico svg { width: 19px; height: 19px; }
+.toast .toast-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.toast .toast-title {
+  font-weight: 600; font-size: 14px; color: var(--text);
+}
+.toast .toast-sub { font-size: 12.5px; color: var(--muted); }
+
 /* ================================================= 9. АДАПТИВ (< 900px) */
 @media (max-width: 900px) {
   .admin { grid-template-columns: 1fr; }
@@ -710,3 +894,12 @@
   .modal-backdrop { padding: 0; align-items: flex-end; }
   .modal { max-width: none; max-height: 92vh; border-radius: 22px 22px 0 0; }
 }
+
+/* ---- period picker (analytics / dashboard) ---- */
+.period-picker { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.period-range { display: flex; align-items: center; gap: 6px; }
+.period-range input[type="date"] {
+  width: auto; padding: 8px 11px; font-size: 13px; border-radius: 999px;
+  color-scheme: dark; cursor: pointer;
+}
+.period-range input[type="date"]:hover { border-color: var(--accent); }

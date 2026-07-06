@@ -5,7 +5,16 @@ import { Banner } from "../../components/ui";
 import StarRating from "../../components/StarRating";
 import Modal from "../../components/admin/Modal";
 import { masterImageUrl } from "../../lib/masterImages";
+import { asset } from "../../lib/asset";
 import type { EmployeeFull, RecipeFeedbackItem } from "../../types";
+
+/** Доступные фото сотрудников (public/masters/<slug>.jpg). */
+const PHOTO_SLUGS: { slug: string; label: string }[] = [
+  { slug: "timur", label: "Тимур" },
+  { slug: "alina", label: "Алина" },
+  { slug: "din", label: "Дин" },
+];
+const photoUrl = (slug: string) => asset(`masters/${slug}.jpg`);
 
 /** ФИО одной строкой; запасной вариант — короткое имя. */
 function fullName(e: EmployeeFull): string {
@@ -19,9 +28,9 @@ function fmtDate(iso: string): string {
   return new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" }).format(d);
 }
 
-/** Портрет мастера (masterImageUrl по короткому имени) либо инициал. */
-function Avatar({ name, size = 52 }: { name: string; size?: number }) {
-  const url = masterImageUrl(name);
+/** Портрет сотрудника: photoSlug (если задан) → иначе masterImageUrl по имени → иначе инициал. */
+function Avatar({ name, photoSlug, size = 52 }: { name: string; photoSlug?: string | null; size?: number }) {
+  const url = photoSlug ? photoUrl(photoSlug) : masterImageUrl(name);
   const base: CSSProperties = {
     width: size,
     height: size,
@@ -55,8 +64,9 @@ type FormState = {
   shortName: string;
   position: string;
   phone: string;
+  photoSlug: string;
 };
-const BLANK: FormState = { lastName: "", firstName: "", middleName: "", shortName: "", position: "", phone: "" };
+const BLANK: FormState = { lastName: "", firstName: "", middleName: "", shortName: "", position: "", phone: "", photoSlug: "" };
 
 export default function Staff() {
   const session = useRequireStaff();
@@ -175,6 +185,7 @@ export default function Staff() {
             shortName: emp.shortName,
             position: emp.position,
             phone: emp.phone ?? "",
+            photoSlug: emp.photoSlug ?? "",
           }
         : BLANK,
     );
@@ -198,6 +209,7 @@ export default function Staff() {
         shortName: form.shortName.trim() || form.firstName.trim(),
         position: form.position.trim() || "Сотрудник",
         phone: form.phone.trim() || null,
+        photoSlug: form.photoSlug || null,
       });
       setEditorOpen(false);
       await refresh();
@@ -265,7 +277,7 @@ export default function Staff() {
                 tabIndex={0}
               >
                 <div className="row" style={{ gap: 14, alignItems: "flex-start" }}>
-                  <Avatar name={e.shortName} />
+                  <Avatar name={e.shortName} photoSlug={e.photoSlug} />
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
                       <span className="display" style={{ fontSize: 17, lineHeight: 1.15 }}>
@@ -377,6 +389,33 @@ export default function Staff() {
             <input value={form.phone} onChange={(e) => upd({ phone: e.target.value })} placeholder="+7 903 555-10-00" />
           </div>
         </div>
+
+        <label style={{ marginTop: 14 }}>Фото</label>
+        <div className="img-gallery" role="radiogroup" aria-label="Фото сотрудника">
+          <div
+            role="radio"
+            aria-checked={form.photoSlug === ""}
+            className={"img-thumb none" + (form.photoSlug === "" ? " selected" : "")}
+            onClick={() => upd({ photoSlug: "" })}
+          >
+            <span className="it-cap">без фото</span>
+          </div>
+          {PHOTO_SLUGS.map((p) => (
+            <div
+              key={p.slug}
+              role="radio"
+              aria-checked={form.photoSlug === p.slug}
+              className={"img-thumb" + (form.photoSlug === p.slug ? " selected" : "")}
+              style={{ backgroundImage: `url('${photoUrl(p.slug)}')` }}
+              onClick={() => upd({ photoSlug: p.slug })}
+            >
+              <span className="it-cap">{p.label}</span>
+            </div>
+          ))}
+          <div className="img-thumb upload" onClick={() => upd({ photoSlug: PHOTO_SLUGS[0].slug })}>
+            <span className="it-cap">Загрузить</span>
+          </div>
+        </div>
       </Modal>
 
       {/* ---- карточка мастера + отзывы ---- */}
@@ -389,7 +428,7 @@ export default function Staff() {
         {cardEmp && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div className="row" style={{ gap: 14, alignItems: "flex-start" }}>
-              <Avatar name={cardEmp.shortName} size={64} />
+              <Avatar name={cardEmp.shortName} photoSlug={cardEmp.photoSlug} size={64} />
               <div style={{ minWidth: 0 }}>
                 <div className="muted small">{cardEmp.position}</div>
                 <div className="row" style={{ gap: 8, marginTop: 6 }}>

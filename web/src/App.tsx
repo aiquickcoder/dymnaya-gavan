@@ -12,6 +12,7 @@ import Session from "./pages/guest/Session";
 import Tip from "./pages/guest/Tip";
 import Profile from "./pages/guest/Profile";
 import Master from "./pages/guest/Master";
+import Kitchen from "./pages/guest/Kitchen";
 // staff (unchanged)
 import StaffLogin from "./pages/staff/Login";
 import StaffConsole from "./pages/staff/Console";
@@ -23,6 +24,8 @@ import Menu from "./pages/admin/Menu";
 import Staff from "./pages/admin/Staff";
 import Clients from "./pages/admin/Clients";
 import Analytics from "./pages/admin/Analytics";
+import Reservations from "./pages/admin/Reservations";
+import Calls from "./pages/admin/Calls";
 import AdminLogin from "./pages/admin/Login";
 
 function StaffLayout() {
@@ -62,6 +65,7 @@ export default function App() {
       <Route path="/guest/session" element={<Session />} />
       <Route path="/guest/tip/:employeeId" element={<Tip />} />
       <Route path="/guest/profile" element={<Profile />} />
+      <Route path="/guest/kitchen" element={<Kitchen />} />
 
       {/* staff — legacy console under the top-bar layout */}
       <Route element={<StaffLayout />}>
@@ -73,9 +77,11 @@ export default function App() {
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/tables" element={<Tables />} />
+        <Route path="/admin/reservations" element={<Reservations />} />
         <Route path="/admin/menu" element={<Menu />} />
         <Route path="/admin/staff" element={<Staff />} />
         <Route path="/admin/clients" element={<Clients />} />
+        <Route path="/admin/calls" element={<Calls />} />
         <Route path="/admin/analytics" element={<Analytics />} />
       </Route>
       <Route path="/admin/login" element={<AdminLogin />} />

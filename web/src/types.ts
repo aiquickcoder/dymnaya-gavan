@@ -143,6 +143,10 @@ export interface MenuRecipeView {
   sortOrder?: number;
   components?: Component[];
   imageSlug?: string | null;
+  // Discriminates hookah mixes from kitchen-bar food/drinks. Absent ⇒ treated as
+  // a hookah mix. Guest mix list filters out `kind === "kitchen"`; foodMenu keeps
+  // only kitchen positions.
+  kind?: "hookah" | "kitchen";
 }
 
 // ===== Admin CRM ("Дымная Гавань") view models =====
@@ -181,6 +185,7 @@ export interface EmployeeFull {
   shortName: string;
   position: string;
   phone?: string | null;
+  photoSlug?: string | null;
   rating: number;
   ratingCount: number;
   onShift: boolean;
@@ -252,4 +257,43 @@ export interface AnalyticsSummary {
     recent: { author?: string | null; mix?: string | null; score: number; review?: string | null; date: string }[];
     problem: { mix: string; avg: number; count: number }[]; // позиции с низким средним баллом
   };
+}
+
+// ===== Reservations ("Брони") =====
+// Table bookings managed in /admin/reservations. Backed by demoStore in the
+// demo build.
+export type ReservationStatus = "new" | "confirmed" | "seated" | "cancelled";
+
+export interface Reservation {
+  id: string;
+  restaurantId: string;
+  guestName: string;
+  phone: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  tableId?: string | null; // TableView.id (e.g. "t-7"); null ⇒ no table yet
+  tableLabel?: string | null; // resolved table label (e.g. "7")
+  guests: number;
+  zone?: string | null; // Zone.id
+  status: ReservationStatus;
+  note?: string | null;
+  createdAt: string;
+}
+
+// ===== Calls ("Обращения") =====
+// A guest taps "Позвать" at their table → a Call lands in /admin/calls, where
+// staff acknowledge and complete it. ToastHost beeps on new ones.
+export type CallType = "master" | "coals" | "waiter" | "bill";
+export type CallStatus = "new" | "ack" | "done";
+
+export interface Call {
+  id: string;
+  restaurantId: string;
+  tableId: string; // as passed by the guest (table label or id)
+  tableLabel?: string | null; // resolved for display
+  type: CallType;
+  status: CallStatus;
+  createdAt: string;
+  ackedAt?: string | null;
+  doneAt?: string | null;
 }

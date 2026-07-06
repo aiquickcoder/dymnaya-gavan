@@ -7,6 +7,8 @@ import {
   IconStaff,
   IconGuests,
   IconAnalytics,
+  IconReservations,
+  IconBell,
   type IconProps,
 } from "./icons";
 
@@ -66,8 +68,10 @@ export default function Sidebar({
 const NAV: { to: string; label: string; end?: boolean; icon: (p: IconProps) => JSX.Element }[] = [
   { to: "/admin", label: "Сводка", end: true, icon: IconDashboard },
   { to: "/admin/tables", label: "Столы", icon: IconTables },
+  { to: "/admin/reservations", label: "Брони", icon: IconReservations },
   { to: "/admin/menu", label: "Меню", icon: IconMenu },
   { to: "/admin/staff", label: "Команда", icon: IconStaff },
   { to: "/admin/clients", label: "Гости", icon: IconGuests },
+  { to: "/admin/calls", label: "Обращения", icon: IconBell },
   { to: "/admin/analytics", label: "Аналитика", icon: IconAnalytics },
 ];

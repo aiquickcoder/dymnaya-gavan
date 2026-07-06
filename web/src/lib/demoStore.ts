@@ -7,6 +7,9 @@
 // PRNG) so charts/tables look identical across reloads.
 import type {
   AnalyticsSummary,
+  Call,
+  CallStatus,
+  CallType,
   Employee,
   EmployeeFull,
   Favourite,
@@ -21,6 +24,8 @@ import type {
   Recipe,
   RecipeFeedbackItem,
   RegisterEmployeeResponse,
+  Reservation,
+  ReservationStatus,
   Restaurant,
   ShiftMaster,
   TableView,
@@ -59,14 +64,23 @@ const dowLabel = (iso: string) => {
 };
 const DOW = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
+// Reservations/calls are seeded relative to the REAL current date (unlike the
+// deterministic analytics anchor) so the /admin "сегодня" filter always finds
+// today's bookings and "N мин назад" reads correctly. `new Date()` is fine here
+// — this runs in the browser at import time.
+const nowISO = () => new Date().toISOString();
+const minsAgoISO = (m: number) => new Date(Date.now() - m * 60000).toISOString();
+const TODAY_YMD = nowISO().slice(0, 10);
+const TOMORROW_YMD = new Date(Date.now() + DAY).toISOString().slice(0, 10);
+
 // ---------- restaurant ----------
 const restaurant: Restaurant = { id: DEMO_RID, name: "Дымная Гавань", code: "DEMO0000" };
 
 // ---------- employees ----------
 let employees: EmployeeFull[] = [
-  { id: "m-timur", firstName: "Тимур", lastName: "Азизов", middleName: "Русланович", shortName: "Тимур", position: "Старший мастер", phone: "+7 903 555-10-01", rating: 4.9, ratingCount: 128, onShift: true, status: "active" },
-  { id: "m-alina", firstName: "Алина", lastName: "Ковалёва", middleName: "Игоревна", shortName: "Алина", position: "Кальянный мастер", phone: "+7 903 555-10-02", rating: 4.6, ratingCount: 96, onShift: true, status: "active" },
-  { id: "m-din", firstName: "Дин", lastName: "Соколов", middleName: "Артёмович", shortName: "Дин", position: "Стажёр", phone: "+7 903 555-10-03", rating: 4.4, ratingCount: 41, onShift: true, status: "active" },
+  { id: "m-timur", firstName: "Тимур", lastName: "Азизов", middleName: "Русланович", shortName: "Тимур", position: "Старший мастер", phone: "+7 903 555-10-01", photoSlug: "timur", rating: 4.9, ratingCount: 128, onShift: true, status: "active" },
+  { id: "m-alina", firstName: "Алина", lastName: "Ковалёва", middleName: "Игоревна", shortName: "Алина", position: "Кальянный мастер", phone: "+7 903 555-10-02", photoSlug: "alina", rating: 4.6, ratingCount: 96, onShift: true, status: "active" },
+  { id: "m-din", firstName: "Дин", lastName: "Соколов", middleName: "Артёмович", shortName: "Дин", position: "Стажёр", phone: "+7 903 555-10-03", photoSlug: "din", rating: 4.4, ratingCount: 41, onShift: true, status: "active" },
   { id: "m-vera", firstName: "Вера", lastName: "Лапина", middleName: "Сергеевна", shortName: "Вера", position: "Официант", phone: "+7 903 555-10-04", rating: 4.7, ratingCount: 33, onShift: false, status: "active" },
   { id: "m-oleg", firstName: "Олег", lastName: "Гринёв", middleName: "Петрович", shortName: "Олег", position: "Менеджер", phone: "+7 903 555-10-05", rating: 0, ratingCount: 0, onShift: false, status: "inactive" },
 ];
@@ -82,6 +96,32 @@ let menu: MenuRecipeView[] = [
   { id: "menu-6", restaurantId: DEMO_RID, authorEmployeeId: "m-din", name: "Секретный вкус", description: "Заказ вслепую — доверьтесь мастеру.", strength: 6, price: 1400, rating: null, badge: "?", tags: ["Секрет", "Секрет", "Секрет"], createdAt: NOW, category: "Секретные", available: true, sortOrder: 5, imageSlug: "sekret", components: [{ brand: "MustHave", flavour: "Виноград", percent: 45 }, { brand: "Element", flavour: "Черника", percent: 30 }, { brand: "Darkside", flavour: "Дыня", percent: 25 }] },
   { id: "menu-7", restaurantId: DEMO_RID, authorEmployeeId: "m-alina", name: "Комбо со звездой", description: "Фирменное промо месяца — виноград, дыня и личи.", strength: 5, price: 2100, rating: 4.8, badge: "Звезда", tags: ["Виноград", "Дыня", "Личи"], createdAt: NOW, category: "Промо", available: true, sortOrder: 6, imageSlug: "temnaya-storona", components: [{ brand: "MustHave", flavour: "Виноград", percent: 40 }, { brand: "Darkside", flavour: "Дыня", percent: 35 }, { brand: "MustHave", flavour: "Личи", percent: 25 }] },
 ];
+// Every seeded position above is a hookah mix.
+menu.forEach((m) => { m.kind = "hookah"; });
+
+// ---------- kitchen-bar menu (kind="kitchen") ----------
+// Lives in the SAME `menu` array (single source of truth): adminMenu returns
+// everything, guest menuList filters kitchen out, foodMenu keeps only kitchen.
+interface KitchenSeed { id: string; name: string; category: string; price: number; description: string; badge?: string }
+const KITCHEN_SEEDS: KitchenSeed[] = [
+  { id: "food-1", name: "Хумус с питой", category: "Закуски", price: 650, description: "Нежный хумус из нута с оливковым маслом и тёплой питой." },
+  { id: "food-2", name: "Сырная тарелка", category: "Закуски", price: 1200, description: "Ассорти сыров с мёдом, грецким орехом и виноградом.", badge: "Хит" },
+  { id: "food-3", name: "Стейк Рибай", category: "Горячее", price: 2400, description: "Мраморная говядина средней прожарки с соусом чимичурри." },
+  { id: "food-4", name: "Паста Карбонара", category: "Горячее", price: 890, description: "Сливочный соус, бекон, желток и пармезан." },
+  { id: "food-5", name: "Домашний лимонад", category: "Напитки", price: 450, description: "Освежающий лимонад с мятой и лаймом, 0.5 л." },
+  { id: "food-6", name: "Чай масала", category: "Напитки", price: 390, description: "Пряный индийский чай на молоке с кардамоном." },
+  { id: "food-7", name: "Чизкейк Нью-Йорк", category: "Десерты", price: 520, description: "Классический чизкейк с ягодным соусом.", badge: "MustHave" },
+  { id: "food-8", name: "Тирамису", category: "Десерты", price: 540, description: "Итальянский десерт с маскарпоне и эспрессо." },
+];
+KITCHEN_SEEDS.forEach((k, i) => {
+  menu.push({
+    id: k.id, restaurantId: DEMO_RID, authorEmployeeId: "m-vera",
+    name: k.name, description: k.description, strength: 0, price: k.price,
+    rating: null, badge: k.badge ?? null, tags: [], createdAt: NOW,
+    category: k.category, available: true, sortOrder: 100 + i,
+    components: [], imageSlug: null, kind: "kitchen",
+  });
+});
 
 // ---------- zones + tables ----------
 let zones: Zone[] = [
@@ -196,11 +236,15 @@ const guestVisits: Record<string, Visit[]> = {};
 
 (function buildGuests() {
   const rng = mulberry32(0x51ee77);
+  // Guests love mixes, not food — pick favourites/visits from hookah menu only.
+  // (Kitchen items are appended after index 6, so this also keeps the seed's
+  // deterministic output identical to before kitchen positions existed.)
+  const hookahMenu = menu.filter((m) => m.kind !== "kitchen");
   for (let i = 0; i < 20; i++) {
     const anon = rng() < 0.18;
     const visits = 1 + Math.floor(rng() * 14);
     const avgScore = round1(3.8 + rng() * 1.2);
-    const favouriteMix = menu[Math.floor(rng() * menu.length)].name;
+    const favouriteMix = hookahMenu[Math.floor(rng() * hookahMenu.length)].name;
     const createdMs = ANCHOR_MS - (Math.floor(rng() * 175) + 3) * DAY;
     const lastVisitMs = createdMs + Math.floor(rng() * Math.max(1, ANCHOR_MS - createdMs));
     const avgCheck = 1200 + Math.floor(rng() * 1200);
@@ -214,8 +258,8 @@ const guestVisits: Record<string, Visit[]> = {};
     let ts = lastVisitMs;
     for (let k = 0; k < n; k++) {
       const two = rng() < 0.4;
-      const m1 = menu[Math.floor(rng() * menu.length)];
-      const mixes = two ? [m1.name, menu[Math.floor(rng() * menu.length)].name] : [m1.name];
+      const m1 = hookahMenu[Math.floor(rng() * hookahMenu.length)];
+      const mixes = two ? [m1.name, hookahMenu[Math.floor(rng() * hookahMenu.length)].name] : [m1.name];
       const master = empById(MASTER_IDS[Math.floor(rng() * MASTER_IDS.length)]);
       const total = mixes.reduce((sum, nm) => sum + (menu.find((x) => x.name === nm)?.price ?? 1300), 0);
       const score = rng() < 0.15 ? 3 : rng() < 0.5 ? 4 : 5;
@@ -255,6 +299,50 @@ const cloneOrder = (o: Order): Order => ({ ...o, recipes: o.recipes.slice() });
 const openOrderForLabel = (label: string) => Object.values(orders).find((o) => o.tableId === label && !o.closedAt);
 const tableByLabel = (label: string) => tables.find((t) => t.label === label);
 const tableById = (id: string) => tables.find((t) => t.id === id);
+// Resolve a table by either its id ("t-7") or label ("7"). Reservations forms
+// pass ids (adminTables); guests pass whatever KEYS.table holds (the label).
+const resolveTable = (idOrLabel?: string | null): TableView | undefined =>
+  idOrLabel ? tableById(idOrLabel) ?? tableByLabel(idOrLabel) : undefined;
+
+// ---------- reservations ("Брони") ----------
+interface ResSeed { guest: string; phone: string; day: 0 | 1; time: string; tableLabel: string | null; guests: number; status: ReservationStatus; note?: string }
+const RES_SEEDS: ResSeed[] = [
+  { guest: "Мария Соколова", phone: "+7 903 210-45-11", day: 0, time: "18:00", tableLabel: "1", guests: 4, status: "confirmed" },
+  { guest: "Иван Петров", phone: "+7 903 210-45-12", day: 0, time: "19:30", tableLabel: "4", guests: 6, status: "new", note: "Стол у окна" },
+  { guest: "Ольга Кузнецова", phone: "+7 903 210-45-13", day: 0, time: "20:00", tableLabel: "9", guests: 6, status: "seated" },
+  { guest: "Дмитрий Волков", phone: "+7 903 210-45-14", day: 0, time: "21:00", tableLabel: "11", guests: 8, status: "confirmed", note: "День рождения" },
+  { guest: "Анна Морозова", phone: "+7 903 210-45-15", day: 0, time: "18:30", tableLabel: "2", guests: 3, status: "new" },
+  { guest: "Сергей Новиков", phone: "+7 903 210-45-16", day: 0, time: "22:00", tableLabel: null, guests: 2, status: "cancelled" },
+  { guest: "Екатерина Смирнова", phone: "+7 903 210-45-17", day: 1, time: "19:00", tableLabel: "7", guests: 6, status: "new" },
+  { guest: "Павел Егоров", phone: "+7 903 210-45-18", day: 1, time: "20:30", tableLabel: "12", guests: 8, status: "confirmed" },
+  { guest: "Наталья Орлова", phone: "+7 903 210-45-19", day: 1, time: "18:00", tableLabel: "5", guests: 4, status: "new" },
+  { guest: "Артём Лебедев", phone: "+7 903 210-45-20", day: 1, time: "21:30", tableLabel: "10", guests: 4, status: "confirmed", note: "VIP-зал" },
+];
+let reservations: Reservation[] = RES_SEEDS.map((s, i) => {
+  const t = s.tableLabel ? tableByLabel(s.tableLabel) : undefined;
+  return {
+    id: "res-" + (i + 1),
+    restaurantId: DEMO_RID,
+    guestName: s.guest,
+    phone: s.phone,
+    date: s.day === 0 ? TODAY_YMD : TOMORROW_YMD,
+    time: s.time,
+    tableId: t ? t.id : null,
+    tableLabel: t ? t.label : null,
+    guests: s.guests,
+    zone: t ? t.zone : null,
+    status: s.status,
+    note: s.note ?? null,
+    createdAt: nowISO(),
+  };
+});
+
+// ---------- calls ("Обращения") ----------
+const calls: Call[] = [
+  { id: "call-1", restaurantId: DEMO_RID, tableId: "t-5", tableLabel: "5", type: "coals", status: "new", createdAt: minsAgoISO(2), ackedAt: null, doneAt: null },
+  { id: "call-2", restaurantId: DEMO_RID, tableId: "t-12", tableLabel: "12", type: "waiter", status: "ack", createdAt: minsAgoISO(9), ackedAt: minsAgoISO(6), doneAt: null },
+  { id: "call-3", restaurantId: DEMO_RID, tableId: "t-3", tableLabel: "3", type: "master", status: "done", createdAt: minsAgoISO(25), ackedAt: minsAgoISO(22), doneAt: minsAgoISO(18) },
+];
 
 function freeTable(t: TableView) {
   t.status = "free";
@@ -298,10 +386,7 @@ const HOUR_WEIGHTS = [0.5, 0.28, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.3, 0.4, 0.5, 0.
 const SOLD_BASE: Record<string, number> = { "menu-1": 5.0, "menu-5": 4.6, "menu-7": 4.2, "menu-3": 3.8, "menu-2": 3.5, "menu-4": 3.0, "menu-6": 2.4 };
 const MASTER_SHARE: Record<string, number> = { "m-timur": 0.42, "m-alina": 0.36, "m-din": 0.22 };
 
-function analytics(days: number): AnalyticsSummary {
-  const total = DAILY.length;
-  const win = DAILY.slice(Math.max(0, total - days));
-  const prev = DAILY.slice(Math.max(0, total - 2 * days), total - days);
+function build(win: DayRow[], prev: DayRow[], spanDays: number, windowStartMs: number): AnalyticsSummary {
   const sum = (a: DayRow[], k: keyof DayRow) => a.reduce((s, r) => s + (r[k] as number), 0);
 
   const revenue = sum(win, "revenue");
@@ -328,7 +413,8 @@ function analytics(days: number): AnalyticsSummary {
   const byDow: TimePoint[] = [1, 2, 3, 4, 5, 6, 0].map((i) => ({ label: DOW[i], value: dowAgg[i] }));
 
   const topMixes: TopItem[] = menu
-    .map((m) => ({ name: m.name, value: Math.round((SOLD_BASE[m.id] ?? 2.0) * days) }))
+    .filter((m) => m.kind !== "kitchen")
+    .map((m) => ({ name: m.name, value: Math.round((SOLD_BASE[m.id] ?? 2.0) * spanDays) }))
     .sort((a, b) => b.value - a.value);
 
   const flAgg: Record<string, number> = {};
@@ -351,7 +437,6 @@ function analytics(days: number): AnalyticsSummary {
   const masters = ratedMasters.map((e) => ({ name: e.shortName, mixes: Math.round(totalMixes * (MASTER_SHARE[e.id] ?? 0.1)), rating: e.rating }));
 
   const gTotal = guests.length;
-  const windowStartMs = ANCHOR_MS - days * DAY;
   const newC = guests.filter((g) => Date.parse(g.createdAt) >= windowStartMs).length;
   const returning = guests.filter((g) => g.visits > 1).length;
   const retention = gTotal ? Math.round((returning / gTotal) * 100) : 0;
@@ -395,12 +480,12 @@ function analytics(days: number): AnalyticsSummary {
   // Problem positions: lowest-rated available menu mixes (with an estimated sold count).
   const problem = menu
     .filter((m): m is MenuRecipeView & { rating: number } => typeof m.rating === "number")
-    .map((m) => ({ mix: m.name, avg: m.rating, count: Math.round((SOLD_BASE[m.id] ?? 2.0) * days) }))
+    .map((m) => ({ mix: m.name, avg: m.rating, count: Math.round((SOLD_BASE[m.id] ?? 2.0) * spanDays) }))
     .sort((a, b) => a.avg - b.avg)
     .slice(0, 3);
 
   return {
-    days,
+    days: spanDays,
     kpis: { revenue, orders: ordersN, avgCheck, guests: guestsN, occupancy, avgRating, revenueDelta, ordersDelta },
     revenue: revenueSeries,
     orders: ordersSeries,
@@ -413,6 +498,34 @@ function analytics(days: number): AnalyticsSummary {
     ratings: { dist, trend, recent, problem },
   };
 }
+
+// Preset window: last N days ending at the anchor "today".
+function analytics(days: number): AnalyticsSummary {
+  const total = DAILY.length;
+  const win = DAILY.slice(Math.max(0, total - days));
+  const prev = DAILY.slice(Math.max(0, total - 2 * days), total - days);
+  return build(win, prev, days, ANCHOR_MS - days * DAY);
+}
+
+// Arbitrary [from, to] date range (YYYY-MM-DD, inclusive).
+function analyticsRange(from: string, to: string): AnalyticsSummary {
+  const fromMs = Date.parse(from + "T00:00:00.000Z");
+  const toMs = Date.parse(to + "T23:59:59.999Z");
+  const win = DAILY.filter((r) => {
+    const t = Date.parse(r.date);
+    return t >= fromMs && t <= toMs;
+  });
+  const span = Math.max(1, win.length);
+  const prevFromMs = fromMs - span * DAY;
+  const prev = DAILY.filter((r) => {
+    const t = Date.parse(r.date);
+    return t >= prevFromMs && t < fromMs;
+  });
+  return build(win, prev, span, fromMs);
+}
+
+// The demo analytics "today" anchor (date portion), for period presets in the UI.
+export const ANALYTICS_ANCHOR = new Date(ANCHOR_MS).toISOString().slice(0, 10);
 
 // ============================================================================
 // Public singleton — every method is synchronous; lib/demo.ts wraps in Promises.
@@ -443,7 +556,8 @@ export const demoStore = {
   },
 
   menuList(_rid: string): MenuRecipeView[] {
-    return menu.filter((m) => m.available !== false).slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    // Guest mix list: hookah only — kitchen positions have their own foodMenu.
+    return menu.filter((m) => m.available !== false && m.kind !== "kitchen").slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   },
   createMenu(input: { restaurantId: string; authorEmployeeId: string; name: string; description: string; strength: number; price: number; rating?: number; badge?: string; tags: string[] }): MenuRecipeView {
     const item: MenuRecipeView = {
@@ -463,6 +577,7 @@ export const demoStore = {
       sortOrder: menu.length,
       components: [],
       imageSlug: null,
+      kind: "hookah",
     };
     menu.push(item);
     return item;
@@ -649,6 +764,7 @@ export const demoStore = {
       sortOrder: m.sortOrder ?? menu.length,
       components: m.components ?? [],
       imageSlug: m.imageSlug ?? null,
+      kind: m.kind ?? "hookah",
     };
     menu.push(created);
     return { ...created };
@@ -673,7 +789,7 @@ export const demoStore = {
       if (ex) {
         const patch: Partial<EmployeeFull> = {
           firstName: e.firstName, lastName: e.lastName, middleName: e.middleName,
-          shortName: e.shortName, position: e.position, phone: e.phone,
+          shortName: e.shortName, position: e.position, phone: e.phone, photoSlug: e.photoSlug,
           rating: e.rating, ratingCount: e.ratingCount, onShift: e.onShift, status: e.status,
         };
         (Object.keys(patch) as (keyof EmployeeFull)[]).forEach((k) => {
@@ -691,6 +807,7 @@ export const demoStore = {
       shortName: e.shortName ?? e.firstName ?? "Новый",
       position: e.position ?? "Сотрудник",
       phone: e.phone ?? null,
+      photoSlug: e.photoSlug ?? null,
       rating: e.rating ?? 0,
       ratingCount: e.ratingCount ?? 0,
       onShift: e.onShift ?? false,
@@ -713,6 +830,97 @@ export const demoStore = {
 
   adminAnalytics(_rid: string, days: number): AnalyticsSummary {
     return analytics(days);
+  },
+  adminAnalyticsRange(_rid: string, from: string, to: string): AnalyticsSummary {
+    return analyticsRange(from, to);
+  },
+
+  // ----- reservations ("Брони") -----
+  adminReservations(_rid: string, date?: string): Reservation[] {
+    let list = reservations.slice();
+    if (date) list = list.filter((r) => r.date === date);
+    return list
+      .sort((a, b) => (a.date === b.date ? a.time.localeCompare(b.time) : a.date.localeCompare(b.date)))
+      .map((r) => ({ ...r }));
+  },
+  adminUpsertReservation(r: Partial<Reservation> & { restaurantId: string }): Reservation {
+    if (r.id) {
+      const ex = reservations.find((x) => x.id === r.id);
+      if (ex) {
+        Object.assign(ex, r);
+        const t = resolveTable(ex.tableId);
+        if (t) { ex.tableId = t.id; ex.tableLabel = t.label; ex.zone = t.zone; }
+        else { ex.tableId = null; ex.tableLabel = null; }
+        return { ...ex };
+      }
+    }
+    const t = resolveTable(r.tableId);
+    const created: Reservation = {
+      id: r.id ?? uid("res"),
+      restaurantId: r.restaurantId,
+      guestName: r.guestName ?? "Гость",
+      phone: r.phone ?? "",
+      date: r.date ?? TODAY_YMD,
+      time: r.time ?? "20:00",
+      tableId: t ? t.id : null,
+      tableLabel: t ? t.label : null,
+      guests: r.guests ?? 2,
+      zone: t ? t.zone : r.zone ?? null,
+      status: r.status ?? "new",
+      note: r.note ?? null,
+      createdAt: nowISO(),
+    };
+    reservations.push(created);
+    return { ...created };
+  },
+  adminSetReservationStatus(id: string, status: ReservationStatus): void {
+    const r = reservations.find((x) => x.id === id);
+    if (r) r.status = status;
+  },
+  adminDeleteReservation(id: string): void {
+    reservations = reservations.filter((r) => r.id !== id);
+  },
+
+  // ----- calls ("Обращения") -----
+  createCall(input: { restaurantId: string; tableId: string; type: CallType }): Call {
+    const t = resolveTable(input.tableId);
+    const call: Call = {
+      id: uid("call"),
+      restaurantId: input.restaurantId,
+      tableId: input.tableId,
+      tableLabel: t ? t.label : input.tableId,
+      type: input.type,
+      status: "new",
+      createdAt: nowISO(),
+      ackedAt: null,
+      doneAt: null,
+    };
+    calls.push(call);
+    return { ...call };
+  },
+  adminCalls(_rid: string): Call[] {
+    const rank: Record<CallStatus, number> = { new: 0, ack: 1, done: 2 };
+    return calls
+      .slice()
+      .sort((a, b) => (rank[a.status] !== rank[b.status] ? rank[a.status] - rank[b.status] : Date.parse(b.createdAt) - Date.parse(a.createdAt)))
+      .map((c) => ({ ...c }));
+  },
+  adminAckCall(id: string): void {
+    const c = calls.find((x) => x.id === id);
+    if (c && c.status === "new") { c.status = "ack"; c.ackedAt = nowISO(); }
+  },
+  adminDoneCall(id: string): void {
+    const c = calls.find((x) => x.id === id);
+    if (c && c.status !== "done") { c.status = "done"; c.doneAt = nowISO(); if (!c.ackedAt) c.ackedAt = nowISO(); }
+  },
+
+  // ----- kitchen-bar (guest food menu) -----
+  foodMenu(_rid: string): MenuRecipeView[] {
+    return menu
+      .filter((m) => m.kind === "kitchen" && m.available !== false)
+      .slice()
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      .map((m) => ({ ...m }));
   },
 };
 

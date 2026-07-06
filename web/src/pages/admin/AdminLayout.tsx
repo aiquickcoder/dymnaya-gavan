@@ -1,6 +1,7 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import { useRequireStaff } from "../../lib/guards";
 import Sidebar from "../../components/admin/Sidebar";
+import ToastHost from "../../components/admin/ToastHost";
 import "../../admin.css";
 
 /**
@@ -51,6 +52,9 @@ export default function AdminLayout() {
           <Outlet />
         </div>
       </div>
+      {/* Глобальный хост тостов о новых вызовах: поллит adminCalls на ЛЮБОМ
+          /admin-экране, проигрывает звук и показывает всплывашку (агент calls). */}
+      <ToastHost />
     </div>
   );
 }

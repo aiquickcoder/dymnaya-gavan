@@ -16,9 +16,8 @@ import {
   IconOccupancy,
   IconStar,
 } from "../../components/admin/icons";
+import PeriodPicker, { DEFAULT_PERIOD, periodLabel, type PeriodRange } from "../../components/admin/PeriodPicker";
 import type { AnalyticsSummary, TableView, Zone } from "../../types";
-
-const DAYS = 7;
 
 /** «385 488 ₽» — целые рубли с разделителями разрядов. */
 function money(n: number): string {
@@ -50,6 +49,7 @@ export default function Dashboard() {
   const session = useRequireStaff();
   const rid = session?.restaurantId;
 
+  const [period, setPeriod] = useState<PeriodRange>(DEFAULT_PERIOD);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [tables, setTables] = useState<TableView[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
@@ -64,7 +64,7 @@ export default function Dashboard() {
       setError("");
       try {
         const [a, t, z] = await Promise.all([
-          api.adminAnalytics(rid, DAYS),
+          api.adminAnalyticsRange(rid, period.from, period.to),
           api.adminTables(rid),
           api.adminZones(rid).catch(() => [] as Zone[]),
         ]);
@@ -81,7 +81,7 @@ export default function Dashboard() {
     return () => {
       alive = false;
     };
-  }, [rid]);
+  }, [rid, period.from, period.to]);
 
   if (!session) return null;
 
@@ -123,12 +123,15 @@ export default function Dashboard() {
 
   return (
     <div className="fade-in">
-      <div style={{ marginBottom: 20 }}>
-        <h1 className="page-title">Дашборд</h1>
-        <p className="admin-sub">
-          Ключевые показатели за последние {DAYS} дней
-          {session.restaurantName ? ` · ${session.restaurantName}` : ""}
-        </p>
+      <div className="toolbar" style={{ marginBottom: 20 }}>
+        <div className="grow">
+          <h1 className="page-title">Дашборд</h1>
+          <p className="admin-sub">
+            Ключевые показатели · {periodLabel(period)}
+            {session.restaurantName ? ` · ${session.restaurantName}` : ""}
+          </p>
+        </div>
+        <PeriodPicker value={period} onChange={setPeriod} />
       </div>
 
       {error && <Banner kind="error">{error}</Banner>}
@@ -151,7 +154,7 @@ export default function Dashboard() {
           <div className="panel" style={{ marginTop: 16 }}>
             <div className="ph">
               <span className="pt">Выручка</span>
-              <span className="admin-sub">за {DAYS} дней</span>
+              <span className="admin-sub">{periodLabel(period)}</span>
             </div>
             <LineChart data={analytics.revenue} area height={240} />
           </div>

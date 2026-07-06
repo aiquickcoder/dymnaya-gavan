@@ -97,6 +97,37 @@ export function IconAnalytics(p: IconProps) {
   );
 }
 
+// Брони — календарь с отмеченным днём.
+export function IconReservations(p: IconProps) {
+  return (
+    <Icon {...p}>
+      <rect x="3.5" y="4.5" width="17" height="16" rx="2.4" />
+      <path d="M3.5 9.5h17M8 3v3M16 3v3" />
+      <rect x="7" y="12.5" width="3.4" height="3.2" rx="0.8" fill="currentColor" stroke="none" />
+    </Icon>
+  );
+}
+
+// Обращения — колокол вызова.
+export function IconBell(p: IconProps) {
+  return (
+    <Icon {...p}>
+      <path d="M6 9a6 6 0 0 1 12 0c0 4.2 1.2 6 2 6.8H4c.8-.8 2-2.6 2-6.8z" />
+      <path d="M10.2 19a2 2 0 0 0 3.6 0" />
+    </Icon>
+  );
+}
+
+// Кухня-бар — вилка и нож.
+export function IconKitchen(p: IconProps) {
+  return (
+    <Icon {...p}>
+      <path d="M7 3v7a2 2 0 0 0 2 2v0M9 3v6M11 3v6M9 12v9" />
+      <path d="M17 3c-1.6 0-2.5 1.6-2.5 4.5S15.4 12 17 12v9" />
+    </Icon>
+  );
+}
+
 /* ------------------------------------------------------------------------ KPI */
 
 // Рубль — знак ₽.

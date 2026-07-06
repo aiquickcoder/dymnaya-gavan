@@ -16,14 +16,8 @@ import {
   IconOccupancy,
   IconStar,
 } from "../../components/admin/icons";
+import PeriodPicker, { DEFAULT_PERIOD, type PeriodRange } from "../../components/admin/PeriodPicker";
 import type { AnalyticsSummary } from "../../types";
-
-/** Доступные периоды фильтра .seg (в днях). */
-const PERIODS: { days: number; label: string }[] = [
-  { days: 7, label: "7 дней" },
-  { days: 30, label: "30 дней" },
-  { days: 90, label: "90 дней" },
-];
 
 /** «385 488 ₽» — целые рубли с разделителями разрядов. */
 function money(n: number): string {
@@ -69,7 +63,7 @@ export default function Analytics() {
   const session = useRequireStaff();
   const rid = session?.restaurantId;
 
-  const [days, setDays] = useState(30);
+  const [period, setPeriod] = useState<PeriodRange>(DEFAULT_PERIOD);
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -81,7 +75,7 @@ export default function Analytics() {
       setLoading(true);
       setError("");
       try {
-        const a = await api.adminAnalytics(rid, days);
+        const a = await api.adminAnalyticsRange(rid, period.from, period.to);
         if (!alive) return;
         setData(a);
       } catch (e) {
@@ -93,7 +87,7 @@ export default function Analytics() {
     return () => {
       alive = false;
     };
-  }, [rid, days]);
+  }, [rid, period.from, period.to]);
 
   if (!session) return null;
 
@@ -103,7 +97,7 @@ export default function Analytics() {
     data && data.hourLoad.length
       ? data.hourLoad.reduce((a, b) => (b.value > a.value ? b : a), data.hourLoad[0])
       : null;
-  const ordersPerDay = data ? Math.round((data.kpis.orders / Math.max(days, 1)) * 10) / 10 : 0;
+  const ordersPerDay = data ? Math.round((data.kpis.orders / Math.max(data.days, 1)) * 10) / 10 : 0;
   const ratings = data?.ratings;
 
   return (
@@ -116,18 +110,7 @@ export default function Analytics() {
             {session.restaurantName ? ` · ${session.restaurantName}` : ""}
           </p>
         </div>
-        <div className="seg" role="group" aria-label="Период">
-          {PERIODS.map((p) => (
-            <button
-              key={p.days}
-              type="button"
-              className={days === p.days ? "on" : ""}
-              onClick={() => setDays(p.days)}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+        <PeriodPicker value={period} onChange={setPeriod} />
       </div>
 
       {error && <Banner kind="error">{error}</Banner>}
@@ -150,7 +133,7 @@ export default function Analytics() {
           <div className="panel" style={{ marginTop: 16 }}>
             <div className="ph">
               <span className="pt">Выручка и средний чек</span>
-              <span className="admin-sub">за {days} дн. · {money(k.revenue)}</span>
+              <span className="admin-sub">за {data?.days ?? 0} дн. · {money(k.revenue)}</span>
             </div>
             <LineChart data={data.revenue} area height={240} />
           </div>

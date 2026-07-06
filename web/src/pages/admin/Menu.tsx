@@ -13,6 +13,13 @@ function thumbUrl(m: MenuRecipeView): string | null {
   return mixImageUrl(m.name, m.tags ?? []);
 }
 
+type KindFilter = "all" | "hookah" | "kitchen";
+const KIND_FILTERS: { key: KindFilter; label: string }[] = [
+  { key: "all", label: "Все" },
+  { key: "hookah", label: "Кальян" },
+  { key: "kitchen", label: "Кухня" },
+];
+
 export default function Menu() {
   const session = useRequireStaff();
   const rid = session?.restaurantId ?? "";
@@ -22,6 +29,7 @@ export default function Menu() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [kindFilter, setKindFilter] = useState<KindFilter>("all");
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<MenuRecipeView | null>(null);
@@ -72,8 +80,12 @@ export default function Menu() {
   );
 
   const q = search.trim();
-  const visible = q ? applyFilters(rows, { ...DEFAULT_FILTERS, q }) : rows;
-  const reorderable = q === "";
+  const byKind =
+    kindFilter === "all" ? rows : rows.filter((m) => (m.kind ?? "hookah") === kindFilter);
+  const visible = q ? applyFilters(byKind, { ...DEFAULT_FILTERS, q }) : byKind;
+  // Reordering writes positions across the FULL list, so only allow it on the
+  // unfiltered view (no search, no type filter) to avoid confusing index jumps.
+  const reorderable = q === "" && kindFilter === "all";
 
   async function toggleAvailable(m: MenuRecipeView) {
     const next = !(m.available ?? true);
@@ -159,6 +171,16 @@ export default function Menu() {
       ),
     },
     {
+      key: "kind",
+      title: "Тип",
+      render: (m) =>
+        m.kind === "kitchen" ? (
+          <span className="tag">Кухня</span>
+        ) : (
+          <span className="tag accent">Кальян</span>
+        ),
+    },
+    {
       key: "category",
       title: "Категория",
       render: (m) => <span className="tag">{m.category ?? "—"}</span>,
@@ -167,7 +189,8 @@ export default function Menu() {
       key: "strength",
       title: "Крепость",
       align: "right",
-      render: (m) => <span>{m.strength}/10</span>,
+      render: (m) =>
+        m.kind === "kitchen" ? <span className="muted">—</span> : <span>{m.strength}/10</span>,
     },
     {
       key: "price",
@@ -265,6 +288,19 @@ export default function Menu() {
       {error && <div className="banner error" style={{ marginBottom: 14 }}>{error}</div>}
 
       <div className="toolbar">
+        <div className="seg" role="group" aria-label="Тип позиций">
+          {KIND_FILTERS.map((k) => (
+            <button
+              key={k.key}
+              type="button"
+              className={kindFilter === k.key ? "on" : ""}
+              aria-pressed={kindFilter === k.key}
+              onClick={() => setKindFilter(k.key)}
+            >
+              {k.label}
+            </button>
+          ))}
+        </div>
         <div className="search icon grow">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <circle cx="11" cy="11" r="7" />
@@ -302,6 +338,7 @@ export default function Menu() {
         item={editing}
         employees={employees}
         restaurantId={rid}
+        defaultKind={kindFilter === "kitchen" ? "kitchen" : "hookah"}
         onClose={() => setEditorOpen(false)}
         onSaved={onSaved}
       />

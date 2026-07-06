@@ -1,6 +1,8 @@
 // Typed client for the mixMaster API. Unwraps the { data, error } envelope (R1.3).
 import type {
   AnalyticsSummary,
+  Call,
+  CallType,
   Component,
   Employee,
   EmployeeFull,
@@ -14,6 +16,8 @@ import type {
   Recipe,
   RecipeFeedbackItem,
   RegisterEmployeeResponse,
+  Reservation,
+  ReservationStatus,
   Restaurant,
   ShiftMaster,
   TableView,
@@ -160,6 +164,22 @@ const realApi = {
   adminGuest: (_id: string): Promise<{ summary: GuestSummary; visits: Visit[] }> => notImpl(),
 
   adminAnalytics: (_restaurantId: string, _days: number): Promise<AnalyticsSummary> => notImpl(),
+  adminAnalyticsRange: (_restaurantId: string, _from: string, _to: string): Promise<AnalyticsSummary> => notImpl(),
+
+  // reservations ("Брони")
+  adminReservations: (_restaurantId: string, _date?: string): Promise<Reservation[]> => notImpl(),
+  adminUpsertReservation: (_r: Partial<Reservation> & { restaurantId: string }): Promise<Reservation> => notImpl(),
+  adminSetReservationStatus: (_id: string, _status: ReservationStatus): Promise<void> => notImpl(),
+  adminDeleteReservation: (_id: string): Promise<void> => notImpl(),
+
+  // calls ("Обращения")
+  createCall: (_input: { restaurantId: string; tableId: string; type: CallType }): Promise<Call> => notImpl(),
+  adminCalls: (_restaurantId: string): Promise<Call[]> => notImpl(),
+  adminAckCall: (_id: string): Promise<void> => notImpl(),
+  adminDoneCall: (_id: string): Promise<void> => notImpl(),
+
+  // kitchen-bar (guest food menu)
+  foodMenu: (_restaurantId: string): Promise<MenuRecipeView[]> => notImpl(),
 };
 
 // In the GitHub Pages / demo build there is no backend — serve seeded mock data.

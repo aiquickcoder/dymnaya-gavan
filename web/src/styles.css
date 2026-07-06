@@ -619,3 +619,91 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius
 input:focus-visible, select:focus-visible, textarea:focus-visible, .filter-select:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 2px;
 }
+
+/* ============================================================================
+   Гость: «Позвать» (вызов персонала) + «Кухня-бар» (некальянное меню).
+   Добавлено в конец — существующие правила не трогаем. Токены ember/smoke.
+   ========================================================================== */
+
+/* ---- плавающая кнопка «Позвать» (над таб-баром, по центру колонки) ---- */
+.call-fab {
+  position: fixed;
+  left: 50%;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 40;
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 46px; padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: linear-gradient(180deg, var(--accent-2), var(--accent));
+  color: var(--ink);
+  font-weight: 700; font-size: 14.5px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), var(--glow);
+  cursor: pointer;
+}
+.call-fab:hover { filter: brightness(1.05); border-color: var(--accent); }
+.call-fab:active { transform: translateX(-50%) scale(0.97); }
+.call-fab svg { width: 19px; height: 19px; }
+
+/* ---- лист вызова: 2×2 сетка крупных действий ---- */
+.call-sheet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.call-action {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px;
+  padding: 22px 12px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s, background 0.15s;
+}
+.call-action:hover { border-color: var(--accent); transform: translateY(-1px); }
+.call-action:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.call-action .ca-ico {
+  width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--gold-soft); border: 1px solid var(--border); color: var(--accent-2);
+}
+.call-action .ca-ico svg { width: 22px; height: 22px; }
+.call-action .ca-lbl { font-size: 13.5px; font-weight: 600; line-height: 1.2; }
+
+/* ---- кухня-бар: заголовок категории + список карточек блюд ---- */
+.food-cat-title {
+  font-family: var(--display);
+  text-transform: var(--display-tt);
+  letter-spacing: var(--display-ls);
+  font-weight: var(--display-fw);
+  font-size: 20px; line-height: 1.1;
+  margin: 22px 0 12px;
+  color: var(--text);
+}
+.food-cat-title:first-of-type { margin-top: 4px; }
+
+.kitchen-list { display: flex; flex-direction: column; gap: 12px; }
+.food-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.15s, transform 0.1s;
+}
+.food-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.food-card .fc-photo {
+  width: 72px; height: 72px; flex-shrink: 0;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.food-card .fc-body { flex: 1 1 auto; min-width: 0; }
+.food-card .fc-name { font-size: 16px; font-weight: 600; line-height: 1.2; color: var(--text); }
+.food-card .fc-desc { color: var(--muted); font-size: 13px; line-height: 1.45; margin-top: 3px; }
+.food-card .fc-price {
+  flex-shrink: 0;
+  font-family: var(--display); font-weight: var(--display-fw);
+  font-size: 19px; color: var(--accent-2); font-variant-numeric: tabular-nums;
+}

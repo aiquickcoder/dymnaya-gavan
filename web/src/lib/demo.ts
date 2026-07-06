@@ -3,15 +3,18 @@
 // the mutable `demoStore` singleton (lib/demoStore.ts), so guest and admin share
 // one source of truth: an admin edit is instantly visible on the guest web.
 import type {
+  CallType,
   Component,
   EmployeeFull,
   MenuRecipeView,
+  Reservation,
+  ReservationStatus,
   TableView,
 } from "../types";
-import { DEMO_RID, DEMO_TABLE, demoStore } from "./demoStore";
+import { ANALYTICS_ANCHOR, DEMO_RID, DEMO_TABLE, demoStore } from "./demoStore";
 
 export const DEMO = import.meta.env.VITE_DEMO === "1";
-export { DEMO_RID, DEMO_TABLE };
+export { ANALYTICS_ANCHOR, DEMO_RID, DEMO_TABLE };
 
 const ok = <T>(v: T): Promise<T> => Promise.resolve(v);
 
@@ -78,4 +81,20 @@ export const demoApi = {
   adminGuest: (id: string) => ok(demoStore.adminGuest(id)),
 
   adminAnalytics: (restaurantId: string, days: number) => ok(demoStore.adminAnalytics(restaurantId, days)),
+  adminAnalyticsRange: (restaurantId: string, from: string, to: string) => ok(demoStore.adminAnalyticsRange(restaurantId, from, to)),
+
+  // ----- reservations -----
+  adminReservations: (restaurantId: string, date?: string) => ok(demoStore.adminReservations(restaurantId, date)),
+  adminUpsertReservation: (r: Partial<Reservation> & { restaurantId: string }) => ok(demoStore.adminUpsertReservation(r)),
+  adminSetReservationStatus: (id: string, status: ReservationStatus) => ok(demoStore.adminSetReservationStatus(id, status)),
+  adminDeleteReservation: (id: string) => ok(demoStore.adminDeleteReservation(id)),
+
+  // ----- calls -----
+  createCall: (input: { restaurantId: string; tableId: string; type: CallType }) => ok(demoStore.createCall(input)),
+  adminCalls: (restaurantId: string) => ok(demoStore.adminCalls(restaurantId)),
+  adminAckCall: (id: string) => ok(demoStore.adminAckCall(id)),
+  adminDoneCall: (id: string) => ok(demoStore.adminDoneCall(id)),
+
+  // ----- kitchen-bar (guest food menu) -----
+  foodMenu: (restaurantId: string) => ok(demoStore.foodMenu(restaurantId)),
 };

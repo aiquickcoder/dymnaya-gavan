@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import SmokeBg from "./SmokeBg";
 import BottomNav from "./BottomNav";
+import CallButton from "./CallButton";
 
 /** Guest app shell: phone-width column, ambient smoke, scroll area + optional tab bar. */
 export function Shell({ children, nav }: { children: ReactNode; nav?: boolean }) {
@@ -9,6 +10,7 @@ export function Shell({ children, nav }: { children: ReactNode; nav?: boolean })
     <div className="app">
       <SmokeBg />
       <div className={"screen" + (nav ? " has-nav" : "")}>{children}</div>
+      {nav && <CallButton />}
       {nav && <BottomNav />}
     </div>
   );
