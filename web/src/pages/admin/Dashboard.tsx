@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { api, ApiError } from "../../api";
 import { Banner } from "../../components/ui";
 import { useRequireStaff } from "../../lib/guards";
@@ -7,13 +8,31 @@ import DataTable, { type Column } from "../../components/admin/DataTable";
 import LineChart from "../../components/admin/charts/LineChart";
 import BarChart from "../../components/admin/charts/BarChart";
 import Heatmap from "../../components/admin/charts/Heatmap";
+import {
+  IconRuble,
+  IconOrders,
+  IconCheck,
+  IconGuest,
+  IconOccupancy,
+  IconStar,
+} from "../../components/admin/icons";
 import type { AnalyticsSummary, TableView, Zone } from "../../types";
 
 const DAYS = 7;
 
-/** «12 400 ₽» — целые рубли с разделителями разрядов. */
+/** «385 488 ₽» — целые рубли с разделителями разрядов. */
 function money(n: number): string {
   return Math.round(n || 0).toLocaleString("ru-RU") + " ₽";
+}
+
+/** «12 400» — целое число с разделителями разрядов (без валюты). */
+function num(n: number): string {
+  return Math.round(n || 0).toLocaleString("ru-RU");
+}
+
+/** Обёртка KPI-иконки для StatCard icon-пропа (.ki — золотой бейдж). */
+function Ki({ children }: { children: ReactNode }) {
+  return <span className="ki">{children}</span>;
 }
 
 /** Минуты → «1 ч 20 м» / «45 м». */
@@ -120,12 +139,12 @@ export default function Dashboard() {
         <>
           {/* KPI-ряд */}
           <div className="kpi-grid">
-            <StatCard label="Выручка" value={money(k.revenue)} delta={k.revenueDelta} icon={<RubleIcon />} />
-            <StatCard label="Заказы" value={k.orders} delta={k.ordersDelta} icon={<OrdersIcon />} />
-            <StatCard label="Средний чек" value={money(k.avgCheck)} icon={<CheckIcon />} />
-            <StatCard label="Гости" value={k.guests} icon={<GuestsIcon />} />
-            <StatCard label="Загрузка" value={k.occupancy} icon={<TableIcon />} hint="занятость столов" />
-            <StatCard label="Рейтинг" value={k.avgRating.toFixed(1)} icon={<StarIcon />} hint="средний ★" />
+            <StatCard label="Выручка" value={money(k.revenue)} delta={k.revenueDelta} icon={<Ki><IconRuble /></Ki>} />
+            <StatCard label="Заказы" value={num(k.orders)} delta={k.ordersDelta} icon={<Ki><IconOrders /></Ki>} />
+            <StatCard label="Средний чек" value={money(k.avgCheck)} icon={<Ki><IconCheck /></Ki>} />
+            <StatCard label="Гости" value={num(k.guests)} icon={<Ki><IconGuest /></Ki>} />
+            <StatCard label="Загрузка" value={k.occupancy} icon={<Ki><IconOccupancy /></Ki>} hint="занятость столов" />
+            <StatCard label="Рейтинг" value={k.avgRating.toFixed(1)} icon={<Ki><IconStar /></Ki>} hint="средний ★" />
           </div>
 
           {/* Выручка */}
@@ -199,63 +218,5 @@ function DashboardSkeleton() {
       </div>
       <div className="skeleton" style={{ height: 200, marginTop: 16 }} />
     </>
-  );
-}
-
-/* ---- inline SVG-иконки KPI (color наследуется через currentColor) ---- */
-const iconProps = {
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 1.8,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-};
-
-function RubleIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M8 12h6a4 4 0 0 0 0-8H8v16" />
-      <path d="M5 12h7" />
-    </svg>
-  );
-}
-function OrdersIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M4 6h16M4 12h16M4 18h10" />
-    </svg>
-  );
-}
-function CheckIcon() {
-  return (
-    <svg {...iconProps}>
-      <rect x="4" y="4" width="16" height="16" rx="2" />
-      <path d="M8 12l2.5 2.5L16 9" />
-    </svg>
-  );
-}
-function GuestsIcon() {
-  return (
-    <svg {...iconProps}>
-      <circle cx="9" cy="8" r="3" />
-      <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
-      <path d="M16 5a3 3 0 0 1 0 6M21 20c0-2.5-1.3-4.5-3.5-5.5" />
-    </svg>
-  );
-}
-function TableIcon() {
-  return (
-    <svg {...iconProps}>
-      <rect x="3" y="4" width="18" height="12" rx="2" />
-      <path d="M8 20v-4M16 20v-4" />
-    </svg>
-  );
-}
-function StarIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />
-    </svg>
   );
 }

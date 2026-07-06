@@ -357,6 +357,48 @@ function analytics(days: number): AnalyticsSummary {
   const retention = gTotal ? Math.round((returning / gTotal) * 100) : 0;
   const avgLtv = gTotal ? Math.round(guests.reduce((s, g) => s + g.ltv, 0) / gTotal) : 0;
 
+  // ----- «Оценки и отзывы» (deterministic) -----
+  // Distribution 1..5 (emitted 5 → 1), skewed to 4–5, summing to the masters' total ratingCount.
+  const DIST_PCT: [number, number][] = [[5, 0.6], [4, 0.26], [3, 0.08], [2, 0.04], [1, 0.02]];
+  let distAcc = 0;
+  const dist = DIST_PCT.map(([score, pct], i) => {
+    const count = i === DIST_PCT.length - 1 ? Math.max(0, rc - distAcc) : Math.round(rc * pct);
+    distAcc += count;
+    return { score, count };
+  });
+
+  // Average-rating trend, one point per day in the window; gentle upward drift + seeded noise.
+  const rTrendRng = mulberry32(0x9a71c3);
+  const span = Math.max(1, win.length - 1);
+  const trend: TimePoint[] = win.map((r, i) => {
+    const base = 4.35 + (i / span) * 0.35;
+    const noise = (rTrendRng() - 0.5) * 0.28;
+    return { label: dowLabel(r.date), value: round1(Math.min(5, Math.max(3.8, base + noise))) };
+  });
+
+  // Latest reviews pulled from the seeded per-master feedback, newest first.
+  const recent = Object.entries(feedbackByMaster)
+    .flatMap(([mid, items]) => {
+      const e = empById(mid);
+      const author = e ? e.shortName : null;
+      return items.map((it) => ({
+        author,
+        mix: it.recipeName ?? null,
+        score: it.score ?? 5,
+        review: it.review ?? null,
+        date: it.updatedAt,
+      }));
+    })
+    .sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
+    .slice(0, 8);
+
+  // Problem positions: lowest-rated available menu mixes (with an estimated sold count).
+  const problem = menu
+    .filter((m): m is MenuRecipeView & { rating: number } => typeof m.rating === "number")
+    .map((m) => ({ mix: m.name, avg: m.rating, count: Math.round((SOLD_BASE[m.id] ?? 2.0) * days) }))
+    .sort((a, b) => a.avg - b.avg)
+    .slice(0, 3);
+
   return {
     days,
     kpis: { revenue, orders: ordersN, avgCheck, guests: guestsN, occupancy, avgRating, revenueDelta, ordersDelta },
@@ -368,6 +410,7 @@ function analytics(days: number): AnalyticsSummary {
     hourLoad,
     masters,
     clients: { newC, returning, retention, avgLtv },
+    ratings: { dist, trend, recent, problem },
   };
 }
 

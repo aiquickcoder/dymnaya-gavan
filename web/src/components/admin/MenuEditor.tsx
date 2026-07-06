@@ -3,6 +3,7 @@ import { api, ApiError } from "../../api";
 import Modal from "./Modal";
 import StrengthScale from "../StrengthScale";
 import CompositionBars from "../CompositionBars";
+import { badgeClass } from "../MixCard";
 import { PALETTE } from "../../lib/flavours";
 import { asset } from "../../lib/asset";
 import type { Component, EmployeeFull, MenuRecipeView } from "../../types";
@@ -18,7 +19,19 @@ const IMAGE_SLUGS: { slug: string; label: string }[] = [
 ];
 
 const CATEGORIES = ["Хиты", "Классика", "Лёгкие", "Крепкие", "Лимитки", "Секретные", "Промо", "Прочее"];
-const BADGES = ["Хит", "MustHave", "Limited", "Звезда", "?"];
+
+// Пресеты бейджа — value сохраняется в menu.badge, каждый чип рисует настоящий .badge-превью.
+const BADGE_PRESETS: { value: string; label: string }[] = [
+  { value: "", label: "нет" },
+  { value: "Хит", label: "Хит" },
+  { value: "Limited", label: "Limited" },
+  { value: "Звезда", label: "Звезда" },
+  { value: "Секрет", label: "Секрет" },
+  { value: "MustHave", label: "MustHave" },
+];
+
+// Демо-«Загрузить»: бэкенда нет — просто подставляем готовый плейсхолдер-слаг.
+const UPLOAD_PLACEHOLDER = "severnoe-siyanie";
 
 interface CompRow {
   brand: string;
@@ -123,6 +136,12 @@ export default function MenuEditor({
     });
   }
 
+  // Чип бейджа активен при точном совпадении value или совпадении визуального класса
+  // (напр. старое значение «?» подсветит чип «Секрет»).
+  const isBadgeSelected = (value: string) =>
+    badge === value ||
+    (badge !== "" && value !== "" && badgeClass(value) !== "" && badgeClass(badge) === badgeClass(value));
+
   async function save() {
     setSaving(true);
     setErr("");
@@ -194,16 +213,6 @@ export default function MenuEditor({
         </div>
 
         <div className="field">
-          <label>Бейдж</label>
-          <input list="menu-badges" value={badge} placeholder="—" onChange={(e) => setBadge(e.target.value)} />
-          <datalist id="menu-badges">
-            {BADGES.map((b) => (
-              <option key={b} value={b} />
-            ))}
-          </datalist>
-        </div>
-
-        <div className="field">
           <label>Категория</label>
           <input list="menu-categories" value={category} onChange={(e) => setCategory(e.target.value)} />
           <datalist id="menu-categories">
@@ -225,6 +234,82 @@ export default function MenuEditor({
           </select>
         </div>
 
+        <div className="field">
+          <label>Доступность</label>
+          <button
+            type="button"
+            className={"switch" + (available ? " on" : "")}
+            role="switch"
+            aria-checked={available}
+            aria-label="Доступна в меню"
+            onClick={() => setAvailable((v) => !v)}
+          >
+            <span className="knob" />
+          </button>
+        </div>
+
+        <div className="field full">
+          <label>Бейдж</label>
+          <div className="badge-pick" role="radiogroup" aria-label="Бейдж позиции">
+            {BADGE_PRESETS.map((p) => {
+              const selected = isBadgeSelected(p.value);
+              return (
+                <button
+                  key={p.label}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  className={"badge-chip" + (selected ? " selected" : "")}
+                  onClick={() => setBadge(p.value)}
+                >
+                  {p.value ? (
+                    <span className={`badge ${badgeClass(p.value)}`}>{p.value}</span>
+                  ) : (
+                    "нет"
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="field full">
+          <label>Картинка</label>
+          <div className="img-gallery" role="radiogroup" aria-label="Фото позиции">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={imageSlug === ""}
+              className={"img-thumb none" + (imageSlug === "" ? " selected" : "")}
+              onClick={() => setImageSlug("")}
+            >
+              без фото
+            </button>
+            {IMAGE_SLUGS.map((s) => (
+              <button
+                key={s.slug}
+                type="button"
+                role="radio"
+                aria-checked={imageSlug === s.slug}
+                title={s.label}
+                className={"img-thumb" + (imageSlug === s.slug ? " selected" : "")}
+                style={{ backgroundImage: `url('${asset(`mixes/${s.slug}.jpg`)}')` }}
+                onClick={() => setImageSlug(s.slug)}
+              >
+                <span className="it-cap">{s.label}</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              className="img-thumb upload"
+              title="Демо: подставить плейсхолдер"
+              onClick={() => setImageSlug(UPLOAD_PLACEHOLDER)}
+            >
+              ↑ Загрузить
+            </button>
+          </div>
+        </div>
+
         <div className="field full">
           <label>Вкусы (теги)</label>
           <div className="row">
@@ -244,42 +329,6 @@ export default function MenuEditor({
             ))}
           </datalist>
         </div>
-
-        <div className="field">
-          <label>Картинка</label>
-          <select value={imageSlug} onChange={(e) => setImageSlug(e.target.value)}>
-            <option value="">— без фото —</option>
-            {IMAGE_SLUGS.map((s) => (
-              <option key={s.slug} value={s.slug}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Доступность</label>
-          <button
-            type="button"
-            className={"switch" + (available ? " on" : "")}
-            role="switch"
-            aria-checked={available}
-            aria-label="Доступна в меню"
-            onClick={() => setAvailable((v) => !v)}
-          >
-            <span className="knob" />
-          </button>
-        </div>
-
-        {imageSlug && (
-          <div className="field full">
-            <img
-              src={asset(`mixes/${imageSlug}.jpg`)}
-              alt=""
-              style={{ width: "100%", maxHeight: 150, objectFit: "cover", borderRadius: "var(--radius)" }}
-            />
-          </div>
-        )}
 
         <div className="field full">
           <label>Состав (сумма процентов = 100)</label>

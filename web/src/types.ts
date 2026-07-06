@@ -244,4 +244,12 @@ export interface AnalyticsSummary {
   hourLoad: HourLoad[];
   masters: { name: string; mixes: number; rating: number }[];
   clients: { newC: number; returning: number; retention: number; avgLtv: number };
+  // Optional "Оценки и отзывы" block (admin analytics polish). Absent-safe:
+  // consumers must treat `ratings` as possibly undefined.
+  ratings?: {
+    dist: { score: number; count: number }[]; // распределение 1..5 (порядок: 5 → 1)
+    trend: TimePoint[]; // динамика среднего рейтинга по дням окна
+    recent: { author?: string | null; mix?: string | null; score: number; review?: string | null; date: string }[];
+    problem: { mix: string; avg: number; count: number }[]; // позиции с низким средним баллом
+  };
 }
