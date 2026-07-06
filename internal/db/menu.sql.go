@@ -9,13 +9,17 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createMenuRecipe = `-- name: CreateMenuRecipe :one
 insert into menu_recipes
-    (restaurant_id, author_employee_id, name, description, strength, price, rating, tags, badge)
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-returning id, restaurant_id, author_employee_id, name, description, strength, price, rating, tags, removed_at, created_at, updated_at, badge
+    (restaurant_id, author_employee_id, name, description, strength, price, rating, tags, badge,
+     kind, category, available, image_slug, components, sort_order)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+     coalesce((select max(sort_order) + 1 from menu_recipes
+               where restaurant_id = $1 and removed_at is null), 0))
+returning id, restaurant_id, author_employee_id, name, description, strength, price, rating, tags, removed_at, created_at, updated_at, badge, kind, category, available, sort_order, image_slug, components
 `
 
 type CreateMenuRecipeParams struct {
@@ -28,6 +32,11 @@ type CreateMenuRecipeParams struct {
 	Rating           *float64  `json:"rating"`
 	Tags             []string  `json:"tags"`
 	Badge            *string   `json:"badge"`
+	Kind             string    `json:"kind"`
+	Category         string    `json:"category"`
+	Available        bool      `json:"available"`
+	ImageSlug        *string   `json:"image_slug"`
+	Components       []byte    `json:"components"`
 }
 
 func (q *Queries) CreateMenuRecipe(ctx context.Context, arg CreateMenuRecipeParams) (MenuRecipe, error) {
@@ -41,6 +50,11 @@ func (q *Queries) CreateMenuRecipe(ctx context.Context, arg CreateMenuRecipePara
 		arg.Rating,
 		arg.Tags,
 		arg.Badge,
+		arg.Kind,
+		arg.Category,
+		arg.Available,
+		arg.ImageSlug,
+		arg.Components,
 	)
 	var i MenuRecipe
 	err := row.Scan(
@@ -57,13 +71,19 @@ func (q *Queries) CreateMenuRecipe(ctx context.Context, arg CreateMenuRecipePara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Badge,
+		&i.Kind,
+		&i.Category,
+		&i.Available,
+		&i.SortOrder,
+		&i.ImageSlug,
+		&i.Components,
 	)
 	return i, err
 }
 
 const getMenuRecipe = `-- name: GetMenuRecipe :one
-select id, restaurant_id, author_employee_id, name, description, strength, price, rating, tags, removed_at, created_at, updated_at, badge from menu_recipes
-where id = $1
+select id, restaurant_id, author_employee_id, name, description, strength, price, rating, tags, removed_at, created_at, updated_at, badge, kind, category, available, sort_order, image_slug, components from menu_recipes
+where id = $1 and removed_at is null
 `
 
 func (q *Queries) GetMenuRecipe(ctx context.Context, id uuid.UUID) (MenuRecipe, error) {
@@ -83,16 +103,70 @@ func (q *Queries) GetMenuRecipe(ctx context.Context, id uuid.UUID) (MenuRecipe, 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Badge,
+		&i.Kind,
+		&i.Category,
+		&i.Available,
+		&i.SortOrder,
+		&i.ImageSlug,
+		&i.Components,
 	)
 	return i, err
 }
 
-const listMenuRecipes = `-- name: ListMenuRecipes :many
-select id, restaurant_id, author_employee_id, name, description, strength, price, rating, tags, removed_at, created_at, updated_at, badge from menu_recipes
-where restaurant_id = $1 and removed_at is null
-order by created_at desc
+const listFoodMenu = `-- name: ListFoodMenu :many
+select id, restaurant_id, author_employee_id, name, description, strength, price, rating, tags, removed_at, created_at, updated_at, badge, kind, category, available, sort_order, image_slug, components from menu_recipes
+where restaurant_id = $1 and removed_at is null and available and kind = 'kitchen'
+order by sort_order, created_at
 `
 
+// Guest kitchen-bar menu: available kitchen positions only.
+func (q *Queries) ListFoodMenu(ctx context.Context, restaurantID uuid.UUID) ([]MenuRecipe, error) {
+	rows, err := q.db.Query(ctx, listFoodMenu, restaurantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []MenuRecipe{}
+	for rows.Next() {
+		var i MenuRecipe
+		if err := rows.Scan(
+			&i.ID,
+			&i.RestaurantID,
+			&i.AuthorEmployeeID,
+			&i.Name,
+			&i.Description,
+			&i.Strength,
+			&i.Price,
+			&i.Rating,
+			&i.Tags,
+			&i.RemovedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Badge,
+			&i.Kind,
+			&i.Category,
+			&i.Available,
+			&i.SortOrder,
+			&i.ImageSlug,
+			&i.Components,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMenuRecipes = `-- name: ListMenuRecipes :many
+select id, restaurant_id, author_employee_id, name, description, strength, price, rating, tags, removed_at, created_at, updated_at, badge, kind, category, available, sort_order, image_slug, components from menu_recipes
+where restaurant_id = $1 and removed_at is null and available and kind = 'hookah'
+order by sort_order, created_at
+`
+
+// Guest hookah menu: available hookah positions only, in admin-defined order.
 func (q *Queries) ListMenuRecipes(ctx context.Context, restaurantID uuid.UUID) ([]MenuRecipe, error) {
 	rows, err := q.db.Query(ctx, listMenuRecipes, restaurantID)
 	if err != nil {
@@ -116,6 +190,12 @@ func (q *Queries) ListMenuRecipes(ctx context.Context, restaurantID uuid.UUID) (
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Badge,
+			&i.Kind,
+			&i.Category,
+			&i.Available,
+			&i.SortOrder,
+			&i.ImageSlug,
+			&i.Components,
 		); err != nil {
 			return nil, err
 		}
@@ -125,6 +205,66 @@ func (q *Queries) ListMenuRecipes(ctx context.Context, restaurantID uuid.UUID) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const listMenuRecipesAdmin = `-- name: ListMenuRecipesAdmin :many
+select id, restaurant_id, author_employee_id, name, description, strength, price, rating, tags, removed_at, created_at, updated_at, badge, kind, category, available, sort_order, image_slug, components from menu_recipes
+where restaurant_id = $1 and removed_at is null
+order by sort_order, created_at
+`
+
+// Admin menu: every non-removed position (incl. unavailable and kitchen).
+func (q *Queries) ListMenuRecipesAdmin(ctx context.Context, restaurantID uuid.UUID) ([]MenuRecipe, error) {
+	rows, err := q.db.Query(ctx, listMenuRecipesAdmin, restaurantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []MenuRecipe{}
+	for rows.Next() {
+		var i MenuRecipe
+		if err := rows.Scan(
+			&i.ID,
+			&i.RestaurantID,
+			&i.AuthorEmployeeID,
+			&i.Name,
+			&i.Description,
+			&i.Strength,
+			&i.Price,
+			&i.Rating,
+			&i.Tags,
+			&i.RemovedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Badge,
+			&i.Kind,
+			&i.Category,
+			&i.Available,
+			&i.SortOrder,
+			&i.ImageSlug,
+			&i.Components,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const reorderMenuRecipes = `-- name: ReorderMenuRecipes :exec
+update menu_recipes m
+set sort_order = t.ord - 1, updated_at = now()
+from unnest($1::uuid[]) with ordinality as t(id, ord)
+where m.id = t.id and m.removed_at is null
+`
+
+// Bulk-set sort_order from the position of each id in the array (0-based).
+func (q *Queries) ReorderMenuRecipes(ctx context.Context, ids []uuid.UUID) error {
+	_, err := q.db.Exec(ctx, reorderMenuRecipes, ids)
+	return err
 }
 
 const softRemoveMenuRecipe = `-- name: SoftRemoveMenuRecipe :exec
@@ -140,32 +280,45 @@ func (q *Queries) SoftRemoveMenuRecipe(ctx context.Context, id uuid.UUID) error 
 
 const updateMenuRecipe = `-- name: UpdateMenuRecipe :one
 update menu_recipes
-set name        = $2,
-    description = $3,
-    strength    = $4,
-    price       = $5,
-    rating      = $6,
-    tags        = $7,
-    badge       = $8,
+set name        = coalesce($1, name),
+    description = coalesce($2, description),
+    strength    = coalesce($3, strength),
+    price       = coalesce($4, price),
+    rating      = coalesce($5, rating),
+    tags        = coalesce($6, tags),
+    badge       = coalesce($7, badge),
+    kind        = coalesce($8, kind),
+    category    = coalesce($9, category),
+    available   = coalesce($10, available),
+    sort_order  = coalesce($11, sort_order),
+    image_slug  = coalesce($12, image_slug),
+    components  = coalesce($13, components),
     updated_at  = now()
-where id = $1 and removed_at is null
-returning id, restaurant_id, author_employee_id, name, description, strength, price, rating, tags, removed_at, created_at, updated_at, badge
+where id = $14 and removed_at is null
+returning id, restaurant_id, author_employee_id, name, description, strength, price, rating, tags, removed_at, created_at, updated_at, badge, kind, category, available, sort_order, image_slug, components
 `
 
 type UpdateMenuRecipeParams struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Strength    int32     `json:"strength"`
-	Price       float64   `json:"price"`
-	Rating      *float64  `json:"rating"`
-	Tags        []string  `json:"tags"`
-	Badge       *string   `json:"badge"`
+	Name        *string     `json:"name"`
+	Description *string     `json:"description"`
+	Strength    *int32      `json:"strength"`
+	Price       *float64    `json:"price"`
+	Rating      *float64    `json:"rating"`
+	Tags        []string    `json:"tags"`
+	Badge       *string     `json:"badge"`
+	Kind        *string     `json:"kind"`
+	Category    *string     `json:"category"`
+	Available   pgtype.Bool `json:"available"`
+	SortOrder   *int32      `json:"sort_order"`
+	ImageSlug   *string     `json:"image_slug"`
+	Components  []byte      `json:"components"`
+	ID          uuid.UUID   `json:"id"`
 }
 
+// Partial update: only fields passed as non-null are changed (coalesce pattern,
+// same convention as UpdateEmployee). Nullable fields cannot be cleared to null.
 func (q *Queries) UpdateMenuRecipe(ctx context.Context, arg UpdateMenuRecipeParams) (MenuRecipe, error) {
 	row := q.db.QueryRow(ctx, updateMenuRecipe,
-		arg.ID,
 		arg.Name,
 		arg.Description,
 		arg.Strength,
@@ -173,6 +326,13 @@ func (q *Queries) UpdateMenuRecipe(ctx context.Context, arg UpdateMenuRecipePara
 		arg.Rating,
 		arg.Tags,
 		arg.Badge,
+		arg.Kind,
+		arg.Category,
+		arg.Available,
+		arg.SortOrder,
+		arg.ImageSlug,
+		arg.Components,
+		arg.ID,
 	)
 	var i MenuRecipe
 	err := row.Scan(
@@ -189,6 +349,12 @@ func (q *Queries) UpdateMenuRecipe(ctx context.Context, arg UpdateMenuRecipePara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Badge,
+		&i.Kind,
+		&i.Category,
+		&i.Available,
+		&i.SortOrder,
+		&i.ImageSlug,
+		&i.Components,
 	)
 	return i, err
 }

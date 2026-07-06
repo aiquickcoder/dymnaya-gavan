@@ -42,12 +42,21 @@ type Querier interface {
 	ListEmployeeRecipeFeedback(ctx context.Context, employeeID uuid.UUID) ([]ListEmployeeRecipeFeedbackRow, error)
 	ListEmployeesByRestaurant(ctx context.Context, restaurantID uuid.UUID) ([]ListEmployeesByRestaurantRow, error)
 	ListFavourites(ctx context.Context, userID uuid.UUID) ([]ListFavouritesRow, error)
+	// Guest kitchen-bar menu: available kitchen positions only.
+	ListFoodMenu(ctx context.Context, restaurantID uuid.UUID) ([]MenuRecipe, error)
+	// Guest hookah menu: available hookah positions only, in admin-defined order.
 	ListMenuRecipes(ctx context.Context, restaurantID uuid.UUID) ([]MenuRecipe, error)
+	// Admin menu: every non-removed position (incl. unavailable and kitchen).
+	ListMenuRecipesAdmin(ctx context.Context, restaurantID uuid.UUID) ([]MenuRecipe, error)
 	ListShiftToday(ctx context.Context, restaurantID uuid.UUID) ([]ListShiftTodayRow, error)
 	RemoveFavourite(ctx context.Context, arg RemoveFavouriteParams) error
+	// Bulk-set sort_order from the position of each id in the array (0-based).
+	ReorderMenuRecipes(ctx context.Context, ids []uuid.UUID) error
 	SoftRemoveMenuRecipe(ctx context.Context, id uuid.UUID) error
 	SoftRemoveOrderRecipe(ctx context.Context, arg SoftRemoveOrderRecipeParams) (OrderRecipe, error)
 	UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error)
+	// Partial update: only fields passed as non-null are changed (coalesce pattern,
+	// same convention as UpdateEmployee). Nullable fields cannot be cleared to null.
 	UpdateMenuRecipe(ctx context.Context, arg UpdateMenuRecipeParams) (MenuRecipe, error)
 	UpsertEmployeeRating(ctx context.Context, arg UpsertEmployeeRatingParams) (EmployeeRating, error)
 	UpsertOrderRecipeRating(ctx context.Context, arg UpsertOrderRecipeRatingParams) (OrderRecipeFeedback, error)

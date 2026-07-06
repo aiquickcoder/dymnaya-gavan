@@ -210,7 +210,8 @@ export interface GuestSummary {
   lastVisit?: string | null;
   favouriteMix?: string | null;
   avgScore?: number | null;
-  ltv: number;
+  ltv: number; // сумма трат гостя за всё время (по visits/guestVisits)
+  ltvMonth?: number; // сумма трат за последние 30 дней (относительно текущей даты)
   createdAt: string;
 }
 
@@ -270,7 +271,8 @@ export interface Reservation {
   guestName: string;
   phone: string;
   date: string; // YYYY-MM-DD
-  time: string; // HH:MM
+  time: string; // HH:MM — начало брони
+  endTime: string; // HH:MM — конец брони (по умолчанию start+2ч)
   tableId?: string | null; // TableView.id (e.g. "t-7"); null ⇒ no table yet
   tableLabel?: string | null; // resolved table label (e.g. "7")
   guests: number;
@@ -296,4 +298,33 @@ export interface Call {
   createdAt: string;
   ackedAt?: string | null;
   doneAt?: string | null;
+}
+
+// ===== Table state ("Состояние столов") =====
+// Live snapshot of a table for the admin "Обращения"/"Состояние столов" view and
+// the Dashboard "Активные столы" drill-in card. Aggregates the open order (master,
+// mixes), the assigned waiter, timing, and the active (new/ack) calls on the table.
+export interface TableState {
+  tableId: string; // TableView.id (e.g. "t-7")
+  label: string; // TableView.label (e.g. "7")
+  zone?: string | null; // Zone.id
+  occupied: boolean;
+  sinceISO?: string | null; // when the table was seated (TableView.openedAt)
+  minutes?: number | null; // minutes since seated
+  guests?: number | null;
+  masterName?: string | null; // hookah master (author of the order's mixes), short name
+  waiterName?: string | null; // assigned waiter, short name
+  mixes: { name: string; master?: string | null }[]; // mixes currently on the table
+  calls: Call[]; // active (new/ack) calls on this table
+  total?: number | null; // running bill
+}
+
+// ===== Shift schedule ("График смен") =====
+// One employee's on/off shift flags across a date range, for the Staff schedule
+// grid (employees × days). `days` is keyed by date (YYYY-MM-DD).
+export interface ScheduleRow {
+  employeeId: string;
+  shortName: string;
+  position: string;
+  days: Record<string, boolean>; // key = date YYYY-MM-DD → on shift that day
 }

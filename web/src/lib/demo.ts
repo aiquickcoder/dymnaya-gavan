@@ -66,7 +66,9 @@ export const demoApi = {
   adminDeleteTable: (id: string) => ok(demoStore.adminDeleteTable(id)),
   adminZones: (restaurantId: string) => ok(demoStore.adminZones(restaurantId)),
   adminTableAddMix: (tableId: string, menuId: string, employeeId: string) => ok(demoStore.adminTableAddMix(tableId, menuId, employeeId)),
+  adminTableAddCustomMix: (tableId: string, name: string, employeeId: string) => ok(demoStore.adminTableAddCustomMix(tableId, name, employeeId)),
   adminCloseTable: (tableId: string) => ok(demoStore.adminCloseTable(tableId)),
+  adminTableStates: (restaurantId: string) => ok(demoStore.adminTableStates(restaurantId)),
 
   adminMenu: (restaurantId: string) => ok(demoStore.adminMenu(restaurantId)),
   adminUpsertMenu: (m: Partial<MenuRecipeView> & { restaurantId: string }) => ok(demoStore.adminUpsertMenu(m)),
@@ -76,6 +78,8 @@ export const demoApi = {
   adminEmployees: (restaurantId: string) => ok(demoStore.adminEmployees(restaurantId)),
   adminUpsertEmployee: (e: Partial<EmployeeFull> & { restaurantId: string }) => ok(demoStore.adminUpsertEmployee(e)),
   adminSetShift: (restaurantId: string, employeeIds: string[]) => ok(demoStore.adminSetShift(restaurantId, employeeIds)),
+  adminSchedule: (restaurantId: string, fromISO: string, toISO: string) => ok(demoStore.adminSchedule(restaurantId, fromISO, toISO)),
+  adminSetScheduleDay: (employeeId: string, dateISO: string, on: boolean) => ok(demoStore.adminSetScheduleDay(employeeId, dateISO, on)),
 
   adminGuests: (restaurantId: string) => ok(demoStore.adminGuests(restaurantId)),
   adminGuest: (id: string) => ok(demoStore.adminGuest(id)),
@@ -92,6 +96,7 @@ export const demoApi = {
   // ----- calls -----
   createCall: (input: { restaurantId: string; tableId: string; type: CallType }) => ok(demoStore.createCall(input)),
   adminCalls: (restaurantId: string) => ok(demoStore.adminCalls(restaurantId)),
+  adminCallsArchive: (restaurantId: string) => ok(demoStore.adminCallsArchive(restaurantId)),
   adminAckCall: (id: string) => ok(demoStore.adminAckCall(id)),
   adminDoneCall: (id: string) => ok(demoStore.adminDoneCall(id)),
 

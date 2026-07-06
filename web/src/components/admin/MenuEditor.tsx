@@ -3,7 +3,6 @@ import { api, ApiError } from "../../api";
 import Modal from "./Modal";
 import StrengthScale from "../StrengthScale";
 import CompositionBars from "../CompositionBars";
-import { badgeClass } from "../MixCard";
 import { PALETTE } from "../../lib/flavours";
 import { asset } from "../../lib/asset";
 import type { Component, EmployeeFull, MenuRecipeView } from "../../types";
@@ -47,9 +46,18 @@ function toRows(components: Component[] | undefined): CompRow[] {
   return components.map((c) => ({ brand: c.brand, flavour: c.flavour, percent: String(c.percent) }));
 }
 
-function padTags(tags: string[]): [string, string, string] {
-  return [tags[0] ?? "", tags[1] ?? "", tags[2] ?? ""];
-}
+// Иконки (zero-dep inline SVG).
+const XIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" aria-hidden>
+    <path d="M6 6l12 12M18 6L6 18" />
+  </svg>
+);
+const WarnIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M12 3l9 16H3z" />
+    <path d="M12 10v4M12 17.5v.5" />
+  </svg>
+);
 
 /**
  * Редактор позиции меню в модалке. item=null → создание.
@@ -78,7 +86,8 @@ export default function MenuEditor({
   const [strength, setStrength] = useState(5);
   const [price, setPrice] = useState("1200");
   const [badge, setBadge] = useState("");
-  const [tags, setTags] = useState<[string, string, string]>(["", "", ""]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagDraft, setTagDraft] = useState("");
   const [category, setCategory] = useState("Прочее");
   const [available, setAvailable] = useState(true);
   const [author, setAuthor] = useState("");
@@ -100,7 +109,8 @@ export default function MenuEditor({
       setStrength(item.strength ?? 5);
       setPrice(String(item.price ?? 1200));
       setBadge(item.badge ?? "");
-      setTags(padTags(item.tags ?? []));
+      setTags(item.tags ?? []);
+      setTagDraft("");
       setCategory(item.category ?? (k === "kitchen" ? "Закуски" : "Прочее"));
       setAvailable(item.available ?? true);
       setAuthor(item.authorEmployeeId || employees[0]?.id || "");
@@ -113,7 +123,8 @@ export default function MenuEditor({
       setStrength(5);
       setPrice(defaultKind === "kitchen" ? "650" : "1200");
       setBadge("");
-      setTags(["", "", ""]);
+      setTags([]);
+      setTagDraft("");
       setCategory(defaultKind === "kitchen" ? "Закуски" : "Прочее");
       setAvailable(true);
       setAuthor(employees[0]?.id ?? "");
@@ -127,10 +138,12 @@ export default function MenuEditor({
   const filled = rows
     .map((r) => ({ brand: r.brand.trim(), flavour: r.flavour.trim(), percent: r.percent.trim() }))
     .filter((r) => r.brand || r.flavour || r.percent);
-  const compValid =
-    isKitchen ||
-    filled.length === 0 ||
-    (filled.every((r) => r.brand && r.flavour && Number(r.percent) > 0) && sum === 100);
+  const compComplete = filled.every((r) => r.brand && r.flavour && Number(r.percent) > 0);
+  const compValid = isKitchen || filled.length === 0 || (compComplete && sum === 100);
+  // Видимые состояния состава (не тихая блокировка — ошибку всегда показываем).
+  const compOver = !isKitchen && filled.length > 0 && sum > 100;
+  const compOff = !isKitchen && filled.length > 0 && sum !== 100;
+  const compIncomplete = !isKitchen && filled.length > 0 && !compComplete;
   const preview: Component[] = filled
     .filter((r) => r.flavour && Number(r.percent) > 0)
     .map((r) => ({ brand: r.brand, flavour: r.flavour, percent: Number(r.percent) }));
@@ -151,19 +164,20 @@ export default function MenuEditor({
   function editRow(i: number, key: keyof CompRow, value: string) {
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, [key]: value } : r)));
   }
-  function setTag(i: number, value: string) {
-    setTags((prev) => {
-      const next = [...prev] as [string, string, string];
-      next[i] = value;
-      return next;
-    });
+  // Вкусы: произвольное число тегов. Enter/кнопка добавляет, × удаляет.
+  function addTag(raw: string) {
+    const t = raw.trim();
+    if (!t) return;
+    setTags((prev) => (prev.some((x) => x.toLowerCase() === t.toLowerCase()) ? prev : [...prev, t]));
+    setTagDraft("");
+  }
+  function removeTag(i: number) {
+    setTags((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  // Чип бейджа активен при точном совпадении value или совпадении визуального класса
-  // (напр. старое значение «?» подсветит чип «Секрет»).
-  const isBadgeSelected = (value: string) =>
-    badge === value ||
-    (badge !== "" && value !== "" && badgeClass(value) !== "" && badgeClass(badge) === badgeClass(value));
+  // Бейдж = свободная строка. Пресет-чип активен при точном совпадении со значением;
+  // «нет» активен при пустом бейдже. Свой текст в поле снимает выделение с пресетов.
+  const isBadgeSelected = (value: string) => badge.trim() === value;
 
   async function save() {
     setSaving(true);
@@ -310,26 +324,31 @@ export default function MenuEditor({
 
         <div className="field full">
           <label>Бейдж</label>
-          <div className="badge-pick" role="radiogroup" aria-label="Бейдж позиции">
-            {BADGE_PRESETS.map((p) => {
-              const selected = isBadgeSelected(p.value);
-              return (
-                <button
-                  key={p.label}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  className={"badge-chip" + (selected ? " selected" : "")}
-                  onClick={() => setBadge(p.value)}
-                >
-                  {p.value ? (
-                    <span className={`badge ${badgeClass(p.value)}`}>{p.value}</span>
-                  ) : (
-                    "нет"
-                  )}
-                </button>
-              );
-            })}
+          <div className="badge-editor">
+            <div className="be-presets" role="radiogroup" aria-label="Пресеты бейджа">
+              {BADGE_PRESETS.map((p) => {
+                const selected = isBadgeSelected(p.value);
+                return (
+                  <button
+                    key={p.label}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    className={"be-preset" + (selected ? " on" : "")}
+                    onClick={() => setBadge(p.value)}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+            <input
+              className="be-input"
+              value={badge}
+              maxLength={24}
+              placeholder="…или свой текст бейджа"
+              onChange={(e) => setBadge(e.target.value)}
+            />
           </div>
         </div>
 
@@ -373,16 +392,31 @@ export default function MenuEditor({
         {!isKitchen && (
           <div className="field full">
             <label>Вкусы (теги)</label>
-            <div className="row">
-              {[0, 1, 2].map((i) => (
-                <input
-                  key={i}
-                  list="menu-flavours"
-                  value={tags[i]}
-                  placeholder={`тег ${i + 1}`}
-                  onChange={(e) => setTag(i, e.target.value)}
-                />
+            <div className="tags-editor">
+              {tags.map((t, i) => (
+                <span className="tag-chip" key={`${t}-${i}`}>
+                  {t}
+                  <button type="button" aria-label={`Удалить вкус ${t}`} onClick={() => removeTag(i)}>
+                    {XIcon}
+                  </button>
+                </span>
               ))}
+              <input
+                className="tag-add"
+                list="menu-flavours"
+                value={tagDraft}
+                placeholder="+ добавить вкус"
+                onChange={(e) => setTagDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addTag(tagDraft);
+                  }
+                }}
+              />
+              <button type="button" className="ghost sm" onClick={() => addTag(tagDraft)}>
+                Добавить
+              </button>
             </div>
             <datalist id="menu-flavours">
               {PALETTE.map((f) => (
@@ -432,8 +466,26 @@ export default function MenuEditor({
             >
               + компонент
             </button>
-            <span className={sum === 100 ? "pill accent" : "pill"}>сумма: {sum}%</span>
+            <span className={"comp-sum" + (sum === 100 ? " ok" : compOver ? " over" : "")}>
+              сумма: <b>{sum}%</b>
+            </span>
           </div>
+          {compOver && (
+            <div className="comp-error" style={{ marginTop: 8 }}>
+              {WarnIcon}
+              <span>Сумма больше 100% — уменьшите проценты компонентов.</span>
+            </div>
+          )}
+          {!compOver && compOff && (
+            <div className="comp-hint" style={{ marginTop: 6 }}>
+              Сумма процентов должна быть 100% (сейчас {sum}%).
+            </div>
+          )}
+          {compIncomplete && (
+            <div className="comp-hint" style={{ marginTop: 6 }}>
+              У каждого компонента укажите бренд, вкус и процент.
+            </div>
+          )}
           {preview.length > 0 && (
             <div style={{ marginTop: 10 }}>
               <CompositionBars items={preview} />

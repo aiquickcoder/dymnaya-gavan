@@ -113,6 +113,8 @@ export default function Clients() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [segment, setSegment] = useState<Segment>("all");
+  // Период колонки LTV: «за всё время» (ltv) или «за месяц» (ltvMonth).
+  const [ltvMode, setLtvMode] = useState<"all" | "month">("all");
 
   // drawer / guest card
   const [selected, setSelected] = useState<GuestSummary | null>(null);
@@ -260,11 +262,17 @@ export default function Clients() {
       render: (g) => <ScoreCell score={g.avgScore} />,
     },
     {
-      key: "ltv",
-      title: "LTV",
+      // Ключ = имя поля: DataTable сортирует по нему, поэтому в режиме «за месяц»
+      // сортируем и показываем ltvMonth, иначе — ltv (траты за всё время).
+      key: ltvMode === "month" ? "ltvMonth" : "ltv",
+      title: ltvMode === "month" ? "LTV · 30 дн" : "LTV · всё время",
       sortable: true,
       align: "right",
-      render: (g) => <span style={{ fontVariantNumeric: "tabular-nums" }}>{money(g.ltv)}</span>,
+      render: (g) => (
+        <span style={{ fontVariantNumeric: "tabular-nums" }}>
+          {money(ltvMode === "month" ? g.ltvMonth : g.ltv)}
+        </span>
+      ),
     },
   ];
 
@@ -352,10 +360,35 @@ export default function Clients() {
             aria-label="Поиск гостей"
           />
         </div>
+        <div className="seg" role="group" aria-label="Период трат (LTV)">
+          <button
+            type="button"
+            className={ltvMode === "all" ? "on" : ""}
+            aria-pressed={ltvMode === "all"}
+            onClick={() => setLtvMode("all")}
+          >
+            За всё время
+          </button>
+          <button
+            type="button"
+            className={ltvMode === "month" ? "on" : ""}
+            aria-pressed={ltvMode === "month"}
+            onClick={() => setLtvMode("month")}
+          >
+            За месяц
+          </button>
+        </div>
         <div className="admin-sub">
           {loading ? "Загрузка…" : `${filtered.length} из ${guests.length}`}
         </div>
       </div>
+
+      {!loading && !error && guests.length > 0 && (
+        <p className="admin-sub" style={{ margin: "-8px 0 14px", fontSize: 12.5 }}>
+          LTV — сколько гость потратил у вас{" "}
+          {ltvMode === "month" ? "за последние 30 дней" : "за всё время"} (суммарные траты по всем визитам).
+        </p>
+      )}
 
       {loading ? (
         <div style={{ display: "grid", gap: 8 }}>
@@ -398,7 +431,7 @@ export default function Clients() {
           <>
             <div className="kpi-grid" style={{ marginBottom: 16 }}>
               <StatCard label="Визитов" value={detail.summary.visits} />
-              <StatCard label="LTV" value={money(detail.summary.ltv)} />
+              <StatCard label="LTV" value={money(detail.summary.ltv)} hint="траты за всё время" />
               <StatCard
                 label="Ср. оценка"
                 value={detail.summary.avgScore != null ? `${detail.summary.avgScore.toFixed(1)} ★` : "—"}
@@ -421,6 +454,7 @@ export default function Clients() {
                     )
                   }
                 />
+                <InfoRow label="Траты за 30 дней" value={money(detail.summary.ltvMonth)} />
                 <InfoRow label="Первый визит" value={fmtDate(detail.summary.createdAt)} />
                 <InfoRow label="Последний визит" value={fmtDate(detail.summary.lastVisit)} />
               </div>

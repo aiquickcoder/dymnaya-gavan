@@ -27,7 +27,9 @@ import type {
   Reservation,
   ReservationStatus,
   Restaurant,
+  ScheduleRow,
   ShiftMaster,
+  TableState,
   TableView,
   TimePoint,
   TopItem,
@@ -229,6 +231,20 @@ let tables: TableView[] = TABLE_SEEDS.map((s) => {
   return base;
 });
 
+// ---------- waiter per occupied table ----------
+// The hookah master is derived from the order (recipe author); the waiter is a
+// separate role. Occupied tables get a waiter assigned round-robin from the
+// waiter pool (m-vera «Официант»). Kept in a side map so TableView is untouched.
+const WAITER_IDS = ["m-vera"];
+const tableWaiter: Record<string, string> = {};
+let waiterCursor = 0;
+tables.forEach((t) => {
+  if (t.status === "occupied") tableWaiter[t.id] = WAITER_IDS[waiterCursor++ % WAITER_IDS.length];
+});
+function ensureWaiter(t: TableView): void {
+  if (!tableWaiter[t.id]) tableWaiter[t.id] = WAITER_IDS[waiterCursor++ % WAITER_IDS.length];
+}
+
 // ---------- guests + visit history ----------
 const GUEST_NAMES = ["Мария", "Иван", "Ольга", "Дмитрий", "Анна", "Сергей", "Екатерина", "Павел", "Наталья", "Артём", "Юлия", "Роман", "Виктория", "Никита", "Дарья", "Максим", "Полина", "Егор", "Алиса", "Кирилл"];
 let guests: GuestSummary[] = [];
@@ -270,6 +286,19 @@ const guestVisits: Record<string, Visit[]> = {};
   }
 })();
 
+// LTV = the guest's actual spend, summed from their visit history (single source
+// of truth: guestVisits). `ltv` is all-time; `ltvMonth` is the last 30 days
+// relative to the demo "today" anchor (so it stays meaningful regardless of when
+// the demo is viewed). Reads as «накурил на N».
+const LTV_MONTH_FROM = ANCHOR_MS - 30 * DAY;
+guests.forEach((g) => {
+  const vs = guestVisits[g.id] ?? [];
+  g.ltv = vs.reduce((s, v) => s + v.total, 0);
+  g.ltvMonth = vs
+    .filter((v) => Date.parse(v.date) >= LTV_MONTH_FROM)
+    .reduce((s, v) => s + v.total, 0);
+});
+
 // ---------- feedback (guest reviews on a master's mixes) ----------
 const feedbackByMaster: Record<string, RecipeFeedbackItem[]> = {
   "m-timur": [
@@ -304,6 +333,31 @@ const tableById = (id: string) => tables.find((t) => t.id === id);
 const resolveTable = (idOrLabel?: string | null): TableView | undefined =>
   idOrLabel ? tableById(idOrLabel) ?? tableByLabel(idOrLabel) : undefined;
 
+// Add hours to an "HH:MM" clock string (wraps at 24h). Used for reservation end times.
+const addHoursHHMM = (hhmm: string, hours: number): string => {
+  const [h, m] = hhmm.split(":").map((x) => parseInt(x, 10) || 0);
+  const total = ((h * 60 + m + hours * 60) % 1440 + 1440) % 1440;
+  return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
+};
+
+// Ensure `t` has an open order (seating it if needed) and return that order.
+// Shared by admin "add mix" flows so occupied-state bookkeeping stays in one place.
+function ensureOpenOrder(t: TableView): Order {
+  let o = t.orderId ? orders[t.orderId] : undefined;
+  if (!o || o.closedAt) {
+    o = { id: uid("ord"), tableId: t.label, restaurantId: t.restaurantId, userId: null, createdAt: NOW, closedAt: null, recipes: [] };
+    orders[o.id] = o;
+    t.orderId = o.id;
+    t.status = "occupied";
+    t.openedAt = NOW;
+    t.minutes = t.minutes ?? 0;
+    t.guests = t.guests ?? 2;
+    t.total = t.total ?? 0;
+    ensureWaiter(t);
+  }
+  return o;
+}
+
 // ---------- reservations ("Брони") ----------
 interface ResSeed { guest: string; phone: string; day: 0 | 1; time: string; tableLabel: string | null; guests: number; status: ReservationStatus; note?: string }
 const RES_SEEDS: ResSeed[] = [
@@ -327,6 +381,7 @@ let reservations: Reservation[] = RES_SEEDS.map((s, i) => {
     phone: s.phone,
     date: s.day === 0 ? TODAY_YMD : TOMORROW_YMD,
     time: s.time,
+    endTime: addHoursHHMM(s.time, 2),
     tableId: t ? t.id : null,
     tableLabel: t ? t.label : null,
     guests: s.guests,
@@ -338,11 +393,50 @@ let reservations: Reservation[] = RES_SEEDS.map((s, i) => {
 });
 
 // ---------- calls ("Обращения") ----------
+// Active (new/ack) drive the "Состояние столов" view; done ones feed the archive.
+// Tables t-5/t-10/t-12 are occupied, so their calls surface on the table cards.
 const calls: Call[] = [
   { id: "call-1", restaurantId: DEMO_RID, tableId: "t-5", tableLabel: "5", type: "coals", status: "new", createdAt: minsAgoISO(2), ackedAt: null, doneAt: null },
   { id: "call-2", restaurantId: DEMO_RID, tableId: "t-12", tableLabel: "12", type: "waiter", status: "ack", createdAt: minsAgoISO(9), ackedAt: minsAgoISO(6), doneAt: null },
-  { id: "call-3", restaurantId: DEMO_RID, tableId: "t-3", tableLabel: "3", type: "master", status: "done", createdAt: minsAgoISO(25), ackedAt: minsAgoISO(22), doneAt: minsAgoISO(18) },
+  { id: "call-3", restaurantId: DEMO_RID, tableId: "t-10", tableLabel: "10", type: "bill", status: "new", createdAt: minsAgoISO(1), ackedAt: null, doneAt: null },
+  { id: "call-4", restaurantId: DEMO_RID, tableId: "t-3", tableLabel: "3", type: "master", status: "done", createdAt: minsAgoISO(25), ackedAt: minsAgoISO(22), doneAt: minsAgoISO(18) },
+  { id: "call-5", restaurantId: DEMO_RID, tableId: "t-7", tableLabel: "7", type: "coals", status: "done", createdAt: minsAgoISO(48), ackedAt: minsAgoISO(45), doneAt: minsAgoISO(40) },
+  { id: "call-6", restaurantId: DEMO_RID, tableId: "t-12", tableLabel: "12", type: "bill", status: "done", createdAt: minsAgoISO(72), ackedAt: minsAgoISO(66), doneAt: minsAgoISO(60) },
 ];
+const callMatchesTable = (c: Call, t: TableView): boolean =>
+  c.tableId === t.id || c.tableId === t.label || c.tableLabel === t.label;
+
+// ---------- shift schedule ("График смен") ----------
+// Per-date on/off shift flags, keyed `${employeeId}|${YYYY-MM-DD}`; mutable so the
+// Staff schedule grid can toggle days and persist. Seeded from a per-employee
+// weekday pattern (masters work different days) across a wide window around the
+// real "today" so both the week- and month-view of the grid come up populated.
+const scheduleMap: Record<string, boolean> = {};
+const ymd = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+const scheduleKey = (employeeId: string, date: string) => `${employeeId}|${date}`;
+// Weekday indices: 0=Вс 1=Пн 2=Вт 3=Ср 4=Чт 5=Пт 6=Сб.
+const SHIFT_PATTERN: Record<string, number[]> = {
+  "m-timur": [1, 3, 4, 5, 6], // Пн Ср Чт Пт Сб
+  "m-alina": [2, 3, 5, 6, 0], // Вт Ср Пт Сб Вс
+  "m-din": [1, 2, 4, 0], // Пн Вт Чт Вс
+  "m-vera": [4, 5, 6, 0], // Чт Пт Сб Вс (официант)
+  "m-oleg": [1, 2, 3, 4, 5], // Пн–Пт (менеджер)
+};
+(function seedSchedule() {
+  const now = new Date();
+  const midnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const mondayOffset = (now.getUTCDay() + 6) % 7; // days since this week's Monday
+  const startMs = midnight - (mondayOffset + 14) * DAY; // 2 weeks before → 8 weeks total
+  for (let d = 0; d < 56; d++) {
+    const ms = startMs + d * DAY;
+    const date = ymd(ms);
+    const wd = new Date(ms).getUTCDay();
+    employees.forEach((e) => {
+      const pat = SHIFT_PATTERN[e.id];
+      if (pat) scheduleMap[scheduleKey(e.id, date)] = pat.includes(wd);
+    });
+  }
+})();
 
 function freeTable(t: TableView) {
   t.status = "free";
@@ -712,28 +806,67 @@ export const demoStore = {
   adminTableAddMix(tableId: string, menuId: string, employeeId: string): void {
     const t = tableById(tableId);
     if (!t) return;
-    let o = t.orderId ? orders[t.orderId] : undefined;
-    if (!o || o.closedAt) {
-      o = { id: uid("ord"), tableId: t.label, restaurantId: t.restaurantId, userId: null, createdAt: NOW, closedAt: null, recipes: [] };
-      orders[o.id] = o;
-      t.orderId = o.id;
-      t.status = "occupied";
-      t.openedAt = NOW;
-      t.minutes = t.minutes ?? 0;
-      t.guests = t.guests ?? 2;
-      t.total = t.total ?? 0;
-    }
+    const o = ensureOpenOrder(t);
     const m = menuById(menuId);
     if (m) {
       o.recipes.push(orRecipe(uid("or"), m, empById(employeeId)));
       t.total = (t.total ?? 0) + m.price;
     }
   },
+  // Free-text mix — the master types a one-off name instead of picking from menu.
+  adminTableAddCustomMix(tableId: string, name: string, employeeId: string): void {
+    const t = tableById(tableId);
+    if (!t) return;
+    const o = ensureOpenOrder(t);
+    const master = empById(employeeId);
+    o.recipes.push({
+      orderRecipeId: uid("or"),
+      recipeId: uid("custom"),
+      recipeName: name.trim() || "Свой микс",
+      strength: null,
+      isSecret: false,
+      authorFullName: master ? fullName(master) : "Мастер смены",
+      authorShortName: master ? master.shortName : "—",
+      components: [],
+    });
+  },
   adminCloseTable(tableId: string): void {
     const t = tableById(tableId);
     if (!t) return;
     if (t.orderId) closeOrderInternal(t.orderId);
     freeTable(t);
+  },
+  // Live snapshot of ALL tables (occupied flag distinguishes them) with master,
+  // waiter, mixes and active (new/ack) calls — backs the admin "Состояние столов"
+  // view and the Dashboard "Активные столы" drill-in card.
+  adminTableStates(_rid: string): TableState[] {
+    return tables
+      .slice()
+      .sort((a, b) => (parseInt(a.label, 10) || 0) - (parseInt(b.label, 10) || 0))
+      .map((t) => {
+        const o = t.orderId ? orders[t.orderId] : undefined;
+        const recs = o && !o.closedAt ? o.recipes : [];
+        const mixes = recs.map((r) => ({ name: r.recipeName ?? "Микс", master: r.authorShortName ?? null }));
+        const occupied = t.status === "occupied";
+        const activeCalls = calls
+          .filter((c) => c.status !== "done" && callMatchesTable(c, t))
+          .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+          .map((c) => ({ ...c }));
+        return {
+          tableId: t.id,
+          label: t.label,
+          zone: t.zone,
+          occupied,
+          sinceISO: t.openedAt,
+          minutes: t.minutes,
+          guests: t.guests,
+          masterName: recs[0]?.authorShortName ?? null,
+          waiterName: occupied ? empById(tableWaiter[t.id] ?? WAITER_IDS[0])?.shortName ?? null : null,
+          mixes,
+          calls: activeCalls,
+          total: t.total,
+        };
+      });
   },
 
   adminMenu(_rid: string): MenuRecipeView[] {
@@ -862,6 +995,7 @@ export const demoStore = {
       phone: r.phone ?? "",
       date: r.date ?? TODAY_YMD,
       time: r.time ?? "20:00",
+      endTime: r.endTime ?? addHoursHHMM(r.time ?? "20:00", 2),
       tableId: t ? t.id : null,
       tableLabel: t ? t.label : null,
       guests: r.guests ?? 2,
@@ -912,6 +1046,32 @@ export const demoStore = {
   adminDoneCall(id: string): void {
     const c = calls.find((x) => x.id === id);
     if (c && c.status !== "done") { c.status = "done"; c.doneAt = nowISO(); if (!c.ackedAt) c.ackedAt = nowISO(); }
+  },
+  // Archive tab: completed calls, most recently done first.
+  adminCallsArchive(_rid: string): Call[] {
+    return calls
+      .filter((c) => c.status === "done")
+      .slice()
+      .sort((a, b) => Date.parse(b.doneAt ?? b.createdAt) - Date.parse(a.doneAt ?? a.createdAt))
+      .map((c) => ({ ...c }));
+  },
+
+  // ----- shift schedule ("График смен") -----
+  adminSchedule(_rid: string, fromISO: string, toISO: string): ScheduleRow[] {
+    const from = fromISO.slice(0, 10);
+    const to = toISO.slice(0, 10);
+    const dates: string[] = [];
+    let ms = Date.parse(from + "T00:00:00.000Z");
+    const end = Date.parse(to + "T00:00:00.000Z");
+    for (let guard = 0; ms <= end && guard < 400; ms += DAY, guard++) dates.push(ymd(ms));
+    return employees.map((e) => {
+      const days: Record<string, boolean> = {};
+      dates.forEach((d) => { days[d] = scheduleMap[scheduleKey(e.id, d)] ?? false; });
+      return { employeeId: e.id, shortName: e.shortName, position: e.position, days };
+    });
+  },
+  adminSetScheduleDay(employeeId: string, dateISO: string, on: boolean): void {
+    scheduleMap[scheduleKey(employeeId, dateISO.slice(0, 10))] = on;
   },
 
   // ----- kitchen-bar (guest food menu) -----

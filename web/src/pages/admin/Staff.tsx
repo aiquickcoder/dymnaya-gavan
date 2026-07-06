@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, Fragment, type CSSProperties } from "react";
 import { api, ApiError } from "../../api";
 import { useRequireStaff } from "../../lib/guards";
 import { Banner } from "../../components/ui";
@@ -6,7 +6,7 @@ import StarRating from "../../components/StarRating";
 import Modal from "../../components/admin/Modal";
 import { masterImageUrl } from "../../lib/masterImages";
 import { asset } from "../../lib/asset";
-import type { EmployeeFull, RecipeFeedbackItem } from "../../types";
+import type { EmployeeFull, RecipeFeedbackItem, ScheduleRow } from "../../types";
 
 /** Доступные фото сотрудников (public/masters/<slug>.jpg). */
 const PHOTO_SLUGS: { slug: string; label: string }[] = [
@@ -27,6 +27,25 @@ function fmtDate(iso: string): string {
   if (Number.isNaN(d.getTime())) return "";
   return new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" }).format(d);
 }
+
+// ---- График смен: даты считаем в UTC, чтобы совпадать с ключами adminSchedule ----
+const DOW_SHORT = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+const ymdUTC = (d: Date): string => d.toISOString().slice(0, 10);
+const atUTCMidnight = (d: Date): Date => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+function addDaysUTC(d: Date, n: number): Date {
+  const x = new Date(d.getTime());
+  x.setUTCDate(x.getUTCDate() + n);
+  return x;
+}
+function startOfWeekUTC(d: Date): Date {
+  const x = atUTCMidnight(d);
+  const back = (x.getUTCDay() + 6) % 7; // неделя с понедельника
+  return addDaysUTC(x, -back);
+}
+const isWeekendUTC = (d: Date): boolean => {
+  const dow = d.getUTCDay();
+  return dow === 0 || dow === 6;
+};
 
 /** Портрет сотрудника: photoSlug (если задан) → иначе masterImageUrl по имени → иначе инициал. */
 function Avatar({ name, photoSlug, size = 52 }: { name: string; photoSlug?: string | null; size?: number }) {
@@ -84,6 +103,14 @@ export default function Staff() {
   const [form, setForm] = useState<FormState>(BLANK);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  // график смен (сотрудники × дни)
+  const [schedMode, setSchedMode] = useState<"week" | "month">("week");
+  const [schedCursor, setSchedCursor] = useState<Date>(() => atUTCMidnight(new Date()));
+  const [schedRows, setSchedRows] = useState<ScheduleRow[]>([]);
+  const [schedLoading, setSchedLoading] = useState(true);
+  const [schedError, setSchedError] = useState("");
+  const [schedSaving, setSchedSaving] = useState<Set<string>>(new Set());
 
   // карточка мастера (drawer) + его отзывы
   const [cardEmp, setCardEmp] = useState<EmployeeFull | null>(null);
@@ -150,6 +177,91 @@ export default function Staff() {
   }, [cardEmp]);
 
   const dirty = useMemo(() => employees.some((e) => shiftIds.has(e.id) !== e.onShift), [employees, shiftIds]);
+
+  // диапазон дат графика (неделя ⇒ 7 дней с Пн; месяц ⇒ все дни месяца)
+  const schedDays = useMemo<Date[]>(() => {
+    const base = atUTCMidnight(schedCursor);
+    if (schedMode === "week") {
+      const start = startOfWeekUTC(base);
+      return Array.from({ length: 7 }, (_, i) => addDaysUTC(start, i));
+    }
+    const first = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), 1));
+    const count = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 0)).getUTCDate();
+    return Array.from({ length: count }, (_, i) => addDaysUTC(first, i));
+  }, [schedMode, schedCursor]);
+
+  const fromISO = schedDays.length ? ymdUTC(schedDays[0]) : "";
+  const toISO = schedDays.length ? ymdUTC(schedDays[schedDays.length - 1]) : "";
+  const todayKey = ymdUTC(new Date());
+
+  const schedRangeLabel = useMemo(() => {
+    if (!schedDays.length) return "";
+    if (schedMode === "month") {
+      return new Intl.DateTimeFormat("ru-RU", { month: "long", year: "numeric", timeZone: "UTC" }).format(schedDays[0]);
+    }
+    const f = (d: Date) => new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short", timeZone: "UTC" }).format(d);
+    return `${f(schedDays[0])} – ${f(schedDays[schedDays.length - 1])}`;
+  }, [schedDays, schedMode]);
+
+  // загрузка графика при смене ресторана / диапазона
+  useEffect(() => {
+    if (!rid || !fromISO || !toISO) return;
+    let alive = true;
+    setSchedLoading(true);
+    setSchedError("");
+    api
+      .adminSchedule(rid, fromISO, toISO)
+      .then((r) => {
+        if (alive) setSchedRows(r);
+      })
+      .catch((e) => {
+        if (alive) setSchedError(e instanceof ApiError ? e.message : String(e));
+      })
+      .finally(() => {
+        if (alive) setSchedLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [rid, fromISO, toISO]);
+
+  function shiftCursor(dir: number) {
+    setSchedCursor((c) => {
+      const base = atUTCMidnight(c);
+      return schedMode === "week"
+        ? addDaysUTC(base, dir * 7)
+        : new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + dir, 1));
+    });
+  }
+
+  // клик по ячейке: оптимистичный флип + persist, откат при ошибке
+  async function toggleSchedDay(empId: string, dateKey: string, cur: boolean) {
+    const cellKey = empId + "|" + dateKey;
+    if (schedSaving.has(cellKey)) return;
+    const next = !cur;
+    const flip = (val: boolean) =>
+      setSchedRows((rows) =>
+        rows.map((r) => (r.employeeId === empId ? { ...r, days: { ...r.days, [dateKey]: val } } : r)),
+      );
+    flip(next);
+    setSchedSaving((s) => new Set(s).add(cellKey));
+    try {
+      await api.adminSetScheduleDay(empId, dateKey, next);
+    } catch (e) {
+      flip(cur);
+      setSchedError(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setSchedSaving((s) => {
+        const n = new Set(s);
+        n.delete(cellKey);
+        return n;
+      });
+    }
+  }
+
+  const schedGridStyle: CSSProperties = {
+    gridTemplateColumns: `minmax(130px, 1.3fr) repeat(${schedDays.length}, minmax(44px, 1fr))`,
+  };
 
   function toggleShift(e: EmployeeFull) {
     if (e.status !== "active") return;
@@ -333,6 +445,123 @@ export default function Staff() {
           })}
         </div>
       )}
+
+      {/* ---- график смен ---- */}
+      <div style={{ marginTop: 30 }}>
+        <div className="sched-toolbar">
+          <div className="row" style={{ gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+            <h2 className="display" style={{ fontSize: 18, margin: 0 }}>
+              График смен
+            </h2>
+            <div className="seg" role="group" aria-label="Диапазон графика">
+              <button
+                type="button"
+                className={schedMode === "week" ? "on" : ""}
+                aria-pressed={schedMode === "week"}
+                onClick={() => setSchedMode("week")}
+              >
+                Неделя
+              </button>
+              <button
+                type="button"
+                className={schedMode === "month" ? "on" : ""}
+                aria-pressed={schedMode === "month"}
+                onClick={() => setSchedMode("month")}
+              >
+                Месяц
+              </button>
+            </div>
+          </div>
+          <div className="row" style={{ gap: 8, alignItems: "center" }}>
+            <button className="ghost sm" aria-label="Предыдущий период" onClick={() => shiftCursor(-1)}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+            <span
+              className="small"
+              style={{ minWidth: 128, textAlign: "center", color: "var(--text)", textTransform: "capitalize" }}
+            >
+              {schedRangeLabel}
+            </span>
+            <button className="ghost sm" aria-label="Следующий период" onClick={() => shiftCursor(1)}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+            <button className="ghost sm" onClick={() => setSchedCursor(atUTCMidnight(new Date()))}>
+              Сегодня
+            </button>
+          </div>
+        </div>
+
+        {schedError && <Banner kind="error">{schedError}</Banner>}
+
+        {schedLoading ? (
+          <div className="skeleton" style={{ height: 260 }} aria-hidden />
+        ) : schedRows.length === 0 ? (
+          <div className="empty">
+            <div className="em-ico">○</div>
+            <div>Нет сотрудников для графика</div>
+          </div>
+        ) : (
+          <div className="sched-scroll">
+            <div className="sched-grid" style={schedGridStyle}>
+              <div className="sched-corner">Сотрудник</div>
+              {schedDays.map((d) => {
+                const key = ymdUTC(d);
+                const weekend = isWeekendUTC(d);
+                return (
+                  <div
+                    key={key}
+                    className={"sched-daycol" + (key === todayKey ? " today" : "") + (weekend ? " sched-weekend" : "")}
+                  >
+                    <span className="sd-dow">{DOW_SHORT[d.getUTCDay()]}</span>
+                    <span className="sd-date">{d.getUTCDate()}</span>
+                  </div>
+                );
+              })}
+
+              {schedRows.map((r) => (
+                <Fragment key={r.employeeId}>
+                  <div className="sched-emp">
+                    <span className="se-name">{r.shortName}</span>
+                    <span className="se-pos">{r.position}</span>
+                  </div>
+                  {schedDays.map((d) => {
+                    const key = ymdUTC(d);
+                    const on = !!r.days[key];
+                    const weekend = isWeekendUTC(d);
+                    const busy = schedSaving.has(r.employeeId + "|" + key);
+                    return (
+                      <div
+                        key={key}
+                        className={"sched-cell " + (on ? "on" : "off") + (weekend ? " sched-weekend" : "")}
+                        style={busy ? { opacity: 0.5 } : undefined}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={on}
+                        aria-busy={busy || undefined}
+                        aria-label={`${r.shortName}, ${key}: ${on ? "на смене" : "выходной"}`}
+                        title={on ? "На смене — снять" : "Выходной — поставить"}
+                        onClick={() => toggleSchedDay(r.employeeId, key, on)}
+                        onKeyDown={(ev) => {
+                          if (ev.key === "Enter" || ev.key === " ") {
+                            ev.preventDefault();
+                            toggleSchedDay(r.employeeId, key, on);
+                          }
+                        }}
+                      >
+                        <span className="sc-dot" />
+                      </div>
+                    );
+                  })}
+                </Fragment>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ---- add / edit ---- */}
       <Modal

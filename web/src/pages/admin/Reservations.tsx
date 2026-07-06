@@ -52,6 +52,27 @@ function fmtDate(ymd: string): string {
   return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
 }
 
+// ---- time-view helpers (HH:MM ↔ minutes since midnight) ----
+function toMin(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map((n) => parseInt(n, 10));
+  return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
+}
+function fmtMin(min: number): string {
+  const h = Math.floor(min / 60) % 24;
+  const m = ((min % 60) + 60) % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+// End of a reservation's interval in minutes; a wrapped/invalid end ⇒ end-of-day.
+function endMinutes(r: Reservation): number {
+  const s = toMin(r.time);
+  const e = toMin(r.endTime);
+  return e <= s ? 1440 : e;
+}
+// Does the reservation's [start, end) interval cover the selected minute?
+function covers(r: Reservation, selMin: number): boolean {
+  return toMin(r.time) <= selMin && selMin < endMinutes(r);
+}
+
 export default function Reservations() {
   const session = useRequireStaff();
   const rid = session?.restaurantId ?? "";
@@ -66,6 +87,9 @@ export default function Reservations() {
 
   const [date, setDate] = useState<string>(todayYMD);
   const [activeZone, setActiveZone] = useState<string>("all");
+
+  // TIME-VIEW: момент (HH:MM), на который считаем занятость столов бронями.
+  const [viewTime, setViewTime] = useState<string>("20:00");
 
   const [editing, setEditing] = useState<Partial<Reservation> | null>(null);
 
@@ -145,6 +169,7 @@ export default function Reservations() {
       phone: "",
       date,
       time: "20:00",
+      endTime: "22:00",
       tableId: null,
       guests: 2,
       zone: activeZone !== "all" ? activeZone : zones[0]?.id ?? null,
@@ -188,6 +213,39 @@ export default function Reservations() {
     return g;
   }, [shown]);
 
+  // ---------- TIME-VIEW occupancy ----------
+  // Tables shown on the mini-hall — filtered by the active zone to mirror the
+  // reservation filter above.
+  const hallTables = useMemo(
+    () => (activeZone === "all" ? tables : tables.filter((t) => t.zone === activeZone)),
+    [tables, activeZone],
+  );
+
+  const viewMin = toMin(viewTime);
+
+  // Per-table occupancy at `viewTime`: a table is busy if any non-cancelled
+  // reservation assigned to it covers the moment. `until` = latest such end.
+  const occByTable = useMemo(() => {
+    const map = new Map<string, { busy: boolean; until: string | null; names: string[] }>();
+    for (const t of hallTables) {
+      const ovl = rows.filter(
+        (r) => r.tableId === t.id && r.status !== "cancelled" && covers(r, viewMin),
+      );
+      if (ovl.length === 0) {
+        map.set(t.id, { busy: false, until: null, names: [] });
+        continue;
+      }
+      const endMax = ovl.reduce((mx, r) => Math.max(mx, endMinutes(r)), 0);
+      map.set(t.id, { busy: true, until: fmtMin(endMax), names: ovl.map((r) => r.guestName) });
+    }
+    return map;
+  }, [hallTables, rows, viewMin]);
+
+  const busyCount = useMemo(
+    () => hallTables.filter((t) => occByTable.get(t.id)?.busy).length,
+    [hallTables, occByTable],
+  );
+
   const renderCard = (r: Reservation) => (
     <div className="resv-card" key={r.id}>
       <div className="resv-head">
@@ -202,7 +260,7 @@ export default function Reservations() {
         <div className="rm-row">
           <IconReservations />
           <span>
-            <b>{fmtDate(r.date)}</b> · <b>{r.time}</b>
+            <b>{fmtDate(r.date)}</b> · <b>{r.time}–{r.endTime}</b>
           </span>
         </div>
         <div className="rm-row">
@@ -311,6 +369,73 @@ export default function Reservations() {
         </button>
       </div>
 
+      {/* ---------- time-view: занятость столов бронями на выбранный момент ---------- */}
+      {tables.length > 0 && (
+        <div className="resv-timeview" style={{ marginTop: 16 }}>
+          <div className="resv-time-input">
+            <label htmlFor="resv-view-time">Момент</label>
+            <input
+              id="resv-view-time"
+              type="time"
+              step={900}
+              value={viewTime}
+              onChange={(e) => setViewTime(e.target.value || "20:00")}
+            />
+            <input
+              type="range"
+              min={0}
+              max={1425}
+              step={15}
+              value={viewMin}
+              onChange={(e) => setViewTime(fmtMin(Number(e.target.value)))}
+              aria-label="Время для схемы зала"
+            />
+            <span className="resv-until">
+              {fmtDate(date)} · {viewTime} · занято {busyCount} из {hallTables.length}
+            </span>
+          </div>
+
+          {hallTables.length === 0 ? (
+            <div className="ts-empty">В этой зоне пока нет столов.</div>
+          ) : (
+            <div className="resv-hall">
+              {hallTables.map((t) => {
+                const occ = occByTable.get(t.id);
+                const busy = !!occ?.busy;
+                return (
+                  <div
+                    key={t.id}
+                    className={`resv-tnode ${busy ? "busy" : "free"}`}
+                    title={
+                      busy
+                        ? `Занят бронью до ${occ?.until}${
+                            occ?.names.length ? ` · ${occ.names.join(", ")}` : ""
+                          }`
+                        : "Свободен на этот момент"
+                    }
+                  >
+                    <span className="rt-num">{t.label}</span>
+                    <span className="rt-seats">{t.seats} мест</span>
+                    {busy && occ?.until && <span className="resv-until">до {occ.until}</span>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="resv-legend">
+            <span className="rl-item">
+              <span className="rl-dot free" />
+              Свободен
+            </span>
+            <span className="rl-item">
+              <span className="rl-dot busy" />
+              Занят бронью
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* ---------- kanban columns by status ---------- */}
       {loading ? (
         <div className="kanban">
@@ -394,7 +519,13 @@ export default function Reservations() {
               type="button"
               className="primary"
               onClick={save}
-              disabled={busy || !editing?.guestName?.trim() || !editing?.date || !editing?.time}
+              disabled={
+                busy ||
+                !editing?.guestName?.trim() ||
+                !editing?.date ||
+                !editing?.time ||
+                !editing?.endTime
+              }
             >
               Сохранить
             </button>
@@ -428,11 +559,29 @@ export default function Reservations() {
               />
             </div>
             <div className="field">
-              <label>Время</label>
+              <label>Время с</label>
               <input
                 type="time"
                 value={editing.time ?? ""}
-                onChange={(e) => setEditing((s) => ({ ...s, time: e.target.value }))}
+                onChange={(e) => {
+                  const t = e.target.value;
+                  setEditing((s) => {
+                    if (!s) return s;
+                    // Держим конец брони позже начала: если он пуст или ≤ нового
+                    // начала — сдвигаем на +2ч.
+                    const cur = s.endTime;
+                    const bump = t && (!cur || toMin(cur) <= toMin(t));
+                    return { ...s, time: t, endTime: bump ? fmtMin(toMin(t) + 120) : cur };
+                  });
+                }}
+              />
+            </div>
+            <div className="field">
+              <label>Время до</label>
+              <input
+                type="time"
+                value={editing.endTime ?? ""}
+                onChange={(e) => setEditing((s) => ({ ...s, endTime: e.target.value }))}
               />
             </div>
             <div className="field">

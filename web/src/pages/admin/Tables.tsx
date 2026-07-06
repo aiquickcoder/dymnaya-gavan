@@ -5,7 +5,7 @@ import Modal from "../../components/admin/Modal";
 import FloorMap from "../../components/admin/FloorMap";
 import QrModal from "../../components/admin/QrModal";
 import { useRequireStaff } from "../../lib/guards";
-import type { EmployeeFull, MenuRecipeView, Order, TableView } from "../../types";
+import type { MenuRecipeView, Order, TableView } from "../../types";
 
 const SHAPES: { value: TableView["shape"]; label: string }[] = [
   { value: "round", label: "Круглый" },
@@ -18,11 +18,11 @@ const money = (n: number | null | undefined) => `${(n ?? 0).toLocaleString("ru-R
 export default function Tables() {
   const session = useRequireStaff();
   const rid = session?.restaurantId;
+  const empId = session?.employeeId; // автор миксов = текущая сессия (мастера не выбираем)
 
   const [tables, setTables] = useState<TableView[]>([]);
   const [zones, setZones] = useState<{ id: string; name: string }[]>([]);
   const [menu, setMenu] = useState<MenuRecipeView[]>([]);
-  const [employees, setEmployees] = useState<EmployeeFull[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -39,13 +39,11 @@ export default function Tables() {
   const [qrOpen, setQrOpen] = useState(false);
 
   const [mixMenuId, setMixMenuId] = useState("");
-  const [mixEmpId, setMixEmpId] = useState("");
+  const [mixMode, setMixMode] = useState<"menu" | "custom">("menu");
+  const [customMix, setCustomMix] = useState("");
 
-  // ---- authors for the add-mix picker: masters on shift, else any active ----
-  const authorOptions = useMemo(() => {
-    const onShift = employees.filter((e) => e.status === "active" && e.onShift);
-    return onShift.length ? onShift : employees.filter((e) => e.status === "active");
-  }, [employees]);
+  // Только кальянные позиции доступны для «добавить микс» (еда/бар — kind:"kitchen").
+  const hookahMenu = useMemo(() => menu.filter((m) => m.kind !== "kitchen"), [menu]);
 
   const selected = useMemo(
     () => tables.find((t) => t.id === selectedId) ?? null,
@@ -68,17 +66,15 @@ export default function Tables() {
       setLoading(true);
       setError("");
       try {
-        const [ts, zs, mn, emps] = await Promise.all([
+        const [ts, zs, mn] = await Promise.all([
           api.adminTables(rid),
           api.adminZones(rid),
           api.adminMenu(rid),
-          api.adminEmployees(rid),
         ]);
         if (!alive) return;
         setTables(ts);
         setZones(zs);
         setMenu(mn);
-        setEmployees(emps);
       } catch (e) {
         if (alive) setError(e instanceof ApiError ? e.message : String(e));
       } finally {
@@ -90,13 +86,12 @@ export default function Tables() {
     };
   }, [rid]);
 
-  // sensible defaults for the add-mix selects once data lands
+  // sensible default for the add-mix select once data lands
   useEffect(() => {
-    if (!mixMenuId && menu.length) setMixMenuId(menu[0].id);
-  }, [menu, mixMenuId]);
-  useEffect(() => {
-    if (!mixEmpId && authorOptions.length) setMixEmpId(authorOptions[0].id);
-  }, [authorOptions, mixEmpId]);
+    if (hookahMenu.length && !hookahMenu.some((m) => m.id === mixMenuId)) {
+      setMixMenuId(hookahMenu[0].id);
+    }
+  }, [hookahMenu, mixMenuId]);
 
   // ---------- keep the selected table's live order in sync ----------
   useEffect(() => {
@@ -186,10 +181,21 @@ export default function Tables() {
   }
 
   function addMix() {
-    if (!selected || !mixMenuId || !mixEmpId) return;
+    if (!selected || !mixMenuId || !empId) return;
     const tableId = selected.id;
     void run(async () => {
-      await api.adminTableAddMix(tableId, mixMenuId, mixEmpId);
+      await api.adminTableAddMix(tableId, mixMenuId, empId);
+      await refresh();
+    });
+  }
+
+  function addCustomMix() {
+    const name = customMix.trim();
+    if (!selected || !name || !empId) return;
+    const tableId = selected.id;
+    void run(async () => {
+      await api.adminTableAddCustomMix(tableId, name, empId);
+      setCustomMix("");
       await refresh();
     });
   }
@@ -384,43 +390,95 @@ export default function Tables() {
               <div className="admin-sub">Стол свободен — добавьте микс, чтобы открыть заказ.</div>
             )}
 
-            {/* ---- add a mix to this table's order ---- */}
+            {/* ---- add a mix to this table's order (author = current session) ---- */}
             <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-              <div className="admin-sub" style={{ marginBottom: 8, fontWeight: 600 }}>
-                Добавить микс
-              </div>
-              <div className="form-grid">
-                <div className="field">
-                  <label>Позиция меню</label>
-                  <select value={mixMenuId} onChange={(e) => setMixMenuId(e.target.value)}>
-                    {menu.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} · {money(m.price)}
-                        {m.available === false ? " · скрыт" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Мастер</label>
-                  <select value={mixEmpId} onChange={(e) => setMixEmpId(e.target.value)}>
-                    {authorOptions.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.shortName} · {e.position}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="sm primary"
-                onClick={addMix}
-                disabled={busy || !mixMenuId || !mixEmpId}
-                style={{ marginTop: 10 }}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 8,
+                  marginBottom: 8,
+                  flexWrap: "wrap",
+                }}
               >
-                Добавить микс
-              </button>
+                <span className="admin-sub" style={{ fontWeight: 600 }}>
+                  Добавить микс
+                </span>
+                <div className="seg" role="group" aria-label="Способ добавления микса">
+                  <button
+                    type="button"
+                    className={mixMode === "menu" ? "on" : ""}
+                    aria-pressed={mixMode === "menu"}
+                    onClick={() => setMixMode("menu")}
+                  >
+                    Из меню
+                  </button>
+                  <button
+                    type="button"
+                    className={mixMode === "custom" ? "on" : ""}
+                    aria-pressed={mixMode === "custom"}
+                    onClick={() => setMixMode("custom")}
+                  >
+                    Свой микс
+                  </button>
+                </div>
+              </div>
+
+              {mixMode === "menu" ? (
+                <>
+                  <div className="field">
+                    <label>Позиция меню</label>
+                    <select value={mixMenuId} onChange={(e) => setMixMenuId(e.target.value)}>
+                      {hookahMenu.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} · {money(m.price)}
+                          {m.available === false ? " · скрыт" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    className="sm primary"
+                    onClick={addMix}
+                    disabled={busy || !mixMenuId || !empId}
+                    style={{ marginTop: 10 }}
+                  >
+                    Добавить микс
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="field">
+                    <label>Название микса</label>
+                    <input
+                      value={customMix}
+                      onChange={(e) => setCustomMix(e.target.value)}
+                      placeholder="Напр. Северное сияние"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addCustomMix();
+                        }
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="sm primary"
+                    onClick={addCustomMix}
+                    disabled={busy || !customMix.trim() || !empId}
+                    style={{ marginTop: 10 }}
+                  >
+                    Добавить свой микс
+                  </button>
+                </>
+              )}
+
+              <div className="admin-sub" style={{ marginTop: 8, fontSize: 12 }}>
+                Автор: {session?.employeeName ?? "—"}
+              </div>
             </div>
           </>
         )}

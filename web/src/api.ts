@@ -19,7 +19,9 @@ import type {
   Reservation,
   ReservationStatus,
   Restaurant,
+  ScheduleRow,
   ShiftMaster,
+  TableState,
   TableView,
   User,
   Visit,
@@ -149,16 +151,25 @@ const realApi = {
   adminDeleteTable: (_id: string): Promise<void> => notImpl(),
   adminZones: (_restaurantId: string): Promise<Zone[]> => notImpl(),
   adminTableAddMix: (_tableId: string, _menuId: string, _employeeId: string): Promise<void> => notImpl(),
+  adminTableAddCustomMix: (_tableId: string, _name: string, _employeeId: string): Promise<void> => notImpl(),
   adminCloseTable: (_tableId: string): Promise<void> => notImpl(),
+  adminTableStates: (_restaurantId: string): Promise<TableState[]> => notImpl(),
 
-  adminMenu: (_restaurantId: string): Promise<MenuRecipeView[]> => notImpl(),
-  adminUpsertMenu: (_m: Partial<MenuRecipeView> & { restaurantId: string }): Promise<MenuRecipeView> => notImpl(),
-  adminDeleteMenu: (_id: string): Promise<void> => notImpl(),
-  adminReorderMenu: (_ids: string[]): Promise<void> => notImpl(),
+  adminMenu: (restaurantId: string): Promise<MenuRecipeView[]> =>
+    request<MenuRecipeView[]>("POST", "/menu/list-admin", { restaurantId }),
+  adminUpsertMenu: (m: Partial<MenuRecipeView> & { restaurantId: string }): Promise<MenuRecipeView> =>
+    m.id
+      ? request<MenuRecipeView>("PATCH", `/menu/${m.id}`, m)
+      : request<MenuRecipeView>("POST", "/menu", m),
+  adminDeleteMenu: (id: string): Promise<void> => request<void>("DELETE", `/menu/${id}`),
+  adminReorderMenu: (ids: string[]): Promise<void> =>
+    request<void>("POST", "/menu/reorder", { ids }),
 
   adminEmployees: (_restaurantId: string): Promise<EmployeeFull[]> => notImpl(),
   adminUpsertEmployee: (_e: Partial<EmployeeFull> & { restaurantId: string }): Promise<EmployeeFull> => notImpl(),
   adminSetShift: (_restaurantId: string, _employeeIds: string[]): Promise<void> => notImpl(),
+  adminSchedule: (_restaurantId: string, _fromISO: string, _toISO: string): Promise<ScheduleRow[]> => notImpl(),
+  adminSetScheduleDay: (_employeeId: string, _dateISO: string, _on: boolean): Promise<void> => notImpl(),
 
   adminGuests: (_restaurantId: string): Promise<GuestSummary[]> => notImpl(),
   adminGuest: (_id: string): Promise<{ summary: GuestSummary; visits: Visit[] }> => notImpl(),
@@ -175,11 +186,13 @@ const realApi = {
   // calls ("Обращения")
   createCall: (_input: { restaurantId: string; tableId: string; type: CallType }): Promise<Call> => notImpl(),
   adminCalls: (_restaurantId: string): Promise<Call[]> => notImpl(),
+  adminCallsArchive: (_restaurantId: string): Promise<Call[]> => notImpl(),
   adminAckCall: (_id: string): Promise<void> => notImpl(),
   adminDoneCall: (_id: string): Promise<void> => notImpl(),
 
   // kitchen-bar (guest food menu)
-  foodMenu: (_restaurantId: string): Promise<MenuRecipeView[]> => notImpl(),
+  foodMenu: (restaurantId: string): Promise<MenuRecipeView[]> =>
+    request<MenuRecipeView[]>("POST", "/menu/list-food", { restaurantId }),
 };
 
 // In the GitHub Pages / demo build there is no backend — serve seeded mock data.
