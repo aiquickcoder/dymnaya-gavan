@@ -1,13 +1,17 @@
 import { useId } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 export interface BarDatum {
   label: string;
   value: number;
+  /** Опциональная иконка/миниатюра слева от строки (только horizontal). */
+  icon?: ReactNode;
 }
 
 /**
- * Столбчатая диаграмма (inline SVG, адаптив width:100%).
- * horizontal=true — горизонтальные бары (удобно для топов с длинными названиями).
+ * Столбчатая диаграмма.
+ * horizontal=true — горизонтальные HTML-ряды (полные названия до 2 строк + опц. иконка).
+ * horizontal=false — вертикальные SVG-бары (короткие подписи, byDow и т.п.).
  */
 export default function BarChart({
   data,
@@ -29,47 +33,26 @@ export default function BarChart({
   const max = Math.max(...data.map((d) => d.value), 1);
 
   if (horizontal) {
-    const rowH = 30;
-    const gap = 8;
-    const labelW = 96;
-    const valW = 46;
-    const H = data.length * rowH + (data.length - 1) * gap;
-    const W = 360;
-    const trackX = labelW;
-    const trackW = W - labelW - valW;
     return (
-      <div className="chart">
-        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" role="img">
-          <defs>
-            <linearGradient id={`bh-${gid}`} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" style={{ stopColor: "var(--accent)" }} />
-              <stop offset="1" style={{ stopColor: "var(--accent-2)" }} />
-            </linearGradient>
-          </defs>
-          {data.map((d, i) => {
-            const y = i * (rowH + gap);
-            const w = Math.max((d.value / max) * trackW, d.value > 0 ? 3 : 0);
-            return (
-              <g key={i}>
-                <text x={0} y={y + rowH / 2} dominantBaseline="central" fontSize="12" fill="var(--text)">
-                  {clip(d.label, 13)}
-                </text>
-                <rect x={trackX} y={y + 5} width={trackW} height={rowH - 10} rx="5" fill="var(--surface-2)" />
-                <rect
-                  x={trackX}
-                  y={y + 5}
-                  width={w}
-                  height={rowH - 10}
-                  rx="5"
-                  fill={color === "var(--accent)" ? `url(#bh-${gid})` : color}
-                />
-                <text x={W} y={y + rowH / 2} dominantBaseline="central" textAnchor="end" fontSize="12" fill="var(--muted)">
-                  {fmt(d.value)}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+      <div className="bar-rows">
+        {data.map((d, i) => {
+          const pct = Math.max((d.value / max) * 100, d.value > 0 ? 2 : 0);
+          const fillStyle: CSSProperties = { width: `${pct}%` };
+          if (d.value <= 0) fillStyle.minWidth = 0;
+          if (color !== "var(--accent)") fillStyle.background = color;
+          return (
+            <div className="bar-row" key={i}>
+              {d.icon != null && <span className="bar-ico">{d.icon}</span>}
+              <span className="bar-label" title={d.label}>
+                {d.label}
+              </span>
+              <span className="bar-track">
+                <span className="bar-fill" style={fillStyle} />
+              </span>
+              <span className="bar-val">{fmt(d.value)}</span>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -106,7 +89,7 @@ export default function BarChart({
                 rx="4"
                 fill={color === "var(--accent)" ? `url(#bv-${gid})` : color}
               />
-              <text x={cx} y={height - 8} textAnchor="middle" fontSize="11" fill="var(--muted)">
+              <text className="axis-x" x={cx} y={height - 8} textAnchor="middle">
                 {clip(d.label, 6)}
               </text>
             </g>

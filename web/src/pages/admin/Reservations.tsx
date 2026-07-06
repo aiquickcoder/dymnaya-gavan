@@ -34,6 +34,9 @@ const STATUS_FLOW: Record<
   cancelled: [{ to: "new", label: "Вернуть", cls: "sm ghost" }],
 };
 
+// Kanban column order — one column per reservation status.
+const STATUS_COLUMNS: ReservationStatus[] = ["new", "confirmed", "seated", "cancelled"];
+
 function pluralGuests(n: number): string {
   const m10 = n % 10;
   const m100 = n % 100;
@@ -173,6 +176,87 @@ export default function Reservations() {
     [shown],
   );
 
+  // Group the visible reservations into kanban columns keyed by status.
+  const byStatus = useMemo(() => {
+    const g: Record<ReservationStatus, Reservation[]> = {
+      new: [],
+      confirmed: [],
+      seated: [],
+      cancelled: [],
+    };
+    for (const r of shown) g[r.status].push(r);
+    return g;
+  }, [shown]);
+
+  const renderCard = (r: Reservation) => (
+    <div className="resv-card" key={r.id}>
+      <div className="resv-head">
+        <div>
+          <div className="rh-name">{r.guestName}</div>
+          {r.phone && <div className="rh-phone">{r.phone}</div>}
+        </div>
+        <span className={`resv-status ${r.status}`}>{STATUS_LABEL[r.status]}</span>
+      </div>
+
+      <div className="resv-meta">
+        <div className="rm-row">
+          <IconReservations />
+          <span>
+            <b>{fmtDate(r.date)}</b> · <b>{r.time}</b>
+          </span>
+        </div>
+        <div className="rm-row">
+          <IconTables />
+          <span>
+            {r.tableLabel
+              ? `Стол ${r.tableLabel}${r.zone ? ` · ${zoneName(r.zone)}` : ""}`
+              : "Стол не назначен"}
+          </span>
+        </div>
+        <div className="rm-row">
+          <IconGuest />
+          <span>{pluralGuests(r.guests)}</span>
+        </div>
+        {r.note && (
+          <div className="rm-row" style={{ color: "var(--muted)", fontStyle: "italic" }}>
+            <span>«{r.note}»</span>
+          </div>
+        )}
+      </div>
+
+      <div className="resv-actions">
+        {STATUS_FLOW[r.status].map((a) => (
+          <button
+            key={a.to}
+            type="button"
+            className={a.cls}
+            onClick={() => setStatus(r.id, a.to)}
+            disabled={busy}
+          >
+            {a.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="sm ghost"
+          onClick={() => openEdit(r)}
+          disabled={busy}
+        >
+          Изменить
+        </button>
+        <button
+          type="button"
+          className="sm danger"
+          onClick={() => remove(r.id)}
+          disabled={busy}
+          style={{ marginLeft: "auto" }}
+        >
+          Удалить
+        </button>
+      </div>
+    </div>
+  );
+
   if (!session) return null;
 
   return (
@@ -227,14 +311,24 @@ export default function Reservations() {
         </button>
       </div>
 
-      {/* ---------- list ---------- */}
+      {/* ---------- kanban columns by status ---------- */}
       {loading ? (
-        <div className="resv-grid">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div className="resv-card" key={i} aria-hidden>
-              <div className="skeleton" style={{ height: 20, width: "60%", borderRadius: 6 }} />
-              <div className="skeleton" style={{ height: 52, width: "100%", borderRadius: 8 }} />
-              <div className="skeleton" style={{ height: 36, width: "80%", borderRadius: 8 }} />
+        <div className="kanban">
+          {STATUS_COLUMNS.map((s) => (
+            <div className="kanban-col" key={s} aria-hidden>
+              <div className="kc-head">
+                <span className="kc-title">{STATUS_LABEL[s]}</span>
+                <span className="kc-count">·</span>
+              </div>
+              <div className="kc-body">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div className="resv-card" key={i}>
+                    <div className="skeleton" style={{ height: 20, width: "60%", borderRadius: 6 }} />
+                    <div className="skeleton" style={{ height: 52, width: "100%", borderRadius: 8 }} />
+                    <div className="skeleton" style={{ height: 36, width: "80%", borderRadius: 8 }} />
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -247,75 +341,25 @@ export default function Reservations() {
           </div>
         </div>
       ) : (
-        <div className="resv-grid">
-          {shown.map((r) => (
-            <div className="resv-card" key={r.id}>
-              <div className="resv-head">
-                <div>
-                  <div className="rh-name">{r.guestName}</div>
-                  {r.phone && <div className="rh-phone">{r.phone}</div>}
+        <div className="kanban">
+          {STATUS_COLUMNS.map((s) => {
+            const list = byStatus[s];
+            return (
+              <div className="kanban-col" key={s}>
+                <div className="kc-head">
+                  <span className="kc-title">{STATUS_LABEL[s]}</span>
+                  <span className="kc-count">{list.length}</span>
                 </div>
-                <span className={`resv-status ${r.status}`}>{STATUS_LABEL[r.status]}</span>
+                <div className="kc-body">
+                  {list.length === 0 ? (
+                    <div className="kc-empty">Нет броней</div>
+                  ) : (
+                    list.map(renderCard)
+                  )}
+                </div>
               </div>
-
-              <div className="resv-meta">
-                <div className="rm-row">
-                  <IconReservations />
-                  <span>
-                    <b>{fmtDate(r.date)}</b> · <b>{r.time}</b>
-                  </span>
-                </div>
-                <div className="rm-row">
-                  <IconTables />
-                  <span>
-                    {r.tableLabel
-                      ? `Стол ${r.tableLabel}${r.zone ? ` · ${zoneName(r.zone)}` : ""}`
-                      : "Стол не назначен"}
-                  </span>
-                </div>
-                <div className="rm-row">
-                  <IconGuest />
-                  <span>{pluralGuests(r.guests)}</span>
-                </div>
-                {r.note && (
-                  <div className="rm-row" style={{ color: "var(--muted)", fontStyle: "italic" }}>
-                    <span>«{r.note}»</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="resv-actions">
-                {STATUS_FLOW[r.status].map((a) => (
-                  <button
-                    key={a.to}
-                    type="button"
-                    className={a.cls}
-                    onClick={() => setStatus(r.id, a.to)}
-                    disabled={busy}
-                  >
-                    {a.label}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className="sm ghost"
-                  onClick={() => openEdit(r)}
-                  disabled={busy}
-                >
-                  Изменить
-                </button>
-                <button
-                  type="button"
-                  className="sm danger"
-                  onClick={() => remove(r.id)}
-                  disabled={busy}
-                  style={{ marginLeft: "auto" }}
-                >
-                  Удалить
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

@@ -26,6 +26,56 @@ function fmtDate(s?: string | null): string {
 
 const guestTitle = (g: GuestSummary): string => g.name?.trim() || "Без имени";
 
+/* ---------- segments ---------- */
+
+type Segment = "all" | "regular" | "new" | "lapsed" | "vip";
+
+const DAY_MS = 86_400_000;
+const LAPSED_DAYS = 30; // «давно не были» — последний визит > 30 дней назад
+const NEW_DAYS = 30; // «новых» — заведён < 30 дней назад
+const VIP_LTV = 20_000; // порог VIP по LTV (или топ-квартиль)
+
+const SEGMENTS: { key: Segment; label: string }[] = [
+  { key: "all", label: "Все" },
+  { key: "regular", label: "Постоянные" },
+  { key: "new", label: "Новички" },
+  { key: "lapsed", label: "Давно не были" },
+  { key: "vip", label: "VIP" },
+];
+
+function daysSince(iso?: string | null): number | null {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  return Number.isNaN(t) ? null : (Date.now() - t) / DAY_MS;
+}
+
+function matchesSegment(g: GuestSummary, seg: Segment, vipThreshold: number): boolean {
+  switch (seg) {
+    case "all":
+      return true;
+    case "regular":
+      return g.visits >= 5;
+    case "new":
+      return g.visits <= 2;
+    case "lapsed": {
+      const d = daysSince(g.lastVisit);
+      return d != null && d > LAPSED_DAYS;
+    }
+    case "vip":
+      return g.ltv >= vipThreshold;
+  }
+}
+
+/** Ведущий сегмент гостя для бейджа в строке (приоритет: VIP → постоянный → давно не был → новичок). */
+function rowBadge(g: GuestSummary, vipThreshold: number): { cls: string; label: string } | null {
+  if (g.ltv >= vipThreshold) return { cls: "vip", label: "VIP" };
+  if (g.visits >= 5) return { cls: "regular", label: "Постоянный" };
+  const d = daysSince(g.lastVisit);
+  if (d != null && d > LAPSED_DAYS) return { cls: "lapsed", label: "Давно не был" };
+  if (g.visits <= 2) return { cls: "new", label: "Новичок" };
+  return null;
+}
+
 function ScoreCell({ score }: { score?: number | null }) {
   if (score == null) return <span className="admin-sub">—</span>;
   return (
@@ -62,6 +112,7 @@ export default function Clients() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
+  const [segment, setSegment] = useState<Segment>("all");
 
   // drawer / guest card
   const [selected, setSelected] = useState<GuestSummary | null>(null);
@@ -113,30 +164,68 @@ export default function Clients() {
     };
   }, [selected?.id]);
 
+  // VIP-порог: LTV в топ-квартиле ИЛИ >= 20 000 ₽ (берём меньший из двух).
+  const vipThreshold = useMemo(() => {
+    if (guests.length === 0) return VIP_LTV;
+    const sorted = guests.map((g) => g.ltv).sort((a, b) => a - b);
+    const q75 = sorted[Math.floor(sorted.length * 0.75)] ?? sorted[sorted.length - 1];
+    return Math.min(VIP_LTV, q75);
+  }, [guests]);
+
+  // KPI считаем из полного списка adminGuests (не зависят от сегмента/поиска).
+  const kpis = useMemo(() => {
+    const n = guests.length;
+    if (n === 0) return { total: 0, avgLtv: 0, avgVisits: 0, newC: 0 };
+    const totalLtv = guests.reduce((s, g) => s + g.ltv, 0);
+    const totalVisits = guests.reduce((s, g) => s + g.visits, 0);
+    const newC = guests.filter((g) => {
+      const d = daysSince(g.createdAt);
+      return d != null && d <= NEW_DAYS;
+    }).length;
+    return { total: n, avgLtv: totalLtv / n, avgVisits: totalVisits / n, newC };
+  }, [guests]);
+
+  // Счётчики по сегментам (для чипов) — по полному списку.
+  const segCounts = useMemo(() => {
+    const acc: Record<Segment, number> = { all: 0, regular: 0, new: 0, lapsed: 0, vip: 0 };
+    for (const g of guests) {
+      for (const s of SEGMENTS) if (matchesSegment(g, s.key, vipThreshold)) acc[s.key]++;
+    }
+    return acc;
+  }, [guests, vipThreshold]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return guests;
-    return guests.filter(
-      (g) =>
+    return guests.filter((g) => {
+      if (!matchesSegment(g, segment, vipThreshold)) return false;
+      if (!q) return true;
+      return (
         (g.name ?? "").toLowerCase().includes(q) ||
         g.phoneNumber.toLowerCase().includes(q) ||
-        (g.favouriteMix ?? "").toLowerCase().includes(q),
-    );
-  }, [guests, query]);
+        (g.favouriteMix ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [guests, query, segment, vipThreshold]);
 
   const columns: Column<GuestSummary>[] = [
     {
       key: "name",
       title: "Гость",
       sortable: true,
-      render: (g) => (
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <span style={{ fontWeight: 600 }}>{guestTitle(g)}</span>
-          <span className="admin-sub" style={{ fontSize: 12.5 }}>
-            {g.phoneNumber}
-          </span>
-        </div>
-      ),
+      render: (g) => {
+        const badge = rowBadge(g, vipThreshold);
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontWeight: 600 }}>{guestTitle(g)}</span>
+              {badge && <span className={`seg-badge ${badge.cls}`}>{badge.label}</span>}
+            </span>
+            <span className="admin-sub" style={{ fontSize: 12.5 }}>
+              {g.phoneNumber}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: "visits",
@@ -211,6 +300,45 @@ export default function Clients() {
         База гостей заведения — визиты, любимые миксы и пожизненная ценность (LTV).
       </p>
 
+      {!loading && !error && guests.length > 0 && (
+        <>
+          <div className="guest-kpis">
+            <div className="guest-kpi">
+              <span className="gk-val">{nf.format(kpis.total)}</span>
+              <span className="gk-lbl">Всего гостей</span>
+            </div>
+            <div className="guest-kpi">
+              <span className="gk-val">{money(kpis.avgLtv)}</span>
+              <span className="gk-lbl">Средний LTV</span>
+            </div>
+            <div className="guest-kpi">
+              <span className="gk-val">{kpis.avgVisits.toFixed(1)}</span>
+              <span className="gk-lbl">Ср. визитов</span>
+            </div>
+            <div className="guest-kpi">
+              <span className="gk-val">{nf.format(kpis.newC)}</span>
+              <span className="gk-lbl">Новых за 30 дней</span>
+            </div>
+          </div>
+
+          <div className="guest-seg" role="tablist" aria-label="Сегменты гостей">
+            {SEGMENTS.map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                role="tab"
+                aria-selected={segment === s.key}
+                className={"seg-chip" + (segment === s.key ? " on" : "")}
+                onClick={() => setSegment(s.key)}
+              >
+                {s.label}
+                <span className="sc-count">{segCounts[s.key]}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       <div className="toolbar">
         <div className="search icon grow">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
@@ -243,7 +371,7 @@ export default function Clients() {
           rows={filtered}
           rowKey={(g) => g.id}
           onRowClick={(g) => setSelected(g)}
-          empty={query ? "Гостей не найдено" : "Гостей пока нет"}
+          empty={query || segment !== "all" ? "Гостей не найдено" : "Гостей пока нет"}
         />
       )}
 

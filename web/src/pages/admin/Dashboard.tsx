@@ -17,6 +17,7 @@ import {
   IconStar,
 } from "../../components/admin/icons";
 import PeriodPicker, { DEFAULT_PERIOD, periodLabel, type PeriodRange } from "../../components/admin/PeriodPicker";
+import { mixImageUrl } from "../../lib/mixImages";
 import type { AnalyticsSummary, TableView, Zone } from "../../types";
 
 /** «385 488 ₽» — целые рубли с разделителями разрядов. */
@@ -156,7 +157,7 @@ export default function Dashboard() {
               <span className="pt">Выручка</span>
               <span className="admin-sub">{periodLabel(period)}</span>
             </div>
-            <LineChart data={analytics.revenue} area height={240} />
+            <LineChart data={analytics.revenue} area height={240} formatValue={money} />
           </div>
 
           {/* Топ миксов + загрузка по часам */}
@@ -166,7 +167,14 @@ export default function Dashboard() {
                 <span className="pt">Топ миксов</span>
               </div>
               <BarChart
-                data={analytics.topMixes.slice(0, 6).map((t) => ({ label: t.name, value: t.value }))}
+                data={analytics.topMixes.slice(0, 6).map((t) => {
+                  const src = mixImageUrl(t.name);
+                  return {
+                    label: t.name,
+                    value: t.value,
+                    icon: src ? <img className="bar-thumb" src={src} alt="" loading="lazy" /> : undefined,
+                  };
+                })}
                 horizontal
               />
             </div>

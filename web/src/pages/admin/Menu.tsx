@@ -196,7 +196,7 @@ export default function Menu() {
       key: "price",
       title: "Цена",
       align: "right",
-      render: (m) => <span>{m.price.toLocaleString("ru")} ₽</span>,
+      render: (m) => <span className="nowrap">{m.price.toLocaleString("ru")} ₽</span>,
     },
     {
       key: "badge",

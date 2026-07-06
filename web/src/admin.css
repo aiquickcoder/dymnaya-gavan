@@ -522,6 +522,89 @@
 /* оси/подписи для inline-SVG графиков */
 .chart-axis { stroke: var(--border); stroke-width: 1; }
 .axis-label { font-size: 10.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+/* подписи оси X (даты LineChart) — мелкие, muted, обязательно sans, НЕ serif */
+.axis-x {
+  font-size: 11px;
+  fill: var(--muted);
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+}
+
+/* --- hover-тултип графика (LineChart) --- */
+/* .chart-wrap оборачивает .chart для абсолютного позиционирования плашки */
+.chart-wrap { position: relative; }
+.chart-tip {
+  position: absolute;
+  z-index: 6;
+  transform: translate(-50%, calc(-100% - 10px));
+  padding: 6px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), var(--glow);
+  pointer-events: none;
+  white-space: nowrap;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.chart-tip .ct-label { display: block; font-size: 11px; color: var(--muted); }
+.chart-tip .ct-val {
+  display: block; margin-top: 1px;
+  font-size: 14.5px; font-weight: 600; color: var(--text);
+}
+
+/* --- горизонтальные бар-ряды (BarChart: топ миксов) --- */
+/* HTML-строки вместо обрезанного SVG-текста: [icon?] label(2 строки) bar value */
+.bar-rows { display: flex; flex-direction: column; gap: 10px; }
+.bar-row {
+  display: flex; align-items: center; gap: 10px;
+  min-width: 0;
+}
+.bar-ico {
+  display: grid; place-items: center;
+  width: 26px; height: 26px; flex-shrink: 0;
+}
+.bar-thumb {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  display: block;
+  background: var(--surface-2);
+}
+.bar-label {
+  flex: 0 0 34%;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px; line-height: 1.15;
+  color: var(--text);
+  word-break: break-word;
+}
+.bar-track {
+  position: relative;
+  flex: 1 1 auto; min-width: 0;
+  height: 12px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  overflow: hidden;
+}
+.bar-fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  min-width: 3px; border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 0.4s ease;
+}
+.bar-val {
+  flex: 0 0 auto;
+  min-width: 46px;
+  text-align: right;
+  font-size: 12.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
 /* адаптивная сетка панелей аналитики */
 .analytics-grid {
@@ -610,9 +693,15 @@
   grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
   gap: 10px;
 }
+/* Все плитки одной высоты/пропорции (aspect 4/3, width:100%). Фото-плитки —
+   картинка cover + подпись .it-cap нижним оверлеем; .none/.upload — без
+   картинки, подпись строго по центру. Оба варианта разметки (сырой текст в
+   MenuEditor и <span class="it-cap"> в Staff) выглядят одинаково. */
 .img-thumb {
   position: relative;
   aspect-ratio: 4 / 3;
+  width: 100%;
+  margin: 0;
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid var(--border);
@@ -620,14 +709,17 @@
   cursor: pointer;
   padding: 0;
   display: flex; align-items: flex-end;
+  text-align: left;
   transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s;
 }
 .img-thumb:hover { border-color: var(--accent); transform: translateY(-1px); }
+/* подпись фото-плитки — нижний оверлей на градиенте */
 .img-thumb .it-cap {
   width: 100%;
-  padding: 4px 7px;
+  padding: 5px 7px 4px;
   font-size: 10.5px; line-height: 1.2;
   color: var(--text); text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.72));
 }
 .img-thumb.selected {
@@ -641,17 +733,27 @@
   display: grid; place-items: center;
   background: var(--accent); color: var(--ink);
   font-size: 12px; font-weight: 700;
+  z-index: 1;
 }
-.img-thumb.none {
-  background: var(--surface-2);
-  display: grid; place-items: center;
-  color: var(--muted); font-size: 12px; text-align: center;
-}
+/* плитки без картинки (без фото / загрузить) — контент строго по центру */
+.img-thumb.none,
 .img-thumb.upload {
-  background: var(--surface-2);
-  display: grid; place-items: center;
-  color: var(--accent-2); font-size: 12px; text-align: center;
-  border-style: dashed;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 8px;
+  font-size: 12px; line-height: 1.25;
+}
+.img-thumb.none { background: var(--surface-2); color: var(--muted); }
+.img-thumb.upload { background: var(--surface-2); color: var(--accent-2); border-style: dashed; }
+/* внутри .none/.upload подпись .it-cap теряет оверлей-градиент и центрируется */
+.img-thumb.none .it-cap,
+.img-thumb.upload .it-cap {
+  width: auto;
+  padding: 0;
+  font-size: inherit; line-height: inherit;
+  color: inherit; text-align: center;
+  white-space: normal; overflow: visible; text-overflow: clip;
+  background: none;
 }
 
 /* выбор бейджа чипами-пресетами (превью настоящего .badge внутри) */
@@ -767,6 +869,61 @@
   padding: 7px 12px; font-size: 12.5px; min-height: 36px; border-radius: 9px;
 }
 
+/* --- канбан-колонки по статусам (Новая/Подтверждена/За столом/Отменена) --- */
+/* горизонтальный ряд колонок со скроллом; в .kc-body переиспользуется .resv-card */
+.kanban {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+.kanban-col {
+  flex: 1 0 300px;
+  min-width: 300px;
+  display: flex; flex-direction: column;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.kanban-col .kc-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 2px 4px 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.kanban-col .kc-title {
+  font-family: var(--display);
+  text-transform: var(--display-tt);
+  letter-spacing: var(--display-ls);
+  font-weight: var(--display-fw);
+  font-size: 15px; line-height: 1.1;
+  color: var(--text);
+}
+.kc-count {
+  display: inline-grid; place-items: center;
+  min-width: 22px; height: 20px; padding: 0 7px;
+  border-radius: 999px;
+  background: var(--gold-soft);
+  border: 1px solid var(--border);
+  color: var(--accent-2);
+  font-size: 11.5px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.kanban-col .kc-body {
+  display: flex; flex-direction: column; gap: 10px;
+  min-height: 40px;
+}
+.kanban-col .kc-empty {
+  color: var(--muted); font-size: 12.5px; text-align: center;
+  padding: 18px 8px;
+}
+/* карточки внутри колонки — full-width (переопределяем возможные сеточные отступы) */
+.kanban-col .resv-card { width: 100%; }
+
 /* ================================================= 8e. ВЫЗОВЫ (calls) */
 .calls-list { display: flex; flex-direction: column; gap: 10px; }
 .call-row {
@@ -859,6 +1016,69 @@
   font-weight: 600; font-size: 14px; color: var(--text);
 }
 .toast .toast-sub { font-size: 12.5px; color: var(--muted); }
+
+/* ================================================= 8g. ГОСТИ (clients) */
+/* KPI-ряд над таблицей гостей: всего / ср. LTV / ср. визитов / новых */
+.guest-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.guest-kpi {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.guest-kpi .gk-val {
+  font-family: var(--display);
+  font-weight: var(--display-fw);
+  font-size: 24px; line-height: 1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.guest-kpi .gk-lbl {
+  color: var(--muted);
+  font-size: 11.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+
+/* сегмент-фильтры: Все / Постоянные / Новички / Давно не были / VIP */
+.guest-seg { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.seg-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 14px; min-height: 36px;
+  border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--muted);
+  font-size: 13.5px; font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.seg-chip:hover { border-color: var(--accent); color: var(--text); }
+.seg-chip.on { color: var(--accent); border-color: var(--accent); background: var(--gold-soft); }
+.seg-chip .sc-count { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.seg-chip:hover .sc-count { color: var(--text); }
+.seg-chip.on .sc-count { color: var(--accent); }
+
+/* мелкий бейдж-сегмент в строке таблицы гостей */
+.seg-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.seg-badge.vip { color: var(--accent); border-color: var(--accent); background: var(--gold-soft); }
+.seg-badge.regular { color: var(--success); border-color: rgba(123, 185, 138, 0.42); background: rgba(123, 185, 138, 0.1); }
+.seg-badge.new { color: var(--accent-2); border-color: var(--accent); background: var(--gold-soft); }
+.seg-badge.lapsed { color: var(--danger); border-color: rgba(224, 104, 95, 0.4); background: rgba(224, 104, 95, 0.1); }
+
+/* ================================================= 8h. УТИЛИТЫ */
+.nowrap { white-space: nowrap; }
 
 /* ================================================= 9. АДАПТИВ (< 900px) */
 @media (max-width: 900px) {

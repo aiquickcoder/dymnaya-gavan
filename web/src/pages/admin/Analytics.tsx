@@ -17,6 +17,7 @@ import {
   IconStar,
 } from "../../components/admin/icons";
 import PeriodPicker, { DEFAULT_PERIOD, type PeriodRange } from "../../components/admin/PeriodPicker";
+import { mixImageUrl } from "../../lib/mixImages";
 import type { AnalyticsSummary } from "../../types";
 
 /** «385 488 ₽» — целые рубли с разделителями разрядов. */
@@ -135,7 +136,7 @@ export default function Analytics() {
               <span className="pt">Выручка и средний чек</span>
               <span className="admin-sub">за {data?.days ?? 0} дн. · {money(k.revenue)}</span>
             </div>
-            <LineChart data={data.revenue} area height={240} />
+            <LineChart data={data.revenue} area height={240} formatValue={money} />
           </div>
 
           <div className="analytics-grid">
@@ -150,7 +151,7 @@ export default function Analytics() {
                 <span className="pt">Заказы по дням</span>
                 <span className="admin-sub">{ordersPerDay} / день</span>
               </div>
-              <LineChart data={data.orders} height={200} color="var(--accent-2)" />
+              <LineChart data={data.orders} height={200} color="var(--accent-2)" formatValue={num} />
             </div>
           </div>
 
@@ -162,7 +163,14 @@ export default function Analytics() {
                 <span className="admin-sub">заказов</span>
               </div>
               <BarChart
-                data={data.topMixes.slice(0, 7).map((t) => ({ label: t.name, value: t.value }))}
+                data={data.topMixes.slice(0, 7).map((t) => {
+                  const src = mixImageUrl(t.name);
+                  return {
+                    label: t.name,
+                    value: t.value,
+                    icon: src ? <img className="bar-thumb" src={src} alt="" loading="lazy" /> : undefined,
+                  };
+                })}
                 horizontal
                 formatValue={num}
               />
@@ -200,6 +208,7 @@ export default function Analytics() {
                     height={200}
                     color="var(--accent-2)"
                     area
+                    formatValue={(v) => v.toFixed(1)}
                   />
                 </div>
               </div>
