@@ -80,10 +80,10 @@ const restaurant: Restaurant = { id: DEMO_RID, name: "Дымная Гавань"
 
 // ---------- employees ----------
 let employees: EmployeeFull[] = [
-  { id: "m-timur", firstName: "Тимур", lastName: "Азизов", middleName: "Русланович", shortName: "Тимур", position: "Старший мастер", phone: "+7 903 555-10-01", photoSlug: "timur", rating: 4.9, ratingCount: 128, onShift: true, status: "active" },
-  { id: "m-alina", firstName: "Алина", lastName: "Ковалёва", middleName: "Игоревна", shortName: "Алина", position: "Кальянный мастер", phone: "+7 903 555-10-02", photoSlug: "alina", rating: 4.6, ratingCount: 96, onShift: true, status: "active" },
-  { id: "m-din", firstName: "Дин", lastName: "Соколов", middleName: "Артёмович", shortName: "Дин", position: "Стажёр", phone: "+7 903 555-10-03", photoSlug: "din", rating: 4.4, ratingCount: 41, onShift: true, status: "active" },
-  { id: "m-vera", firstName: "Вера", lastName: "Лапина", middleName: "Сергеевна", shortName: "Вера", position: "Официант", phone: "+7 903 555-10-04", rating: 4.7, ratingCount: 33, onShift: false, status: "active" },
+  { id: "m-timur", firstName: "Тимур", lastName: "Азизов", middleName: "Русланович", shortName: "Тимур", position: "Старший мастер", phone: "+7 903 555-10-01", photoSlug: "timur", tipUrl: "https://netmonet.co/p/timur", rating: 4.9, ratingCount: 128, onShift: true, status: "active" },
+  { id: "m-alina", firstName: "Алина", lastName: "Ковалёва", middleName: "Игоревна", shortName: "Алина", position: "Кальянный мастер", phone: "+7 903 555-10-02", photoSlug: "alina", tipUrl: "https://netmonet.co/p/alina", rating: 4.6, ratingCount: 96, onShift: true, status: "active" },
+  { id: "m-din", firstName: "Дин", lastName: "Соколов", middleName: "Артёмович", shortName: "Дин", position: "Стажёр", phone: "+7 903 555-10-03", photoSlug: "din", tipUrl: "https://netmonet.co/p/din", rating: 4.4, ratingCount: 41, onShift: true, status: "active" },
+  { id: "m-vera", firstName: "Вера", lastName: "Лапина", middleName: "Сергеевна", shortName: "Вера", position: "Официант", phone: "+7 903 555-10-04", tipUrl: "https://netmonet.co/p/vera", rating: 4.7, ratingCount: 33, onShift: false, status: "active" },
   { id: "m-oleg", firstName: "Олег", lastName: "Гринёв", middleName: "Петрович", shortName: "Олег", position: "Менеджер", phone: "+7 903 555-10-05", rating: 0, ratingCount: 0, onShift: false, status: "inactive" },
 ];
 const MASTER_IDS = ["m-timur", "m-alina", "m-din"];
@@ -916,13 +916,16 @@ export const demoStore = {
   adminEmployees(_rid: string): EmployeeFull[] {
     return employees.map((e) => ({ ...e }));
   },
+  employeeTipUrl(employeeId: string): string | null {
+    return empById(employeeId)?.tipUrl ?? null;
+  },
   adminUpsertEmployee(e: Partial<EmployeeFull> & { restaurantId: string }): EmployeeFull {
     if (e.id) {
       const ex = empById(e.id);
       if (ex) {
         const patch: Partial<EmployeeFull> = {
           firstName: e.firstName, lastName: e.lastName, middleName: e.middleName,
-          shortName: e.shortName, position: e.position, phone: e.phone, photoSlug: e.photoSlug,
+          shortName: e.shortName, position: e.position, phone: e.phone, photoSlug: e.photoSlug, tipUrl: e.tipUrl,
           rating: e.rating, ratingCount: e.ratingCount, onShift: e.onShift, status: e.status,
         };
         (Object.keys(patch) as (keyof EmployeeFull)[]).forEach((k) => {
@@ -941,6 +944,7 @@ export const demoStore = {
       position: e.position ?? "Сотрудник",
       phone: e.phone ?? null,
       photoSlug: e.photoSlug ?? null,
+      tipUrl: e.tipUrl ?? null,
       rating: e.rating ?? 0,
       ratingCount: e.ratingCount ?? 0,
       onShift: e.onShift ?? false,

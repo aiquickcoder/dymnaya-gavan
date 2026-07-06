@@ -84,8 +84,9 @@ type FormState = {
   position: string;
   phone: string;
   photoSlug: string;
+  tipUrl: string;
 };
-const BLANK: FormState = { lastName: "", firstName: "", middleName: "", shortName: "", position: "", phone: "", photoSlug: "" };
+const BLANK: FormState = { lastName: "", firstName: "", middleName: "", shortName: "", position: "", phone: "", photoSlug: "", tipUrl: "" };
 
 export default function Staff() {
   const session = useRequireStaff();
@@ -298,6 +299,7 @@ export default function Staff() {
             position: emp.position,
             phone: emp.phone ?? "",
             photoSlug: emp.photoSlug ?? "",
+            tipUrl: emp.tipUrl ?? "",
           }
         : BLANK,
     );
@@ -322,6 +324,7 @@ export default function Staff() {
         position: form.position.trim() || "Сотрудник",
         phone: form.phone.trim() || null,
         photoSlug: form.photoSlug || null,
+        tipUrl: form.tipUrl.trim() || null,
       });
       setEditorOpen(false);
       await refresh();
@@ -616,6 +619,15 @@ export default function Staff() {
           <div className="field">
             <label>Телефон</label>
             <input value={form.phone} onChange={(e) => upd({ phone: e.target.value })} placeholder="+7 903 555-10-00" />
+          </div>
+          <div className="field" style={{ gridColumn: "1 / -1" }}>
+            <label>Чаевые — ссылка Нетмонет</label>
+            <input
+              type="url"
+              value={form.tipUrl}
+              onChange={(e) => upd({ tipUrl: e.target.value })}
+              placeholder="https://netmonet.co/p/..."
+            />
           </div>
         </div>
 

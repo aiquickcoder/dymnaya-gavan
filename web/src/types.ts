@@ -186,6 +186,7 @@ export interface EmployeeFull {
   position: string;
   phone?: string | null;
   photoSlug?: string | null;
+  tipUrl?: string | null; // уникальная ссылка на чаевые (Нетмонет)
   rating: number;
   ratingCount: number;
   onShift: boolean;

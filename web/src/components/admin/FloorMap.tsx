@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { TableView } from "../../types";
+import { IconBell } from "./icons";
 
 /**
  * Карта зала. Столы рисуются как `.table-node` по координатам x/y (в % холста);
@@ -20,12 +21,15 @@ export default function FloorMap({
   onSelect,
   config = false,
   onMove,
+  calledIds,
 }: {
   tables: TableView[];
   selectedId: string | null;
   onSelect: (t: TableView) => void;
   config?: boolean;
   onMove?: (id: string, x: number, y: number) => void;
+  /** id столов с активным вызовом — подсвечиваются на карте. */
+  calledIds?: Set<string>;
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -125,10 +129,12 @@ export default function FloorMap({
         )}
         {tables.map((t) => {
           const pos = dragId === t.id && dragPos ? dragPos : { x: t.x, y: t.y };
+          const called = calledIds?.has(t.id) ?? false;
           const cls = [
             "table-node",
             t.shape,
             t.status,
+            called ? "called" : "",
             selectedId === t.id ? "selected" : "",
             dragId === t.id ? "dragging" : "",
           ]
@@ -160,6 +166,11 @@ export default function FloorMap({
                 }
               }}
             >
+              {called && (
+                <span className="tn-bell" aria-label="Активный вызов">
+                  <IconBell size={13} />
+                </span>
+              )}
               <span className="tn-num">{t.label}</span>
               <span className="tn-seats">{t.seats} мест</span>
             </div>

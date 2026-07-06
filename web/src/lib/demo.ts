@@ -76,6 +76,7 @@ export const demoApi = {
   adminReorderMenu: (ids: string[]) => ok(demoStore.adminReorderMenu(ids)),
 
   adminEmployees: (restaurantId: string) => ok(demoStore.adminEmployees(restaurantId)),
+  employeeTipUrl: (employeeId: string) => ok(demoStore.employeeTipUrl(employeeId)),
   adminUpsertEmployee: (e: Partial<EmployeeFull> & { restaurantId: string }) => ok(demoStore.adminUpsertEmployee(e)),
   adminSetShift: (restaurantId: string, employeeIds: string[]) => ok(demoStore.adminSetShift(restaurantId, employeeIds)),
   adminSchedule: (restaurantId: string, fromISO: string, toISO: string) => ok(demoStore.adminSchedule(restaurantId, fromISO, toISO)),

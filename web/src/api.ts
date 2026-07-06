@@ -166,6 +166,7 @@ const realApi = {
     request<void>("POST", "/menu/reorder", { ids }),
 
   adminEmployees: (_restaurantId: string): Promise<EmployeeFull[]> => notImpl(),
+  employeeTipUrl: (_employeeId: string): Promise<string | null> => notImpl(),
   adminUpsertEmployee: (_e: Partial<EmployeeFull> & { restaurantId: string }): Promise<EmployeeFull> => notImpl(),
   adminSetShift: (_restaurantId: string, _employeeIds: string[]): Promise<void> => notImpl(),
   adminSchedule: (_restaurantId: string, _fromISO: string, _toISO: string): Promise<ScheduleRow[]> => notImpl(),

@@ -42,7 +42,8 @@ export default function BarChart({
           if (color !== "var(--accent)") fillStyle.background = color;
           return (
             <div className="bar-row" key={i}>
-              {d.icon != null && <span className="bar-ico">{d.icon}</span>}
+              {/* Always reserve the icon slot so rows without a thumbnail stay aligned. */}
+              <span className="bar-ico">{d.icon}</span>
               <span className="bar-label" title={d.label}>
                 {d.label}
               </span>

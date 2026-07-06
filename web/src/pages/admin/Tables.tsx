@@ -5,7 +5,7 @@ import Modal from "../../components/admin/Modal";
 import FloorMap from "../../components/admin/FloorMap";
 import QrModal from "../../components/admin/QrModal";
 import { useRequireStaff } from "../../lib/guards";
-import type { MenuRecipeView, Order, TableView } from "../../types";
+import type { Call, MenuRecipeView, Order, TableView } from "../../types";
 
 const SHAPES: { value: TableView["shape"]; label: string }[] = [
   { value: "round", label: "Круглый" },
@@ -85,6 +85,36 @@ export default function Tables() {
       alive = false;
     };
   }, [rid]);
+
+  // ---------- активные вызовы со столов (для подсветки на карте) ----------
+  const [calls, setCalls] = useState<Call[]>([]);
+  useEffect(() => {
+    if (!rid) return;
+    let alive = true;
+    const load = () =>
+      api
+        .adminCalls(rid)
+        .then((c) => {
+          if (alive) setCalls(c);
+        })
+        .catch(() => {});
+    load();
+    const iv = setInterval(load, 4000);
+    return () => {
+      alive = false;
+      clearInterval(iv);
+    };
+  }, [rid]);
+
+  const calledIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const c of calls) {
+      if (c.status === "done") continue;
+      const t = tables.find((x) => x.id === c.tableId || x.label === c.tableId || x.label === c.tableLabel);
+      if (t) ids.add(t.id);
+    }
+    return ids;
+  }, [calls, tables]);
 
   // sensible default for the add-mix select once data lands
   useEffect(() => {
@@ -270,6 +300,7 @@ export default function Tables() {
           onSelect={(t) => setSelectedId(t.id)}
           config={config}
           onMove={handleMove}
+          calledIds={calledIds}
         />
 
         {config && (
