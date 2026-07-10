@@ -9,6 +9,7 @@ import type {
   Favourite,
   FeedbackView,
   GuestSummary,
+  HomeConfig,
   LoginResponse,
   MenuRecipeView,
   Order,
@@ -143,17 +144,36 @@ const realApi = {
   removeFavourite: (userId: string, orderRecipeId: string) =>
     request<void>("DELETE", `/users/${userId}/favourites/${orderRecipeId}`),
 
-  // ===== admin CRM — the deployed admin runs in demo mode, so the real backend
-  // has no matching endpoints yet. These stubs keep the `api` union type-safe. =====
-  adminTables: (_restaurantId: string): Promise<TableView[]> => notImpl(),
-  adminUpsertTable: (_t: Partial<TableView> & { restaurantId: string }): Promise<TableView> => notImpl(),
-  adminMoveTable: (_id: string, _x: number, _y: number): Promise<void> => notImpl(),
-  adminDeleteTable: (_id: string): Promise<void> => notImpl(),
-  adminZones: (_restaurantId: string): Promise<Zone[]> => notImpl(),
-  adminTableAddMix: (_tableId: string, _menuId: string, _employeeId: string): Promise<void> => notImpl(),
-  adminTableAddCustomMix: (_tableId: string, _name: string, _employeeId: string): Promise<void> => notImpl(),
-  adminCloseTable: (_tableId: string): Promise<void> => notImpl(),
-  adminTableStates: (_restaurantId: string): Promise<TableState[]> => notImpl(),
+  // ===== Wave 4: tables / zones ("Карта зала") — wired to the real backend =====
+  // Config + live status (occupancy derived from the open order). Routes are flat
+  // under /tables (POST-with-body for the restaurant-scoped lists) so they don't
+  // collide with the /restaurants subtree.
+  adminTables: (restaurantId: string): Promise<TableView[]> =>
+    request<TableView[]>("POST", "/tables/list", { restaurantId }),
+  // Upsert mirrors adminUpsertMenu: edit (has id) → partial PATCH /tables/{id};
+  // create (no id) → POST /tables carrying the whole DTO (restaurantId in body).
+  adminUpsertTable: (t: Partial<TableView> & { restaurantId: string }): Promise<TableView> =>
+    t.id
+      ? request<TableView>("PATCH", `/tables/${t.id}`, t)
+      : request<TableView>("POST", "/tables", t),
+  adminMoveTable: (id: string, x: number, y: number): Promise<void> =>
+    request<void>("POST", `/tables/${id}/move`, { x, y }),
+  adminDeleteTable: (id: string): Promise<void> =>
+    request<void>("DELETE", `/tables/${id}`),
+  adminZones: (restaurantId: string): Promise<Zone[]> =>
+    request<Zone[]>("POST", "/tables/zones", { restaurantId }),
+  adminTableAddMix: (tableId: string, menuId: string, employeeId: string): Promise<void> =>
+    request<void>("POST", `/tables/${tableId}/mix`, { menuId, employeeId }),
+  adminTableAddCustomMix: (tableId: string, name: string, employeeId: string): Promise<void> =>
+    request<void>("POST", `/tables/${tableId}/custom-mix`, { name, employeeId }),
+  adminCloseTable: (tableId: string): Promise<void> =>
+    request<void>("POST", `/tables/${tableId}/close`),
+  adminTableStates: (restaurantId: string): Promise<TableState[]> =>
+    request<TableState[]>("POST", "/tables/states", { restaurantId }),
+
+  // home builder (demo-only for now)
+  homeConfig: (_restaurantId: string): Promise<HomeConfig> => notImpl(),
+  adminSetHomeConfig: (_restaurantId: string, _c: HomeConfig): Promise<HomeConfig> => notImpl(),
 
   adminMenu: (restaurantId: string): Promise<MenuRecipeView[]> =>
     request<MenuRecipeView[]>("POST", "/menu/list-admin", { restaurantId }),
@@ -165,31 +185,92 @@ const realApi = {
   adminReorderMenu: (ids: string[]): Promise<void> =>
     request<void>("POST", "/menu/reorder", { ids }),
 
-  adminEmployees: (_restaurantId: string): Promise<EmployeeFull[]> => notImpl(),
-  employeeTipUrl: (_employeeId: string): Promise<string | null> => notImpl(),
-  adminUpsertEmployee: (_e: Partial<EmployeeFull> & { restaurantId: string }): Promise<EmployeeFull> => notImpl(),
-  adminSetShift: (_restaurantId: string, _employeeIds: string[]): Promise<void> => notImpl(),
-  adminSchedule: (_restaurantId: string, _fromISO: string, _toISO: string): Promise<ScheduleRow[]> => notImpl(),
-  adminSetScheduleDay: (_employeeId: string, _dateISO: string, _on: boolean): Promise<void> => notImpl(),
+  // ===== Wave 2: employees / schedule / guests — wired to the real backend =====
+  // Employees: full per-restaurant roster (join employee_restaurants + rating agg
+  // + today's shift). GET /restaurants/{id}/employees-full → EmployeeFull[].
+  adminEmployees: (restaurantId: string): Promise<EmployeeFull[]> =>
+    request<EmployeeFull[]>("GET", `/restaurants/${restaurantId}/employees-full`),
+  // Tip link (Нетмонет). Envelope data is the url or null when unset.
+  employeeTipUrl: (employeeId: string): Promise<string | null> =>
+    request<string | null>("GET", `/employees/${employeeId}/tip-url`),
+  // Upsert: edit (has id) → partial PATCH /employees/{id} (position + status land
+  // in employee_restaurants; phone/photoSlug/tipUrl on employees). Create (no id) →
+  // POST on the same collection the GET reads, carrying restaurantId in the path.
+  // Body mirrors adminUpsertMenu: the whole DTO is sent; the backend picks fields.
+  adminUpsertEmployee: (e: Partial<EmployeeFull> & { restaurantId: string }): Promise<EmployeeFull> =>
+    e.id
+      ? request<EmployeeFull>("PATCH", `/employees/${e.id}`, e)
+      : request<EmployeeFull>("POST", `/restaurants/${e.restaurantId}/employees-full`, e),
+  // Today's roster by restaurant id (by-rid counterpart of the by-code
+  // POST /restaurants/shift; symmetric to GET /restaurants/{id}/shift).
+  adminSetShift: (restaurantId: string, employeeIds: string[]): Promise<void> =>
+    request<void>("POST", `/restaurants/${restaurantId}/shift`, { employeeIds }),
+  // Shift schedule grid. from/to are inclusive YYYY-MM-DD (UTC) day keys.
+  adminSchedule: (restaurantId: string, fromISO: string, toISO: string): Promise<ScheduleRow[]> =>
+    request<ScheduleRow[]>(
+      "GET",
+      `/restaurants/${restaurantId}/schedule?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}`,
+    ),
+  // Toggle one day: on=true inserts the employee_schedule row, false deletes it.
+  // restaurantId isn't in the signature — the backend derives it from the
+  // employee's restaurant link. date is a YYYY-MM-DD day key.
+  adminSetScheduleDay: (employeeId: string, dateISO: string, on: boolean): Promise<void> =>
+    request<void>("POST", `/employees/${employeeId}/schedule`, { date: dateISO, on }),
 
-  adminGuests: (_restaurantId: string): Promise<GuestSummary[]> => notImpl(),
-  adminGuest: (_id: string): Promise<{ summary: GuestSummary; visits: Visit[] }> => notImpl(),
+  // Guests: distinct users seen via orders, with aggregates. NB: order price is not
+  // fixed on the order yet, so ltv/total are backend approximations (see blueprint
+  // §Гости); real revenue is the analytics wave.
+  adminGuests: (restaurantId: string): Promise<GuestSummary[]> =>
+    request<GuestSummary[]>("GET", `/restaurants/${restaurantId}/guests`),
+  // One guest = summary (GET /users/{id}/summary) + visit history
+  // (GET /users/{id}/visits), fetched in parallel.
+  adminGuest: async (id: string): Promise<{ summary: GuestSummary; visits: Visit[] }> => {
+    const [summary, visits] = await Promise.all([
+      request<GuestSummary>("GET", `/users/${id}/summary`),
+      request<Visit[]>("GET", `/users/${id}/visits`),
+    ]);
+    return { summary, visits };
+  },
 
   adminAnalytics: (_restaurantId: string, _days: number): Promise<AnalyticsSummary> => notImpl(),
   adminAnalyticsRange: (_restaurantId: string, _from: string, _to: string): Promise<AnalyticsSummary> => notImpl(),
 
-  // reservations ("Брони")
-  adminReservations: (_restaurantId: string, _date?: string): Promise<Reservation[]> => notImpl(),
-  adminUpsertReservation: (_r: Partial<Reservation> & { restaurantId: string }): Promise<Reservation> => notImpl(),
-  adminSetReservationStatus: (_id: string, _status: ReservationStatus): Promise<void> => notImpl(),
-  adminDeleteReservation: (_id: string): Promise<void> => notImpl(),
+  // ===== Wave 3: reservations ("Брони") — wired to the real backend =====
+  // List a venue's bookings, optionally one day. date is a YYYY-MM-DD key (UTC).
+  adminReservations: (restaurantId: string, date?: string): Promise<Reservation[]> =>
+    request<Reservation[]>("POST", "/reservations/list", { restaurantId, date }),
+  // Upsert mirrors adminUpsertMenu: edit (has id) → partial PATCH /reservations/{id};
+  // create (no id) → POST /reservations carrying the whole DTO (restaurantId in body).
+  adminUpsertReservation: (r: Partial<Reservation> & { restaurantId: string }): Promise<Reservation> =>
+    r.id
+      ? request<Reservation>("PATCH", `/reservations/${r.id}`, r)
+      : request<Reservation>("POST", "/reservations", r),
+  adminSetReservationStatus: (id: string, status: ReservationStatus): Promise<void> =>
+    request<void>("POST", `/reservations/${id}/status`, { status }),
+  adminDeleteReservation: (id: string): Promise<void> =>
+    request<void>("DELETE", `/reservations/${id}`),
+  // Guest self-booking → POST /reservations (backend supports create). Table is
+  // assigned later by staff, so no tableId is sent.
+  createReservation: (input: {
+    restaurantId: string; userId?: string | null; guestName: string; phone: string;
+    date: string; time: string; endTime?: string; guests: number; zone?: string | null; note?: string | null;
+  }): Promise<Reservation> => request<Reservation>("POST", "/reservations", input),
+  // TODO(api): нет реального роута /users/{id}/reservations — demo-only.
+  myReservations: (_userId: string): Promise<Reservation[]> => notImpl<Reservation[]>(),
 
-  // calls ("Обращения")
-  createCall: (_input: { restaurantId: string; tableId: string; type: CallType }): Promise<Call> => notImpl(),
-  adminCalls: (_restaurantId: string): Promise<Call[]> => notImpl(),
-  adminCallsArchive: (_restaurantId: string): Promise<Call[]> => notImpl(),
-  adminAckCall: (_id: string): Promise<void> => notImpl(),
-  adminDoneCall: (_id: string): Promise<void> => notImpl(),
+  // ===== Wave 3: calls ("Обращения") — wired to the real backend =====
+  // Guest raises a call from the table; POST bodies carry restaurantId (no path id
+  // for list/archive because there is no table-scoped resource yet).
+  createCall: (input: { restaurantId: string; tableId: string; type: CallType }): Promise<Call> =>
+    request<Call>("POST", "/calls", input),
+  adminCalls: (restaurantId: string): Promise<Call[]> =>
+    request<Call[]>("POST", "/calls/list", { restaurantId }),
+  adminCallsArchive: (restaurantId: string): Promise<Call[]> =>
+    request<Call[]>("POST", "/calls/archive", { restaurantId }),
+  adminAckCall: (id: string): Promise<void> =>
+    request<void>("POST", `/calls/${id}/ack`),
+  adminDoneCall: (id: string): Promise<void> =>
+    request<void>("POST", `/calls/${id}/done`),
 
   // kitchen-bar (guest food menu)
   foodMenu: (restaurantId: string): Promise<MenuRecipeView[]> =>

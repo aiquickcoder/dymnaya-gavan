@@ -36,7 +36,7 @@ func main() {
 		log.Fatalf("ping db: %v", err)
 	}
 
-	handler := server.New(pool)
+	handler := server.New(pool, cfg)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

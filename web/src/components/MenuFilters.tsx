@@ -2,23 +2,29 @@ import type { MenuRecipeView } from "../types";
 
 // Filter/sort state for the venue menu list. Kept as plain data so the parent
 // owns it (useState) and can feed the result count back into <MenuFilters/>.
+export type MenuCat = "all" | "fresh" | "sweet" | "strong" | "unusual";
 export type MenuFilterState = {
   q: string;
-  strength: "all" | "light" | "medium" | "strong";
+  cat: MenuCat;
   sort: "popular" | "price-asc" | "price-desc" | "strength";
 };
 
-export const DEFAULT_FILTERS: MenuFilterState = { q: "", strength: "all", sort: "popular" };
+export const DEFAULT_FILTERS: MenuFilterState = { q: "", cat: "all", sort: "popular" };
 
-// strength buckets: light <= 4, medium 5..7, strong >= 8.
-function matchesStrength(s: number, band: MenuFilterState["strength"]): boolean {
-  switch (band) {
-    case "light":
-      return s <= 4;
-    case "medium":
-      return s >= 5 && s <= 7;
+// Category buckets by flavour vibe (tags + strength), case-insensitive.
+function matchesCat(it: MenuRecipeView, cat: MenuCat): boolean {
+  if (cat === "all") return true;
+  const hay = `${it.name} ${it.tags.join(" ")}`.toLowerCase();
+  const has = (...ws: string[]) => ws.some((w) => hay.includes(w));
+  switch (cat) {
+    case "fresh":
+      return has("свеж", "освеж", "лёд", "лед", "ледян", "мят", "цитрус", "кисл", "газир", "хруст", "сочн");
+    case "sweet":
+      return has("сладк", "десерт", "медов", "сливочн", "ягодн", "шокол", "ванил", "дынн", "троп", "фрукт");
     case "strong":
-      return s >= 8;
+      return it.strength >= 8 || has("крепк");
+    case "unusual":
+      return has("восточн", "секрет", "авторск", "терпк", "горчин", "травян", "необычн", "лимит", "прян");
     default:
       return true;
   }
@@ -28,7 +34,7 @@ function matchesStrength(s: number, band: MenuFilterState["strength"]): boolean 
 export function applyFilters(items: MenuRecipeView[], f: MenuFilterState): MenuRecipeView[] {
   const q = f.q.trim().toLowerCase();
   const filtered = items.filter((it) => {
-    if (!matchesStrength(it.strength, f.strength)) return false;
+    if (!matchesCat(it, f.cat)) return false;
     if (q) {
       const hay = `${it.name} ${it.tags.join(" ")}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -62,11 +68,12 @@ function mixWord(n: number): string {
   return "миксов";
 }
 
-const STRENGTHS: { key: MenuFilterState["strength"]; label: string }[] = [
+const CATS: { key: MenuCat; label: string }[] = [
   { key: "all", label: "Все" },
-  { key: "light", label: "Лёгкие" },
-  { key: "medium", label: "Средние" },
-  { key: "strong", label: "Крепкие" },
+  { key: "fresh", label: "Свежий" },
+  { key: "sweet", label: "Сладкий" },
+  { key: "strong", label: "Крепкий" },
+  { key: "unusual", label: "Необычный" },
 ];
 
 export default function MenuFilters({
@@ -90,14 +97,14 @@ export default function MenuFilters({
         />
       </div>
       <div className="filter-row">
-        <div className="seg" role="group" aria-label="Крепость">
-          {STRENGTHS.map((s) => (
+        <div className="seg seg-scroll" role="group" aria-label="Категория">
+          {CATS.map((s) => (
             <button
               key={s.key}
               type="button"
-              className={value.strength === s.key ? "on" : ""}
-              aria-pressed={value.strength === s.key}
-              onClick={() => onChange({ ...value, strength: s.key })}
+              className={value.cat === s.key ? "on" : ""}
+              aria-pressed={value.cat === s.key}
+              onClick={() => onChange({ ...value, cat: s.key })}
             >
               {s.label}
             </button>

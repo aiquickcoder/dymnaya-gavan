@@ -3,6 +3,7 @@
 import { asset } from "./asset";
 
 const BY_NAME: Record<string, string> = {
+  ману: "manu",
   тимур: "timur",
   алина: "alina",
   дин: "din",

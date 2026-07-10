@@ -30,7 +30,7 @@ export interface AdminSession {
   code: string;
 }
 
-export type ThemeName = "ember" | "smoke";
+export type ThemeName = "light" | "dark";
 
 function read<T>(key: string): T | null {
   const raw = localStorage.getItem(key);
@@ -56,4 +56,5 @@ export const KEYS = {
   admin: "mm.admin",
   table: "mm.table",
   theme: "mm.theme",
+  cart: "mm.cart",
 } as const;

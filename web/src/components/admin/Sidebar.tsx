@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
-import { useTheme } from "../../theme";
 import {
   IconDashboard,
+  IconHome,
   IconTables,
   IconMenu,
   IconStaff,
@@ -11,6 +11,7 @@ import {
   IconBell,
   type IconProps,
 } from "./icons";
+import { asset } from "../../lib/asset";
 
 /**
  * Навигация админской CRM. Generic — принимает только имя ресторана и
@@ -23,14 +24,14 @@ export default function Sidebar({
   restaurantName?: string;
   onLogout?: () => void;
 }) {
-  const [theme, setTheme] = useTheme();
-
   return (
     <aside className="admin-sidebar">
       <div className="admin-brand">
-        <div className="abr-mark">Д</div>
+        <div className="abr-mark" style={{ background: "#fff", padding: 0, overflow: "hidden", borderRadius: "50%" }}>
+          <img src={asset("brand/logo.png")} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
         <div>
-          <div className="abr-name">Дымная Гавань</div>
+          <div className="abr-name">Example lounge</div>
           <div className="abr-sub">CRM</div>
         </div>
       </div>
@@ -48,14 +49,6 @@ export default function Sidebar({
       </nav>
 
       <div className="admin-sidebar-foot">
-        <div className="seg block" role="group" aria-label="Тема">
-          <button type="button" className={theme === "ember" ? "on" : ""} onClick={() => setTheme("ember")}>
-            Уголь
-          </button>
-          <button type="button" className={theme === "smoke" ? "on" : ""} onClick={() => setTheme("smoke")}>
-            Ночь
-          </button>
-        </div>
         {restaurantName && <div className="admin-venue">{restaurantName}</div>}
         <button type="button" className="danger" onClick={onLogout}>
           Выйти
@@ -67,6 +60,7 @@ export default function Sidebar({
 
 const NAV: { to: string; label: string; end?: boolean; icon: (p: IconProps) => JSX.Element }[] = [
   { to: "/admin", label: "Сводка", end: true, icon: IconDashboard },
+  { to: "/admin/home", label: "Главная", icon: IconHome },
   { to: "/admin/tables", label: "Столы", icon: IconTables },
   { to: "/admin/reservations", label: "Брони", icon: IconReservations },
   { to: "/admin/menu", label: "Меню", icon: IconMenu },

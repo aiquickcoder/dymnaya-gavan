@@ -6,6 +6,18 @@ export interface Component {
   percent: number;
 }
 
+// ===== Home builder (admin configures the guest home) =====
+export interface HomeBlock {
+  key: string; // masters | banners | quickActions | session | bestMixes | catalog | tobaccos
+  label: string;
+  visible: boolean;
+}
+export interface HomeConfig {
+  blocks: HomeBlock[]; // order matters — rendered top-to-bottom
+  bannerImage?: string | null; // custom promo banner image (data URL or url)
+  bannerTag?: string; // caption on the custom banner
+}
+
 export interface Recipe {
   id: string;
   name?: string | null;
@@ -75,6 +87,7 @@ export interface OrderRecipeView {
   authorFullName: string;
   authorShortName: string;
   components: Component[];
+  tags?: string[]; // optional flavour tags (demo session card)
 }
 
 export interface Order {
@@ -269,6 +282,7 @@ export type ReservationStatus = "new" | "confirmed" | "seated" | "cancelled";
 export interface Reservation {
   id: string;
   restaurantId: string;
+  userId?: string | null; // гость, создавший бронь (для «Мои брони»); null у админ-заявок
   guestName: string;
   phone: string;
   date: string; // YYYY-MM-DD

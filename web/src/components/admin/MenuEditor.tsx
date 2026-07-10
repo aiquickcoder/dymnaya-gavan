@@ -20,7 +20,7 @@ const IMAGE_SLUGS: { slug: string; label: string }[] = [
 const CATEGORIES = ["Хиты", "Классика", "Лёгкие", "Крепкие", "Лимитки", "Секретные", "Промо", "Прочее"];
 
 // Kitchen-bar categories (fixed set — guest groups foodMenu by these).
-const FOOD_CATEGORIES = ["Закуски", "Горячее", "Напитки", "Десерты"];
+const FOOD_CATEGORIES = ["Закуски", "Горячее", "Десерты", "Лимонады", "Чай и кофе", "Коктейли"];
 
 // Пресеты бейджа — value сохраняется в menu.badge, каждый чип рисует настоящий .badge-превью.
 const BADGE_PRESETS: { value: string; label: string }[] = [

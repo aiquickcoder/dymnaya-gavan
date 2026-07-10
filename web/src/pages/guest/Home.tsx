@@ -1,37 +1,37 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../../api";
 import { Banner } from "../../components/ui";
 import { Shell } from "../../components/Shell";
-import MixCard, { badgeClass } from "../../components/MixCard";
+import { badgeClass } from "../../components/MixCard";
 import MasterCard from "../../components/MasterCard";
-import ActionCard, { SparkleIcon, PlusIcon, SecretIcon } from "../../components/ActionCard";
-import EditorialSection from "../../components/EditorialSection";
+import ActionCard, { SparkleIcon, MenuIcon, SecretIcon, CalendarIcon } from "../../components/ActionCard";
+import BannerCarousel from "../../components/BannerCarousel";
+import BestMixesCarousel from "../../components/BestMixesCarousel";
 import SkeletonCard from "../../components/SkeletonCard";
-import MenuFilters, { DEFAULT_FILTERS, applyFilters, type MenuFilterState } from "../../components/MenuFilters";
 import { useRequireTable, useGuest } from "../../lib/guards";
+import { useTheme } from "../../theme";
+import { flavourColor } from "../../lib/flavours";
+import { asset } from "../../lib/asset";
 import { VENUE, TOBACCOS } from "../../lib/mocks";
-import type { MenuRecipeView, Order, ShiftMaster } from "../../types";
+import type { HomeConfig, MenuRecipeView, Order, ShiftMaster } from "../../types";
 
-/** Keep only the last 4 digits of a phone number for a subtle "welcome back". */
-function maskPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  return digits.length >= 4 ? `··· ${digits.slice(-4)}` : "";
-}
+// Fallback home layout when the config endpoint is unavailable (real backend).
+const DEFAULT_BLOCKS = ["masters", "banners", "quickActions", "session", "bestMixes", "tobaccos"];
 
 export default function Home() {
   const table = useRequireTable();
   const guest = useGuest();
   const navigate = useNavigate();
+  const [theme, setTheme] = useTheme();
 
   const [menu, setMenu] = useState<MenuRecipeView[]>([]);
   const [masters, setMasters] = useState<ShiftMaster[]>([]);
   const [order, setOrder] = useState<Order | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
+  const [home, setHome] = useState<HomeConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filters, setFilters] = useState<MenuFilterState>(DEFAULT_FILTERS);
-  const [favHint, setFavHint] = useState(false);
 
   useEffect(() => {
     if (!table) return;
@@ -41,18 +41,20 @@ export default function Home() {
       setError("");
       try {
         const userId = guest?.userId;
-        const [menuList, shift, ord] = await Promise.all([
+        const [menuList, shift, ord, cfg] = await Promise.all([
           api.menuList(table.restaurantId),
           api.shift(table.restaurantId).catch(() => [] as ShiftMaster[]),
           // Only anonymous guests skip the session lookup; keep it non-blocking.
           userId
             ? api.openTable({ restaurantId: table.restaurantId, tableId: table.tableId, userId }).catch(() => null)
             : Promise.resolve<Order | null>(null),
+          api.homeConfig(table.restaurantId).catch(() => null),
         ]);
         if (!alive) return;
         setMenu(menuList);
         setMasters(shift);
         setOrder(ord);
+        setHome(cfg);
 
         const ids = [...new Set(menuList.map((m) => m.authorEmployeeId).filter(Boolean))];
         if (ids.length) {
@@ -76,18 +78,11 @@ export default function Home() {
   const secret = menu.find((m) => badgeClass(m.badge) === "secret");
   const activeMix = order?.recipes?.[0];
 
-  // Feature the first Limited mix as a collab and the first Star mix as a promo;
-  // everything else falls into the filterable "Миксы заведения" list.
-  const collab = menu.find((m) => badgeClass(m.badge) === "limited");
-  const promo = menu.find((m) => badgeClass(m.badge) === "star");
-  const rest = menu.filter((m) => {
-    const c = badgeClass(m.badge);
-    return c !== "limited" && c !== "star";
-  });
-  const filtered = applyFilters(rest, filters);
+  // Карусель на главной — «Авторские миксы». Полное кальянное меню — в разделе «Меню».
+  const best = menu.filter((m) => m.category === "Авторские миксы");
+  const collab = menu.find((m) => badgeClass(m.badge) === "limited") ?? best[0] ?? menu[0];
 
   const recognised = !!guest && !guest.anon;
-  const masked = guest && !guest.anon ? maskPhone(guest.phoneNumber) : "";
 
   function openSecret() {
     if (secret) navigate(`/guest/mix/${secret.id}`);
@@ -96,160 +91,177 @@ export default function Home() {
 
   if (!table) return null;
 
+  // Layout is driven by the admin home-builder config; fall back to a fixed order.
+  const layout = home?.blocks ?? DEFAULT_BLOCKS.map((k) => ({ key: k, label: k, visible: true }));
+
+  const blocks: Record<string, ReactNode> = {
+    masters: loading ? (
+      <>
+        <div className="section-title">Мастера на смене</div>
+        <div className="masters" role="group" aria-label="Мастера на смене">
+          <SkeletonCard variant="master" />
+          <SkeletonCard variant="master" />
+          <SkeletonCard variant="master" />
+        </div>
+      </>
+    ) : masters.length > 0 ? (
+      <>
+        <div className="section-title">Мастера на смене</div>
+        <div className="masters" role="group" aria-label="Мастера на смене">
+          {masters.map((m) => (
+            <MasterCard
+              key={m.id}
+              name={m.firstName}
+              role={m.position}
+              online
+              onClick={() =>
+                navigate(`/guest/master/${m.id}?name=${encodeURIComponent(m.firstName)}&role=${encodeURIComponent(m.position ?? "")}`)
+              }
+            />
+          ))}
+        </div>
+      </>
+    ) : null,
+
+    banners: (
+      <BannerCarousel
+        customImage={home?.bannerImage ?? undefined}
+        customTag={home?.bannerTag}
+        onOpen={() => collab && navigate(`/guest/mix/${collab.id}`)}
+      />
+    ),
+
+    quickActions: (
+      <>
+        <div className="section-title">Быстрый выбор</div>
+        <div className="actions" role="group" aria-label="Быстрый выбор">
+          <ActionCard icon={<SparkleIcon />} label="AI-микс" onClick={() => navigate("/guest/quiz")} />
+          <ActionCard icon={<MenuIcon />} label="Меню" onClick={() => navigate("/guest/kitchen")} />
+          <ActionCard icon={<CalendarIcon />} label="Бронь" onClick={() => navigate("/guest/book")} />
+          <ActionCard icon={<SecretIcon />} label="Секрет" onClick={openSecret} />
+        </div>
+      </>
+    ),
+
+    session: activeMix ? (
+      <div className="card clickable glow" style={{ marginTop: 16 }} onClick={() => navigate("/guest/session")}>
+        <div className="row between">
+          <div className="muted small">Сейчас вы курите</div>
+          <span className="openbtn">Открыть <span className="ob-arrow">→</span></span>
+        </div>
+        <div className="display" style={{ fontSize: 20, marginTop: 4 }}>
+          {activeMix.recipeName || "Ваш микс"}
+        </div>
+        <div className="muted small" style={{ marginTop: 2 }}>
+          Мастер {activeMix.authorShortName} · Стол {table.tableId}
+        </div>
+        {activeMix.components.length > 0 && (
+          <div className="comp" style={{ marginTop: 12 }}>
+            {activeMix.components.map((c, i) => (
+              <div className="row between" key={i}>
+                <span className="row" style={{ gap: 8 }}>
+                  <span className="dot" style={{ width: 10, height: 10, borderRadius: "50%", background: flavourColor(c.flavour) }} />
+                  <span style={{ fontSize: 14 }}>{c.brand} {c.flavour}</span>
+                </span>
+                <span className="comp-pct">{c.percent}%</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {activeMix.tags && activeMix.tags.length > 0 && (
+          <div className="chips" style={{ marginTop: 12 }}>
+            {activeMix.tags.map((t, i) => {
+              const cc = flavourColor(t);
+              return (
+                <span className="chip" key={i} style={{ borderColor: cc + "66", background: cc + "16" }}>
+                  <span className="dot" style={{ background: cc }} />
+                  {t}
+                </span>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    ) : null,
+
+    bestMixes: !loading && best.length > 0 ? (
+      <>
+        <div className="section-title">Авторские миксы</div>
+        <BestMixesCarousel
+          items={best}
+          masterName={(id) => names[id] ?? ""}
+          onOpen={(id) => navigate(`/guest/mix/${id}`)}
+        />
+      </>
+    ) : null,
+
+    tobaccos: (
+      <>
+        <div className="section-title">Табаки в наличии</div>
+        <div className="chips" role="list" aria-label="Табаки в наличии" style={{ marginBottom: 12 }}>
+          {TOBACCOS.map((t) => (
+            <span className="chip" role="listitem" key={t.brand}>
+              {t.brand}
+              {t.note ? <span className="muted"> · {t.note}</span> : null}
+            </span>
+          ))}
+        </div>
+      </>
+    ),
+  };
+
   return (
     <Shell nav>
       <div className="gh fade-in">
-        <div>
-          <div className="venue display">{VENUE.name}</div>
-          <div className="sub">
-            {VENUE.address} · Стол {table.tableId}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <img
+            src={asset("brand/logo.png")}
+            alt=""
+            style={{ width: 46, height: 46, borderRadius: "50%", objectFit: "cover", background: "#fff", border: "1px solid var(--border)", flex: "none" }}
+          />
+          <div>
+            <div className="venue display">{VENUE.name}</div>
+            <div className="sub">
+              {VENUE.address} · Стол {table.tableId}
+            </div>
           </div>
         </div>
-        {recognised && (
-          <div style={{ textAlign: "right" }}>
-            <span className="pill accent">С возвращением</span>
-            {masked && (
-              <div className="muted small" style={{ marginTop: 4 }}>
-                {masked}
-              </div>
-            )}
-          </div>
-        )}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+          <button
+            className="theme-toggle"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-label={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
+          >
+            {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+          </button>
+          {recognised && <span className="pill accent">С возвращением</span>}
+        </div>
       </div>
 
       {error && <Banner kind="error">{error}</Banner>}
 
-      {/* masters on shift */}
-      {loading ? (
-        <>
-          <div className="section-title">Мастера на смене</div>
-          <div className="masters" role="group" aria-label="Мастера на смене">
-            <SkeletonCard variant="master" />
-            <SkeletonCard variant="master" />
-            <SkeletonCard variant="master" />
-          </div>
-        </>
-      ) : masters.length > 0 ? (
-        <>
-          <div className="section-title">Мастера на смене</div>
-          <div className="masters" role="group" aria-label="Мастера на смене">
-            {masters.map((m) => (
-              <MasterCard
-                key={m.id}
-                name={m.firstName}
-                role={m.position}
-                rating={m.rating}
-                online
-                onClick={() =>
-                  navigate(
-                    `/guest/master/${m.id}?name=${encodeURIComponent(m.firstName)}&role=${encodeURIComponent(m.position ?? "")}`,
-                  )
-                }
-              />
-            ))}
-          </div>
-        </>
-      ) : null}
-
-      {/* quick actions */}
-      <div className="section-title">Быстрый выбор</div>
-      <div className="actions" role="group" aria-label="Быстрый выбор">
-        <ActionCard icon={<SparkleIcon />} label="AI-микс" onClick={() => navigate("/guest/quiz")} />
-        <ActionCard icon={<PlusIcon />} label="Конструктор" onClick={() => navigate("/guest/build")} />
-        <ActionCard icon={<SecretIcon />} label="Секрет" onClick={openSecret} />
-      </div>
-
-      {/* kitchen-bar link */}
-      <div className="card clickable" style={{ marginTop: 12 }} onClick={() => navigate("/guest/kitchen")}>
-        <div className="row between">
-          <div>
-            <div className="display" style={{ fontSize: 18 }}>
-              Кухня-бар
-            </div>
-            <div className="muted small">Закуски, горячее, напитки и десерты</div>
-          </div>
-          <span className="pill accent">Открыть →</span>
-        </div>
-      </div>
-
-      {/* active session */}
-      {activeMix && (
-        <div className="card clickable glow" style={{ marginTop: 16 }} onClick={() => navigate("/guest/session")}>
-          <div className="muted small">Сейчас вы курите</div>
-          <div className="row between" style={{ marginTop: 4 }}>
-            <div className="display" style={{ fontSize: 18 }}>
-              {activeMix.recipeName || "Ваш микс"}
-            </div>
-            <span className="pill accent">Открыть →</span>
-          </div>
-        </div>
-      )}
-
-      {/* editorial features */}
-      {!loading && collab && (
-        <EditorialSection
-          title="Коллаборация месяца"
-          item={collab}
-          masterName={names[collab.authorEmployeeId]}
-          onOpen={() => navigate(`/guest/mix/${collab.id}`)}
-        />
-      )}
-      {!loading && promo && (
-        <EditorialSection
-          title="Промо"
-          item={promo}
-          masterName={names[promo.authorEmployeeId]}
-          onOpen={() => navigate(`/guest/mix/${promo.id}`)}
-        />
-      )}
-
-      {/* menu */}
-      <div className="section-title">Миксы заведения</div>
-      {favHint && <Banner kind="info">Избранное доступно после заказа в вашей сессии</Banner>}
-      {loading ? (
-        <>
-          <SkeletonCard variant="mix" />
-          <SkeletonCard variant="mix" />
-          <SkeletonCard variant="mix" />
-        </>
-      ) : menu.length === 0 ? (
-        <div className="empty">
-          <div className="em-ico">○</div>
-          <div>Меню пока пусто</div>
-        </div>
-      ) : (
-        <>
-          <MenuFilters value={filters} onChange={setFilters} count={filtered.length} />
-          {filtered.length === 0 ? (
-            <div className="empty">
-              <div className="em-ico">○</div>
-              <div>Ничего не найдено</div>
-            </div>
-          ) : (
-            filtered.map((m) => (
-              <MixCard
-                key={m.id}
-                item={m}
-                masterName={names[m.authorEmployeeId]}
-                onClick={() => navigate(`/guest/mix/${m.id}`)}
-                onOrder={() => navigate(`/guest/mix/${m.id}`)}
-                onFav={() => setFavHint(true)}
-              />
-            ))
-          )}
-        </>
-      )}
-
-      {/* tobaccos in stock — TODO(api): no stock endpoint */}
-      <div className="section-title">Табаки в наличии</div>
-      <div className="chips" role="list" aria-label="Табаки в наличии" style={{ marginBottom: 12 }}>
-        {TOBACCOS.map((t) => (
-          <span className="chip" role="listitem" key={t.brand}>
-            {t.brand}
-            {t.note ? <span className="muted"> · {t.note}</span> : null}
-          </span>
+      {layout
+        .filter((b) => b.visible)
+        .map((b) => (
+          <Fragment key={b.key}>{blocks[b.key]}</Fragment>
         ))}
-      </div>
     </Shell>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </svg>
   );
 }

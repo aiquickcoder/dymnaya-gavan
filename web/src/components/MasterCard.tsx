@@ -3,7 +3,6 @@ import { masterImageUrl } from "../lib/masterImages";
 export default function MasterCard({
   name,
   role,
-  rating,
   online,
   onClick,
 }: {
@@ -43,9 +42,6 @@ export default function MasterCard({
         </div>
         <div>
           <div className="mc-name">{name}</div>
-          {rating != null && rating > 0 && (
-            <div className="mc-rating">★ {rating.toFixed(1)}</div>
-          )}
         </div>
       </div>
       {role && <div className="mc-role">{role}</div>}

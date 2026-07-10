@@ -10,6 +10,17 @@ import (
 	"github.com/google/uuid"
 )
 
+type Call struct {
+	ID           uuid.UUID  `json:"id"`
+	RestaurantID uuid.UUID  `json:"restaurant_id"`
+	TableID      string     `json:"table_id"`
+	Type         string     `json:"type"`
+	Status       string     `json:"status"`
+	CreatedAt    time.Time  `json:"created_at"`
+	AckedAt      *time.Time `json:"acked_at"`
+	DoneAt       *time.Time `json:"done_at"`
+}
+
 type Component struct {
 	ID        uuid.UUID `json:"id"`
 	RecipeID  uuid.UUID `json:"recipe_id"`
@@ -17,6 +28,16 @@ type Component struct {
 	Flavour   string    `json:"flavour"`
 	Percent   int32     `json:"percent"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type Device struct {
+	ID           uuid.UUID `json:"id"`
+	EmployeeID   uuid.UUID `json:"employee_id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+	Platform     string    `json:"platform"`
+	FcmToken     string    `json:"fcm_token"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type Employee struct {
@@ -27,6 +48,9 @@ type Employee struct {
 	ShortName  string    `json:"short_name"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
+	Phone      *string   `json:"phone"`
+	PhotoSlug  *string   `json:"photo_slug"`
+	TipUrl     *string   `json:"tip_url"`
 }
 
 type EmployeeRating struct {
@@ -44,6 +68,15 @@ type EmployeeRestaurant struct {
 	Rating       *int32    `json:"rating"`
 	CreatedAt    time.Time `json:"created_at"`
 	Position     *string   `json:"position"`
+	Status       string    `json:"status"`
+}
+
+type EmployeeSchedule struct {
+	ID           uuid.UUID `json:"id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+	EmployeeID   uuid.UUID `json:"employee_id"`
+	WorkDate     time.Time `json:"work_date"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 type Favourite struct {
@@ -110,6 +143,22 @@ type Recipe struct {
 	IsSecret  bool      `json:"is_secret"`
 }
 
+type Reservation struct {
+	ID           uuid.UUID `json:"id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+	GuestName    string    `json:"guest_name"`
+	Phone        string    `json:"phone"`
+	ResDate      time.Time `json:"res_date"`
+	StartTime    string    `json:"start_time"`
+	EndTime      string    `json:"end_time"`
+	TableID      *string   `json:"table_id"`
+	Guests       int32     `json:"guests"`
+	Zone         *string   `json:"zone"`
+	Status       string    `json:"status"`
+	Note         *string   `json:"note"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
 type Restaurant struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
@@ -139,4 +188,25 @@ type User struct {
 	PhoneNumber string    `json:"phone_number"`
 	Gender      *string   `json:"gender"`
 	CreatedAt   time.Time `json:"created_at"`
+}
+
+type VenueTable struct {
+	ID           uuid.UUID  `json:"id"`
+	RestaurantID uuid.UUID  `json:"restaurant_id"`
+	Label        string     `json:"label"`
+	X            float64    `json:"x"`
+	Y            float64    `json:"y"`
+	Seats        int32      `json:"seats"`
+	Shape        string     `json:"shape"`
+	ZoneID       *uuid.UUID `json:"zone_id"`
+	SortOrder    int32      `json:"sort_order"`
+	CreatedAt    time.Time  `json:"created_at"`
+}
+
+type Zone struct {
+	ID           uuid.UUID `json:"id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+	Name         string    `json:"name"`
+	SortOrder    int32     `json:"sort_order"`
+	CreatedAt    time.Time `json:"created_at"`
 }

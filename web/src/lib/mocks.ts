@@ -26,8 +26,8 @@ export interface Visit {
 }
 
 export const HISTORY: Visit[] = [
-  { place: "Дымная Гавань", date: "12 июн", mix: "Северное сияние", master: "Тимур", score: 5 },
-  { place: "Дымная Гавань", date: "5 июн", mix: "Цитрус Стронг", master: "Алина", score: 4 },
+  { place: "Example lounge", date: "12 июн", mix: "Северное сияние", master: "Тимур", score: 5 },
+  { place: "Example lounge", date: "5 июн", mix: "Цитрус Стронг", master: "Алина", score: 4 },
   { place: "Облако 9", date: "28 мая", mix: "Гранатовый дым", master: "Дин", score: 4 },
 ];
 
@@ -45,7 +45,7 @@ export const TIP_PRESETS = [100, 200, 500];
 
 // Venue identity. TODO(api): no guest-facing "get restaurant" endpoint — name
 // and address are the app's own brand, table number comes from the QR deep-link.
-export const VENUE = { name: "Дымная Гавань", address: "ул. Тлеющая, 7" };
+export const VENUE = { name: "Example lounge", address: "ул. Камала, 4а" };
 
 // TODO(api): no tobacco-stock endpoint — static list for the "в наличии" block.
 export interface Tobacco {

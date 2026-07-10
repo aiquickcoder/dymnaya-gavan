@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { DEMO, DEMO_RID, DEMO_TABLE } from "./lib/demo";
 import { KEYS } from "./store";
+import "./fonts.css";
 import "./styles.css";
 
 // Demo build (GitHub Pages): seed a table + guest session up-front so the app
@@ -19,12 +20,20 @@ if (DEMO) {
       KEYS.admin,
       JSON.stringify({
         restaurantId: DEMO_RID,
-        restaurantName: "Дымная Гавань",
+        restaurantName: "Example lounge",
         employeeId: "m-timur",
         employeeName: "Тимур",
         code: "DEMO0000",
       }),
     );
+}
+
+// Apply the saved theme up-front so there's no light→dark flash on load.
+try {
+  const t = JSON.parse(localStorage.getItem(KEYS.theme) || '"light"');
+  document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+} catch {
+  document.documentElement.setAttribute("data-theme", "light");
 }
 
 // Under GitHub Pages the app is served from /<repo>/, so route relative to BASE_URL.

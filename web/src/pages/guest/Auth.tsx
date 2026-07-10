@@ -65,14 +65,17 @@ export default function Auth() {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+7 999 123-45-67"
           />
-          <label>Пол (необязательно)</label>
+          <label>Пол</label>
           <div className="seg block">
             {[
               { v: "male", l: "Мужской" },
               { v: "female", l: "Женский" },
-              { v: "", l: "Не указывать" },
             ].map((g) => (
-              <button key={g.l} className={gender === g.v ? "on" : ""} onClick={() => setGender(g.v)}>
+              <button
+                key={g.v}
+                className={gender === g.v ? "on" : ""}
+                onClick={() => setGender(gender === g.v ? "" : g.v)}
+              >
                 {g.l}
               </button>
             ))}

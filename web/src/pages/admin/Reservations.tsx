@@ -27,7 +27,7 @@ const STATUS_FLOW: Record<
     { to: "cancelled", label: "Отменить", cls: "sm danger" },
   ],
   confirmed: [
-    { to: "seated", label: "Посадить", cls: "sm primary" },
+    { to: "seated", label: "Усадить", cls: "sm primary" },
     { to: "cancelled", label: "Отменить", cls: "sm danger" },
   ],
   seated: [{ to: "confirmed", label: "Вернуть к брони", cls: "sm ghost" }],

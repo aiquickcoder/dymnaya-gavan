@@ -19,6 +19,7 @@ import (
 
 	"mixmaster/internal/db"
 	"mixmaster/internal/httpx"
+	"mixmaster/internal/users"
 )
 
 // Handler groups employee and restaurant endpoints.
@@ -43,12 +44,19 @@ func (h *Handler) Mount(r chi.Router) {
 		r.Get("/{id}/rating", h.GetEmployeeRating)       // aggregate rating
 		r.Get("/{id}/ratings", h.ListEmployeeRatingsH)   // ratings given to the master
 		r.Get("/{id}/recipe-feedback", h.RecipeFeedback) // reviews/scores on his recipes
+		r.Get("/{id}/tip-url", h.TipUrl)                 // personal tips link (Нетмонет)
+		r.Post("/{id}/schedule", h.SetScheduleDay)       // toggle one shift-schedule day
 	})
 	r.Route("/restaurants", func(r chi.Router) {
 		r.Post("/", h.CreateRestaurant)
 		r.Post("/employees", h.ListByCode)
-		r.Post("/shift", h.SetShift)               // set today's roster (by code)
-		r.Get("/{restaurantId}/shift", h.GetShift) // today's masters on shift
+		r.Post("/shift", h.SetShift)                           // set today's roster (by code)
+		r.Get("/{restaurantId}/shift", h.GetShift)             // today's masters on shift
+		r.Post("/{restaurantId}/shift", h.SetShiftByID)        // set today's roster (by id)
+		r.Get("/{restaurantId}/employees-full", h.ListFull)    // full admin roster
+		r.Post("/{restaurantId}/employees-full", h.CreateFull) // create a master
+		r.Get("/{restaurantId}/schedule", h.Schedule)          // shift-schedule grid
+		r.Get("/{restaurantId}/guests", h.ListGuests)          // venue guests (admin)
 	})
 }
 
@@ -99,12 +107,51 @@ type AttachRestaurantRequest struct {
 	Position *string `json:"position,omitempty"`
 }
 
-// UpdateEmployeeRequest is a partial update of an employee's names.
+// UpdateEmployeeRequest is a partial update of a master. Names/phone/photoSlug/
+// tipUrl land on employees; position/status on the employee_restaurants link
+// (scoped by restaurantId when present, else all of the master's venues).
 type UpdateEmployeeRequest struct {
-	FirstName  *string `json:"firstName,omitempty"`
-	LastName   *string `json:"lastName,omitempty"`
-	MiddleName *string `json:"middleName,omitempty"`
-	ShortName  *string `json:"shortName,omitempty"`
+	FirstName    *string    `json:"firstName,omitempty"`
+	LastName     *string    `json:"lastName,omitempty"`
+	MiddleName   *string    `json:"middleName,omitempty"`
+	ShortName    *string    `json:"shortName,omitempty"`
+	Phone        *string    `json:"phone,omitempty"`
+	PhotoSlug    *string    `json:"photoSlug,omitempty"`
+	TipUrl       *string    `json:"tipUrl,omitempty"`
+	Position     *string    `json:"position,omitempty"`
+	Status       *string    `json:"status,omitempty"`
+	RestaurantID *uuid.UUID `json:"restaurantId,omitempty"`
+}
+
+// EmployeeFull is the full admin view of a master in a venue context
+// (matches the web EmployeeFull type; camelCase).
+type EmployeeFull struct {
+	ID          uuid.UUID `json:"id"`
+	FirstName   string    `json:"firstName"`
+	LastName    string    `json:"lastName"`
+	MiddleName  string    `json:"middleName"`
+	ShortName   string    `json:"shortName"`
+	Position    string    `json:"position"`
+	Phone       *string   `json:"phone,omitempty"`
+	PhotoSlug   *string   `json:"photoSlug,omitempty"`
+	TipUrl      *string   `json:"tipUrl,omitempty"`
+	Rating      float64   `json:"rating"`
+	RatingCount int32     `json:"ratingCount"`
+	OnShift     bool      `json:"onShift"`
+	Status      string    `json:"status"`
+}
+
+// UpsertEmployeeBody creates a master (POST) — firstName/lastName required.
+type UpsertEmployeeBody struct {
+	FirstName  string  `json:"firstName"`
+	LastName   string  `json:"lastName"`
+	MiddleName string  `json:"middleName"`
+	ShortName  string  `json:"shortName"`
+	Position   *string `json:"position,omitempty"`
+	Phone      *string `json:"phone,omitempty"`
+	PhotoSlug  *string `json:"photoSlug,omitempty"`
+	TipUrl     *string `json:"tipUrl,omitempty"`
+	Status     *string `json:"status,omitempty"`
 }
 
 // BatchRequest is a list of employee ids.
@@ -311,12 +358,16 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	emp, err := h.q.UpdateEmployee(r.Context(), db.UpdateEmployeeParams{
+	ctx := r.Context()
+	emp, err := h.q.UpdateEmployee(ctx, db.UpdateEmployeeParams{
 		ID:         id,
 		FirstName:  req.FirstName,
 		LastName:   req.LastName,
 		MiddleName: req.MiddleName,
 		ShortName:  req.ShortName,
+		Phone:      req.Phone,
+		PhotoSlug:  req.PhotoSlug,
+		TipUrl:     req.TipUrl,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		httpx.Error(w, http.StatusNotFound, "not_found", "employee not found")
@@ -326,7 +377,47 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
 		return
 	}
-	httpx.JSON(w, http.StatusOK, toEmployeeResponse(emp))
+
+	// position/status live on the per-restaurant link.
+	if req.Position != nil || req.Status != nil {
+		if err := h.q.UpdateEmployeeRestaurant(ctx, db.UpdateEmployeeRestaurantParams{
+			EmployeeID:   id,
+			Position:     req.Position,
+			Status:       req.Status,
+			RestaurantID: req.RestaurantID,
+		}); err != nil {
+			httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+			return
+		}
+	}
+
+	// Echo back the full row in a venue context. Prefer the given restaurant;
+	// fall back to any venue the master is linked to.
+	rid := uuid.Nil
+	if req.RestaurantID != nil {
+		rid = *req.RestaurantID
+	} else if any, err := h.q.GetEmployeeAnyRestaurant(ctx, id); err == nil {
+		rid = any
+	}
+	if rid != uuid.Nil {
+		full, err := h.q.GetEmployeeFull(ctx, db.GetEmployeeFullParams{EmployeeID: id, RestaurantID: rid})
+		if err == nil {
+			httpx.JSON(w, http.StatusOK, employeeFullFromGet(full))
+			return
+		}
+	}
+	// No venue context: return a minimal full view from the employee row.
+	httpx.JSON(w, http.StatusOK, EmployeeFull{
+		ID:         emp.ID,
+		FirstName:  emp.FirstName,
+		LastName:   emp.LastName,
+		MiddleName: emp.MiddleName,
+		ShortName:  emp.ShortName,
+		Phone:      emp.Phone,
+		PhotoSlug:  emp.PhotoSlug,
+		TipUrl:     emp.TipUrl,
+		Status:     "active",
+	})
 }
 
 // Batch godoc
@@ -692,7 +783,455 @@ func (h *Handler) writeShift(w http.ResponseWriter, r *http.Request, restaurantI
 	httpx.JSON(w, http.StatusOK, out)
 }
 
+// ---- full roster (admin) ----
+
+// ListFull godoc
+//
+//	@Summary	Full admin roster for a venue (profile + position/status + rating + shift)
+//	@Tags		restaurants
+//	@Produce	json
+//	@Param		restaurantId	path	string	true	"Restaurant ID"
+//	@Success	200	{object}	httpx.Envelope{data=[]employees.EmployeeFull}
+//	@Router		/restaurants/{restaurantId}/employees-full [get]
+func (h *Handler) ListFull(w http.ResponseWriter, r *http.Request) {
+	rid, ok := parseRestaurantID(w, r)
+	if !ok {
+		return
+	}
+	rows, err := h.q.ListEmployeesFullByRestaurant(r.Context(), rid)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	out := make([]EmployeeFull, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, employeeFullFromList(row))
+	}
+	httpx.JSON(w, http.StatusOK, out)
+}
+
+// CreateFull godoc
+//
+//	@Summary	Create a master at a venue (admin)
+//	@Tags		restaurants
+//	@Accept		json
+//	@Produce	json
+//	@Param		restaurantId	path	string					true	"Restaurant ID"
+//	@Param		body			body	employees.UpsertEmployeeBody	true	"Master data"
+//	@Success	201	{object}	httpx.Envelope{data=employees.EmployeeFull}
+//	@Failure	400	{object}	httpx.Envelope
+//	@Router		/restaurants/{restaurantId}/employees-full [post]
+func (h *Handler) CreateFull(w http.ResponseWriter, r *http.Request) {
+	rid, ok := parseRestaurantID(w, r)
+	if !ok {
+		return
+	}
+	var req UpsertEmployeeBody
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "bad_request", "invalid json body")
+		return
+	}
+	if req.FirstName == "" || req.LastName == "" {
+		httpx.Error(w, http.StatusBadRequest, "validation", "firstName and lastName are required")
+		return
+	}
+
+	ctx := r.Context()
+	tx, err := h.pool.Begin(ctx)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	defer tx.Rollback(ctx)
+	qtx := h.q.WithTx(tx)
+
+	emp, err := qtx.CreateEmployee(ctx, db.CreateEmployeeParams{
+		FirstName:  req.FirstName,
+		LastName:   req.LastName,
+		MiddleName: req.MiddleName,
+		ShortName:  req.ShortName,
+	})
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	// Profile extras (phone/photo/tip) go on the employees row.
+	if req.Phone != nil || req.PhotoSlug != nil || req.TipUrl != nil {
+		if _, err := qtx.UpdateEmployee(ctx, db.UpdateEmployeeParams{
+			ID:        emp.ID,
+			Phone:     req.Phone,
+			PhotoSlug: req.PhotoSlug,
+			TipUrl:    req.TipUrl,
+		}); err != nil {
+			httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+			return
+		}
+	}
+	if err := qtx.LinkEmployeeRestaurant(ctx, db.LinkEmployeeRestaurantParams{
+		EmployeeID:   emp.ID,
+		RestaurantID: rid,
+		Position:     req.Position,
+	}); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	if req.Status != nil {
+		if err := qtx.UpdateEmployeeRestaurant(ctx, db.UpdateEmployeeRestaurantParams{
+			EmployeeID:   emp.ID,
+			Status:       req.Status,
+			RestaurantID: &rid,
+		}); err != nil {
+			httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+			return
+		}
+	}
+	full, err := qtx.GetEmployeeFull(ctx, db.GetEmployeeFullParams{EmployeeID: emp.ID, RestaurantID: rid})
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	if err := tx.Commit(ctx); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	httpx.JSON(w, http.StatusCreated, employeeFullFromGet(full))
+}
+
+// TipUrl godoc
+//
+//	@Summary	A master's personal tips link (Нетмонет)
+//	@Tags		employees
+//	@Produce	json
+//	@Param		id	path		string	true	"Employee ID"
+//	@Success	200	{object}	httpx.Envelope{data=string}	"url or null"
+//	@Failure	404	{object}	httpx.Envelope
+//	@Router		/employees/{id}/tip-url [get]
+func (h *Handler) TipUrl(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(w, r)
+	if !ok {
+		return
+	}
+	url, err := h.q.GetEmployeeTipUrl(r.Context(), id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		httpx.Error(w, http.StatusNotFound, "not_found", "employee not found")
+		return
+	}
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	httpx.JSON(w, http.StatusOK, url) // *string → data: "…" or null
+}
+
+// SetShiftByIDRequest sets today's roster for a venue identified by id.
+type SetShiftByIDRequest struct {
+	EmployeeIDs []uuid.UUID `json:"employeeIds"`
+}
+
+// SetShiftByID godoc
+//
+//	@Summary	Set today's masters on shift (by restaurant id)
+//	@Tags		restaurants
+//	@Accept		json
+//	@Produce	json
+//	@Param		restaurantId	path	string							true	"Restaurant ID"
+//	@Param		body			body	employees.SetShiftByIDRequest	true	"Employee ids"
+//	@Success	200	{object}	httpx.Envelope{data=[]employees.ShiftMaster}
+//	@Router		/restaurants/{restaurantId}/shift [post]
+func (h *Handler) SetShiftByID(w http.ResponseWriter, r *http.Request) {
+	rid, ok := parseRestaurantID(w, r)
+	if !ok {
+		return
+	}
+	var req SetShiftByIDRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "bad_request", "invalid json body")
+		return
+	}
+	ctx := r.Context()
+	tx, err := h.pool.Begin(ctx)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	defer tx.Rollback(ctx)
+	qtx := h.q.WithTx(tx)
+
+	if err := qtx.DeleteShiftsToday(ctx, rid); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	for _, empID := range req.EmployeeIDs {
+		if err := qtx.AddShiftToday(ctx, db.AddShiftTodayParams{RestaurantID: rid, EmployeeID: empID}); err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+				httpx.Error(w, http.StatusBadRequest, "invalid_reference", "employee does not exist: "+empID.String())
+				return
+			}
+			httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+			return
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	h.writeShift(w, r, rid)
+}
+
+// ---- shift schedule ----
+
+// ScheduleRow is one master's row in the schedule grid: a date→on map over the
+// requested range (matches the web ScheduleRow type).
+type ScheduleRow struct {
+	EmployeeID uuid.UUID       `json:"employeeId"`
+	ShortName  string          `json:"shortName"`
+	Position   string          `json:"position"`
+	Days       map[string]bool `json:"days"`
+}
+
+const dateLayout = "2006-01-02"
+
+// Schedule godoc
+//
+//	@Summary	Shift-schedule grid for a venue over [from,to]
+//	@Tags		restaurants
+//	@Produce	json
+//	@Param		restaurantId	path	string	true	"Restaurant ID"
+//	@Param		from			query	string	true	"YYYY-MM-DD (inclusive)"
+//	@Param		to				query	string	true	"YYYY-MM-DD (inclusive)"
+//	@Success	200	{object}	httpx.Envelope{data=[]employees.ScheduleRow}
+//	@Router		/restaurants/{restaurantId}/schedule [get]
+func (h *Handler) Schedule(w http.ResponseWriter, r *http.Request) {
+	rid, ok := parseRestaurantID(w, r)
+	if !ok {
+		return
+	}
+	from, err := time.Parse(dateLayout, r.URL.Query().Get("from"))
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "bad_request", "invalid 'from' date (want YYYY-MM-DD)")
+		return
+	}
+	to, err := time.Parse(dateLayout, r.URL.Query().Get("to"))
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "bad_request", "invalid 'to' date (want YYYY-MM-DD)")
+		return
+	}
+	ctx := r.Context()
+
+	// Seed one row per active master of the venue, with every day in range = false.
+	emps, err := h.q.ListEmployeesFullByRestaurant(ctx, rid)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	rows := make([]*ScheduleRow, 0, len(emps))
+	byEmp := make(map[uuid.UUID]*ScheduleRow)
+	for _, e := range emps {
+		if e.Status != "active" {
+			continue
+		}
+		row := &ScheduleRow{
+			EmployeeID: e.ID,
+			ShortName:  e.ShortName,
+			Position:   e.Position,
+			Days:       emptyDayMap(from, to),
+		}
+		rows = append(rows, row)
+		byEmp[e.ID] = row
+	}
+
+	// Overlay actual scheduled days; add any scheduled master not already listed.
+	sch, err := h.q.ListScheduleRange(ctx, db.ListScheduleRangeParams{
+		RestaurantID: rid,
+		FromDate:     from,
+		ToDate:       to,
+	})
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	for _, s := range sch {
+		row := byEmp[s.EmployeeID]
+		if row == nil {
+			row = &ScheduleRow{
+				EmployeeID: s.EmployeeID,
+				ShortName:  s.ShortName,
+				Position:   s.Position,
+				Days:       emptyDayMap(from, to),
+			}
+			rows = append(rows, row)
+			byEmp[s.EmployeeID] = row
+		}
+		row.Days[s.WorkDate.Format(dateLayout)] = true
+	}
+
+	out := make([]ScheduleRow, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, *row)
+	}
+	httpx.JSON(w, http.StatusOK, out)
+}
+
+// SetScheduleDayRequest toggles one schedule day for a master.
+type SetScheduleDayRequest struct {
+	Date         string     `json:"date"` // YYYY-MM-DD
+	On           bool       `json:"on"`
+	RestaurantID *uuid.UUID `json:"restaurantId,omitempty"`
+}
+
+// SetScheduleDay godoc
+//
+//	@Summary	Toggle a master's shift-schedule day (on=insert, off=delete)
+//	@Tags		employees
+//	@Accept		json
+//	@Produce	json
+//	@Param		id		path	string							true	"Employee ID"
+//	@Param		body	body	employees.SetScheduleDayRequest	true	"date + on flag"
+//	@Success	204		{object}	nil
+//	@Failure	404		{object}	httpx.Envelope
+//	@Router		/employees/{id}/schedule [post]
+func (h *Handler) SetScheduleDay(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(w, r)
+	if !ok {
+		return
+	}
+	var req SetScheduleDayRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "bad_request", "invalid json body")
+		return
+	}
+	day, err := time.Parse(dateLayout, req.Date)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "bad_request", "invalid date (want YYYY-MM-DD)")
+		return
+	}
+	ctx := r.Context()
+
+	// Derive the venue from the request, else from the master's link.
+	rid := uuid.Nil
+	if req.RestaurantID != nil {
+		rid = *req.RestaurantID
+	} else {
+		got, err := h.q.GetEmployeeAnyRestaurant(ctx, id)
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpx.Error(w, http.StatusNotFound, "not_found", "employee is not linked to any restaurant")
+			return
+		}
+		if err != nil {
+			httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+			return
+		}
+		rid = got
+	}
+
+	if req.On {
+		if err := h.q.AddSchedule(ctx, db.AddScheduleParams{RestaurantID: rid, EmployeeID: id, WorkDate: day}); err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+				httpx.Error(w, http.StatusBadRequest, "invalid_reference", "employee or restaurant does not exist")
+				return
+			}
+			httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+			return
+		}
+	} else {
+		if err := h.q.DeleteSchedule(ctx, db.DeleteScheduleParams{RestaurantID: rid, EmployeeID: id, WorkDate: day}); err != nil {
+			httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+			return
+		}
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// ---- guests (admin) ----
+
+// ListGuests godoc
+//
+//	@Summary	Guests seen at a venue (distinct users via orders, with aggregates)
+//	@Tags		restaurants
+//	@Produce	json
+//	@Param		restaurantId	path	string	true	"Restaurant ID"
+//	@Success	200	{object}	httpx.Envelope{data=[]users.GuestSummary}
+//	@Router		/restaurants/{restaurantId}/guests [get]
+func (h *Handler) ListGuests(w http.ResponseWriter, r *http.Request) {
+	rid, ok := parseRestaurantID(w, r)
+	if !ok {
+		return
+	}
+	rows, err := h.q.ListGuestsByRestaurant(r.Context(), rid)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	out := make([]users.GuestSummary, 0, len(rows))
+	for _, g := range rows {
+		out = append(out, users.GuestSummaryFromRestaurantRow(g))
+	}
+	httpx.JSON(w, http.StatusOK, out)
+}
+
 // ---- helpers ----
+
+func employeeFullFromList(r db.ListEmployeesFullByRestaurantRow) EmployeeFull {
+	return EmployeeFull{
+		ID:          r.ID,
+		FirstName:   r.FirstName,
+		LastName:    r.LastName,
+		MiddleName:  r.MiddleName,
+		ShortName:   r.ShortName,
+		Position:    r.Position,
+		Phone:       r.Phone,
+		PhotoSlug:   r.PhotoSlug,
+		TipUrl:      r.TipUrl,
+		Rating:      r.Rating,
+		RatingCount: r.RatingCount,
+		OnShift:     asBool(r.OnShift),
+		Status:      r.Status,
+	}
+}
+
+func employeeFullFromGet(r db.GetEmployeeFullRow) EmployeeFull {
+	return EmployeeFull{
+		ID:          r.ID,
+		FirstName:   r.FirstName,
+		LastName:    r.LastName,
+		MiddleName:  r.MiddleName,
+		ShortName:   r.ShortName,
+		Position:    r.Position,
+		Phone:       r.Phone,
+		PhotoSlug:   r.PhotoSlug,
+		TipUrl:      r.TipUrl,
+		Rating:      r.Rating,
+		RatingCount: r.RatingCount,
+		OnShift:     asBool(r.OnShift),
+		Status:      r.Status,
+	}
+}
+
+// asBool adapts an untyped scan target (bool_or infers as interface{} in sqlc).
+func asBool(v interface{}) bool {
+	b, _ := v.(bool)
+	return b
+}
+
+// emptyDayMap builds a date→false map covering [from,to] inclusive.
+func emptyDayMap(from, to time.Time) map[string]bool {
+	days := make(map[string]bool)
+	for d := from; !d.After(to); d = d.AddDate(0, 0, 1) {
+		days[d.Format(dateLayout)] = false
+	}
+	return days
+}
+
+func parseRestaurantID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	rid, err := uuid.Parse(chi.URLParam(r, "restaurantId"))
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "bad_request", "invalid restaurant id")
+		return uuid.Nil, false
+	}
+	return rid, true
+}
 
 func toEmployeeResponse(e db.Employee) EmployeeResponse {
 	return EmployeeResponse{

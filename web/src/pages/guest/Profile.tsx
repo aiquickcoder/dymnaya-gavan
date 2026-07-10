@@ -3,19 +3,28 @@ import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../../api";
 import { Banner } from "../../components/ui";
 import { Shell } from "../../components/Shell";
-import CompositionBars from "../../components/CompositionBars";
 import StarRating from "../../components/StarRating";
+import FavCardBody from "../../components/FavCardBody";
 import BottomSheet from "../../components/BottomSheet";
 import { KEYS, useStored, type GuestSession } from "../../store";
-import { useTheme } from "../../theme";
 import { ACHIEVEMENTS, HISTORY } from "../../lib/mocks";
-import type { Favourite } from "../../types";
+import type { Favourite, Reservation, ReservationStatus } from "../../types";
+
+const RES_LABEL: Record<ReservationStatus, string> = {
+  new: "Новая",
+  confirmed: "Подтверждена",
+  seated: "За столом",
+  cancelled: "Отменена",
+};
+const bookDate = (s: string) =>
+  new Date(s + "T00:00:00").toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+const guestsWord = (n: number) => (n === 1 ? "гость" : n >= 2 && n <= 4 ? "гостя" : "гостей");
 
 export default function Profile() {
   const navigate = useNavigate();
   const [guest, setGuest] = useStored<GuestSession>(KEYS.guest);
-  const [theme, setTheme] = useTheme();
   const [favs, setFavs] = useState<Favourite[]>([]);
+  const [bookings, setBookings] = useState<Reservation[]>([]);
   const [error, setError] = useState("");
   const [sheet, setSheet] = useState(false);
 
@@ -27,7 +36,13 @@ export default function Profile() {
       .listFavourites(guest!.userId)
       .then(setFavs)
       .catch((e) => setError(e instanceof ApiError ? e.message : String(e)));
+    api.myReservations(guest!.userId).then(setBookings).catch(() => {});
   }, [loggedIn, guest?.userId]);
+
+  async function cancelBooking(id: string) {
+    setBookings((b) => b.map((x) => (x.id === id ? { ...x, status: "cancelled" } : x)));
+    await api.adminSetReservationStatus(id, "cancelled").catch(() => {});
+  }
 
   async function unfav(orderRecipeId: string) {
     if (!guest?.userId) return;
@@ -42,13 +57,7 @@ export default function Profile() {
 
   return (
     <Shell nav>
-      <div className="row between">
-        <h1 className="display" style={{ fontSize: 27 }}>Профиль</h1>
-        <div className="seg">
-          <button className={theme === "ember" ? "on" : ""} onClick={() => setTheme("ember")}>Уголь</button>
-          <button className={theme === "smoke" ? "on" : ""} onClick={() => setTheme("smoke")}>Ночь</button>
-        </div>
-      </div>
+      <h1 className="display" style={{ fontSize: 27 }}>Профиль</h1>
 
       {error && <Banner kind="error">{error}</Banner>}
 
@@ -63,6 +72,33 @@ export default function Profile() {
         </div>
       ) : (
         <>
+          <div className="section-title display">Мои брони</div>
+          {bookings.length === 0 ? (
+            <div className="card center" style={{ padding: "20px" }}>
+              <p className="muted small" style={{ marginBottom: 12 }}>Пока нет броней.</p>
+              <button className="primary block" onClick={() => navigate("/guest/book")}>Забронировать стол</button>
+            </div>
+          ) : (
+            <>
+              {bookings.map((b) => (
+                <div className="card" key={b.id}>
+                  <div className="row between">
+                    <div className="display" style={{ fontSize: 17 }}>{bookDate(b.date)} · {b.time}</div>
+                    <span className={`pill res-${b.status}`}>{RES_LABEL[b.status]}</span>
+                  </div>
+                  <div className="muted small" style={{ marginTop: 2 }}>
+                    {b.guests} {guestsWord(b.guests)}{b.tableLabel ? ` · стол ${b.tableLabel}` : ""}
+                  </div>
+                  {b.note && <div className="muted small" style={{ marginTop: 4 }}>{b.note}</div>}
+                  {(b.status === "new" || b.status === "confirmed") && (
+                    <button className="danger sm" style={{ marginTop: 10 }} onClick={() => cancelBooking(b.id)}>Отменить</button>
+                  )}
+                </div>
+              ))}
+              <button className="ghost block" style={{ marginTop: 2 }} onClick={() => navigate("/guest/book")}>＋ Новая бронь</button>
+            </>
+          )}
+
           {favs[0] && (
             <>
               <div className="section-title display">Последний микс</div>
@@ -99,31 +135,31 @@ export default function Profile() {
             ))}
           </div>
 
-          <div className="section-title display">Избранные миксы</div>
+          <div className="row between" style={{ alignItems: "baseline", marginTop: 24 }}>
+            <div className="section-title display" style={{ margin: 0 }}>Избранные миксы</div>
+            {favs.length > 3 && (
+              <button className="link-btn" onClick={() => navigate("/guest/favourites")}>Все ({favs.length}) →</button>
+            )}
+          </div>
           {favs.length === 0 ? (
             <div className="empty">
               <div className="em-ico">♡</div>
-              <div>Пока пусто — сохраняйте миксы из сессии</div>
+              <div>Пока пусто — сохраняйте миксы из меню</div>
             </div>
           ) : (
-            favs.map((f) => (
-              <div className="card" key={f.orderRecipeId}>
-                <div className="row between">
-                  <div className="display" style={{ fontSize: 17 }}>{f.recipeName || "Микс"}</div>
-                  <button className="danger sm" onClick={() => unfav(f.orderRecipeId)}>Убрать</button>
+            <div className="fav-scroll" role="list">
+              {favs.slice(0, 3).map((f) => (
+                <div className="fav-card" role="listitem" key={f.orderRecipeId} onClick={() => navigate(`/guest/mix/${f.recipeId}`)}>
+                  <FavCardBody fav={f} onRemove={() => unfav(f.orderRecipeId)} />
                 </div>
-                <div className="muted small" style={{ marginBottom: 8 }}>
-                  {f.restaurantName} · Мастер {f.authorShortName || f.authorFullName}
-                </div>
-                <CompositionBars items={f.components} masked={f.isSecret} />
-                {f.myScore != null && (
-                  <div className="row" style={{ marginTop: 8 }}>
-                    <span className="muted small">Моя оценка:</span>
-                    <StarRating value={f.myScore} size="sm" />
-                  </div>
-                )}
-              </div>
-            ))
+              ))}
+              {favs.length > 3 && (
+                <button className="fav-card fav-more" onClick={() => navigate("/guest/favourites")}>
+                  <span className="fm-plus">+{favs.length - 3}</span>
+                  <span>Все избранные</span>
+                </button>
+              )}
+            </div>
           )}
 
           {/* TODO(api): нет эндпоинта истории визитов — моковые данные */}
@@ -153,7 +189,7 @@ export default function Profile() {
       </div>
 
       <BottomSheet open={sheet} onClose={() => setSheet(false)}>
-        <div className="display" style={{ fontSize: 22 }}>Дымная Гавань в кармане</div>
+        <div className="display" style={{ fontSize: 22 }}>Example lounge в кармане</div>
         <p className="muted small">Избранное, история и заказы — всегда с собой.</p>
         <button className="primary block lg" style={{ marginTop: 12 }} onClick={() => setSheet(false)}>App Store</button>
         <div style={{ height: 10 }} />

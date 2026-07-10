@@ -44,6 +44,16 @@ export function IconDashboard(p: IconProps) {
 }
 
 // Столы — стол-вид сверху с четырьмя посадочными местами.
+export function IconHome(p: IconProps) {
+  return (
+    <Icon {...p}>
+      <path d="M3.5 10.5 12 3.5l8.5 7" />
+      <path d="M5.5 9.5V20h13V9.5" />
+      <path d="M10 20v-5.5h4V20" />
+    </Icon>
+  );
+}
+
 export function IconTables(p: IconProps) {
   return (
     <Icon {...p}>

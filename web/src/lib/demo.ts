@@ -6,6 +6,7 @@ import type {
   CallType,
   Component,
   EmployeeFull,
+  HomeConfig,
   MenuRecipeView,
   Reservation,
   ReservationStatus,
@@ -70,6 +71,10 @@ export const demoApi = {
   adminCloseTable: (tableId: string) => ok(demoStore.adminCloseTable(tableId)),
   adminTableStates: (restaurantId: string) => ok(demoStore.adminTableStates(restaurantId)),
 
+  // ----- home builder -----
+  homeConfig: (_restaurantId: string) => ok(demoStore.getHomeConfig()),
+  adminSetHomeConfig: (_restaurantId: string, c: HomeConfig) => ok(demoStore.setHomeConfig(c)),
+
   adminMenu: (restaurantId: string) => ok(demoStore.adminMenu(restaurantId)),
   adminUpsertMenu: (m: Partial<MenuRecipeView> & { restaurantId: string }) => ok(demoStore.adminUpsertMenu(m)),
   adminDeleteMenu: (id: string) => ok(demoStore.adminDeleteMenu(id)),
@@ -93,6 +98,8 @@ export const demoApi = {
   adminUpsertReservation: (r: Partial<Reservation> & { restaurantId: string }) => ok(demoStore.adminUpsertReservation(r)),
   adminSetReservationStatus: (id: string, status: ReservationStatus) => ok(demoStore.adminSetReservationStatus(id, status)),
   adminDeleteReservation: (id: string) => ok(demoStore.adminDeleteReservation(id)),
+  createReservation: (input: Parameters<typeof demoStore.createReservation>[0]) => ok(demoStore.createReservation(input)),
+  myReservations: (userId: string) => ok(demoStore.myReservations(userId)),
 
   // ----- calls -----
   createCall: (input: { restaurantId: string; tableId: string; type: CallType }) => ok(demoStore.createCall(input)),

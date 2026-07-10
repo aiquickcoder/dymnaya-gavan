@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"mixmaster/internal/db"
 	"mixmaster/internal/httpx"
@@ -29,6 +30,8 @@ func New(q *db.Queries) *Handler {
 func (h *Handler) Routes(r chi.Router) {
 	r.Post("/", h.Register)
 	r.Get("/{id}", h.Get)
+	r.Get("/{id}/summary", h.Summary) // guest card: aggregates (visits/ltv/…)
+	r.Get("/{id}/visits", h.Visits)   // guest visit history
 	r.Get("/{id}/favourites", h.ListFavourites)
 	r.Post("/{id}/favourites", h.AddFavourite)
 	r.Delete("/{id}/favourites/{orderRecipeId}", h.RemoveFavourite)
@@ -245,6 +248,146 @@ func (h *Handler) RemoveFavourite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// ---- guests (admin) ----
+//
+// A "guest" is a user seen through a venue's orders. NB: order price is not
+// persisted on the order yet, so ltv/ltvMonth/total are backend APPROXIMATIONS
+// (see internal/db/queries/guests.sql). Real revenue is the analytics wave.
+
+// GuestSummary is the admin card for one guest (matches the web GuestSummary).
+type GuestSummary struct {
+	ID           uuid.UUID  `json:"id"`
+	Name         *string    `json:"name,omitempty"` // users have no name yet → always null
+	PhoneNumber  string     `json:"phoneNumber"`
+	Visits       int32      `json:"visits"`
+	LastVisit    *time.Time `json:"lastVisit,omitempty"`
+	FavouriteMix *string    `json:"favouriteMix,omitempty"`
+	AvgScore     *float64   `json:"avgScore,omitempty"`
+	Ltv          float64    `json:"ltv"`
+	LtvMonth     float64    `json:"ltvMonth"`
+	CreatedAt    time.Time  `json:"createdAt"`
+}
+
+// Visit is one entry in a guest's visit history (matches the web Visit).
+type Visit struct {
+	OrderID    uuid.UUID `json:"orderId"`
+	Date       time.Time `json:"date"`
+	TableLabel string    `json:"tableLabel"`
+	Mixes      []string  `json:"mixes"`
+	Master     *string   `json:"master,omitempty"`
+	Total      float64   `json:"total"`
+	Score      *float64  `json:"score,omitempty"`
+}
+
+// Summary godoc
+//
+//	@Summary	Guest aggregate summary (visits, ltv, favourite mix, avg score)
+//	@Tags		users
+//	@Produce	json
+//	@Param		id	path		string	true	"User ID"
+//	@Success	200	{object}	httpx.Envelope{data=users.GuestSummary}
+//	@Failure	404	{object}	httpx.Envelope
+//	@Router		/users/{id}/summary [get]
+func (h *Handler) Summary(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "bad_request", "invalid user id")
+		return
+	}
+	row, err := h.q.GetGuestSummary(r.Context(), id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		httpx.Error(w, http.StatusNotFound, "not_found", "user not found")
+		return
+	}
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	httpx.JSON(w, http.StatusOK, guestSummaryFromSummaryRow(row))
+}
+
+// Visits godoc
+//
+//	@Summary	Guest visit history (orders with mixes, master, total, score)
+//	@Tags		users
+//	@Produce	json
+//	@Param		id	path		string	true	"User ID"
+//	@Success	200	{object}	httpx.Envelope{data=[]users.Visit}
+//	@Router		/users/{id}/visits [get]
+func (h *Handler) Visits(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "bad_request", "invalid user id")
+		return
+	}
+	rows, err := h.q.ListOrdersByUser(r.Context(), &id)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "db_error", err.Error())
+		return
+	}
+	out := make([]Visit, 0, len(rows))
+	for _, o := range rows {
+		out = append(out, Visit{
+			OrderID:    o.OrderID,
+			Date:       o.CreatedAt,
+			TableLabel: o.TableID,
+			Mixes:      o.Mixes,
+			Master:     o.Master,
+			Total:      o.Total,
+			Score:      float8Ptr(o.Score),
+		})
+	}
+	httpx.JSON(w, http.StatusOK, out)
+}
+
+// GuestSummaryFromRestaurantRow maps a per-venue guests row to the shared DTO.
+// Exported so the restaurant-scoped list (in the employees package) reuses it.
+func GuestSummaryFromRestaurantRow(g db.ListGuestsByRestaurantRow) GuestSummary {
+	return GuestSummary{
+		ID:           g.ID,
+		PhoneNumber:  g.PhoneNumber,
+		Visits:       g.Visits,
+		LastVisit:    timePtr(g.LastVisit),
+		FavouriteMix: g.FavouriteMix,
+		AvgScore:     float8Ptr(g.AvgScore),
+		Ltv:          g.Ltv,
+		LtvMonth:     g.LtvMonth,
+		CreatedAt:    g.CreatedAt,
+	}
+}
+
+func guestSummaryFromSummaryRow(g db.GetGuestSummaryRow) GuestSummary {
+	return GuestSummary{
+		ID:           g.ID,
+		PhoneNumber:  g.PhoneNumber,
+		Visits:       g.Visits,
+		LastVisit:    timePtr(g.LastVisit),
+		FavouriteMix: g.FavouriteMix,
+		AvgScore:     float8Ptr(g.AvgScore),
+		Ltv:          g.Ltv,
+		LtvMonth:     g.LtvMonth,
+		CreatedAt:    g.CreatedAt,
+	}
+}
+
+// timePtr adapts an untyped scan target (max(timestamptz) infers as interface{}
+// in sqlc) into a nullable *time.Time.
+func timePtr(v interface{}) *time.Time {
+	if t, ok := v.(time.Time); ok {
+		return &t
+	}
+	return nil
+}
+
+// float8Ptr adapts a nullable pgtype.Float8 into *float64 (null → nil).
+func float8Ptr(v pgtype.Float8) *float64 {
+	if v.Valid {
+		f := v.Float64
+		return &f
+	}
+	return nil
 }
 
 func toUserResponse(u db.User) UserResponse {

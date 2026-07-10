@@ -11,53 +11,129 @@ import (
 )
 
 type Querier interface {
+	// Acknowledge a call (new → ack). No-op if it is not currently new.
+	AckCall(ctx context.Context, id uuid.UUID) error
 	AddFavourite(ctx context.Context, arg AddFavouriteParams) error
+	// Mark a master as working on a given calendar day at a venue. Idempotent.
+	AddSchedule(ctx context.Context, arg AddScheduleParams) error
 	AddShiftToday(ctx context.Context, arg AddShiftTodayParams) error
 	AttachRecipe(ctx context.Context, arg AttachRecipeParams) (OrderRecipe, error)
 	CloseOrder(ctx context.Context, id uuid.UUID) (Order, error)
+	CountTables(ctx context.Context, restaurantID uuid.UUID) (int64, error)
+	// Guest taps "Позвать" at their table → a new call lands in /admin/calls.
+	CreateCall(ctx context.Context, arg CreateCallParams) (Call, error)
 	CreateComponent(ctx context.Context, arg CreateComponentParams) (Component, error)
 	CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (Employee, error)
 	CreateMenuRecipe(ctx context.Context, arg CreateMenuRecipeParams) (MenuRecipe, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Recipe, error)
+	CreateReservation(ctx context.Context, arg CreateReservationParams) (Reservation, error)
 	CreateRestaurant(ctx context.Context, arg CreateRestaurantParams) (Restaurant, error)
+	CreateTable(ctx context.Context, arg CreateTableParams) (VenueTable, error)
 	CreateTableAssignment(ctx context.Context, arg CreateTableAssignmentParams) (TableAssignment, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateZone(ctx context.Context, arg CreateZoneParams) (Zone, error)
+	// Drop a device token (logout / FCM reports it unregistered).
+	DeleteDevice(ctx context.Context, fcmToken string) error
+	DeleteReservation(ctx context.Context, id uuid.UUID) error
+	DeleteSchedule(ctx context.Context, arg DeleteScheduleParams) error
 	DeleteShiftsToday(ctx context.Context, restaurantID uuid.UUID) error
+	DeleteTable(ctx context.Context, id uuid.UUID) error
 	DeleteTableAssignmentByOrder(ctx context.Context, orderID uuid.UUID) error
+	// Complete a call; backfill acked_at if it was never acknowledged.
+	DoneCall(ctx context.Context, id uuid.UUID) error
+	GetEmployeeAnyRestaurant(ctx context.Context, employeeID uuid.UUID) (uuid.UUID, error)
+	// Single master in a venue context (used to echo back the row after a write).
+	GetEmployeeFull(ctx context.Context, arg GetEmployeeFullParams) (GetEmployeeFullRow, error)
 	GetEmployeeRatingAgg(ctx context.Context, employeeID uuid.UUID) (GetEmployeeRatingAggRow, error)
+	GetEmployeeTipUrl(ctx context.Context, id uuid.UUID) (*string, error)
 	GetEmployeesByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Employee, error)
+	// Один гость (глобально, по всем заведениям): те же приближённые агрегаты.
+	// Агрегаты вынесены в отдельные CTE и подключены обычным LEFT JOIN по user_id
+	// (не LATERAL): так sqlc корректно типизирует avg_score/favourite_mix как
+	// nullable — гость без оценок/заказов вернёт NULL.
+	GetGuestSummary(ctx context.Context, id uuid.UUID) (GetGuestSummaryRow, error)
 	GetMenuRecipe(ctx context.Context, id uuid.UUID) (MenuRecipe, error)
 	GetOrder(ctx context.Context, id uuid.UUID) (Order, error)
 	GetRecipesByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Recipe, error)
 	GetRestaurantByCode(ctx context.Context, code string) (Restaurant, error)
 	GetTableAssignment(ctx context.Context, arg GetTableAssignmentParams) (TableAssignment, error)
+	GetTableByID(ctx context.Context, id uuid.UUID) (VenueTable, error)
 	GetUser(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByPhone(ctx context.Context, phoneNumber string) (User, error)
 	LinkEmployeeRestaurant(ctx context.Context, arg LinkEmployeeRestaurantParams) error
+	// Active calls: new before ack, freshest first within each group.
+	ListActiveCalls(ctx context.Context, restaurantID uuid.UUID) ([]Call, error)
 	ListActiveOrderRecipes(ctx context.Context, orderID uuid.UUID) ([]ListActiveOrderRecipesRow, error)
+	// Completed calls, most recently done first.
+	ListArchiveCalls(ctx context.Context, restaurantID uuid.UUID) ([]Call, error)
 	ListComponentsByRecipeID(ctx context.Context, recipeID uuid.UUID) ([]Component, error)
 	ListComponentsByRecipeIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Component, error)
 	ListEmployeeRatings(ctx context.Context, employeeID uuid.UUID) ([]ListEmployeeRatingsRow, error)
 	ListEmployeeRecipeFeedback(ctx context.Context, employeeID uuid.UUID) ([]ListEmployeeRecipeFeedbackRow, error)
 	ListEmployeesByRestaurant(ctx context.Context, restaurantID uuid.UUID) ([]ListEmployeesByRestaurantRow, error)
+	// Full admin roster for a venue: profile + per-venue position/status + global
+	// rating aggregate + whether the master is on today's shift here.
+	ListEmployeesFullByRestaurant(ctx context.Context, restaurantID uuid.UUID) ([]ListEmployeesFullByRestaurantRow, error)
 	ListFavourites(ctx context.Context, userID uuid.UUID) ([]ListFavouritesRow, error)
 	// Guest kitchen-bar menu: available kitchen positions only.
 	ListFoodMenu(ctx context.Context, restaurantID uuid.UUID) ([]MenuRecipe, error)
+	// Гости (клиенты) заведения = отдельные users, засветившиеся через orders.
+	//
+	// ВАЖНО про LTV/выручку: цена НЕ фиксируется на заказе (у order_recipes нет
+	// price). Поэтому ltv/ltv_month/total — ПРИБЛИЖЕНИЕ: каждый налитый микс
+	// (order_recipe) оценивается ценой одноимённой позиции меню этого заведения
+	// (recipes.name = menu_recipes.name), а если совпадения нет — фиксированным
+	// оценочным чеком 600.0. Настоящая выручка появится в Волне аналитики, когда
+	// на заказе появится зафиксированная цена.
+	// Все гости, побывавшие в заведении, с приближёнными агрегатами (см. заметку выше).
+	ListGuestsByRestaurant(ctx context.Context, restaurantID uuid.UUID) ([]ListGuestsByRestaurantRow, error)
 	// Guest hookah menu: available hookah positions only, in admin-defined order.
 	ListMenuRecipes(ctx context.Context, restaurantID uuid.UUID) ([]MenuRecipe, error)
 	// Admin menu: every non-removed position (incl. unavailable and kitchen).
 	ListMenuRecipesAdmin(ctx context.Context, restaurantID uuid.UUID) ([]MenuRecipe, error)
+	// FCM tokens of staff who are on today's shift at this venue — the push audience.
+	ListOnShiftDeviceTokens(ctx context.Context, restaurantID uuid.UUID) ([]string, error)
+	// История визитов гостя: одна строка на заказ с налитыми миксами, мастером
+	// (первый привязанный мастер), приближённым чеком (см. заметку про LTV) и
+	// средней оценкой гостя по этому заказу. master/score вынесены в CTE и
+	// подключены LEFT JOIN по order_id — так они корректно nullable в sqlc.
+	ListOrdersByUser(ctx context.Context, userID *uuid.UUID) ([]ListOrdersByUserRow, error)
+	// All reservations of a restaurant, optionally filtered to a single day.
+	// Sorted by date then start time (matches the admin "Брони" list).
+	ListReservations(ctx context.Context, arg ListReservationsParams) ([]Reservation, error)
+	// Every scheduled (master, day) inside [from, to] for a venue. Only masters
+	// that have at least one day in range appear; the handler folds the rows into
+	// one ScheduleRow per master with a date -> true map.
+	ListScheduleRange(ctx context.Context, arg ListScheduleRangeParams) ([]ListScheduleRangeRow, error)
 	ListShiftToday(ctx context.Context, restaurantID uuid.UUID) ([]ListShiftTodayRow, error)
+	// Config + live status: left-join the active (open) order via table_assignments
+	// (linked by string label). order_id/opened_at are null ⇒ the table is free.
+	ListTablesFull(ctx context.Context, restaurantID uuid.UUID) ([]ListTablesFullRow, error)
+	ListZones(ctx context.Context, restaurantID uuid.UUID) ([]ListZonesRow, error)
+	MoveTable(ctx context.Context, arg MoveTableParams) error
+	// Upsert a staff device's FCM token (idempotent by token; re-binds to the latest
+	// employee/restaurant on re-login or device hand-off).
+	RegisterDevice(ctx context.Context, arg RegisterDeviceParams) (Device, error)
 	RemoveFavourite(ctx context.Context, arg RemoveFavouriteParams) error
 	// Bulk-set sort_order from the position of each id in the array (0-based).
 	ReorderMenuRecipes(ctx context.Context, ids []uuid.UUID) error
+	SetReservationStatus(ctx context.Context, arg SetReservationStatusParams) error
 	SoftRemoveMenuRecipe(ctx context.Context, id uuid.UUID) error
 	SoftRemoveOrderRecipe(ctx context.Context, arg SoftRemoveOrderRecipeParams) (OrderRecipe, error)
 	UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error)
+	// Partial update of the per-restaurant link (position/status). When
+	// restaurant_id is null the change lands on every restaurant the master is
+	// linked to (the admin usually operates within a single venue).
+	UpdateEmployeeRestaurant(ctx context.Context, arg UpdateEmployeeRestaurantParams) error
 	// Partial update: only fields passed as non-null are changed (coalesce pattern,
 	// same convention as UpdateEmployee). Nullable fields cannot be cleared to null.
 	UpdateMenuRecipe(ctx context.Context, arg UpdateMenuRecipeParams) (MenuRecipe, error)
+	// Partial update: only fields passed as non-null are changed (coalesce pattern,
+	// same convention as UpdateMenuRecipe). Nullable fields cannot be cleared to null.
+	UpdateReservation(ctx context.Context, arg UpdateReservationParams) (Reservation, error)
+	// Partial update: only fields passed as non-null change (coalesce pattern).
+	UpdateTable(ctx context.Context, arg UpdateTableParams) (VenueTable, error)
 	UpsertEmployeeRating(ctx context.Context, arg UpsertEmployeeRatingParams) (EmployeeRating, error)
 	UpsertOrderRecipeRating(ctx context.Context, arg UpsertOrderRecipeRatingParams) (OrderRecipeFeedback, error)
 	UpsertOrderRecipeReview(ctx context.Context, arg UpsertOrderRecipeReviewParams) (OrderRecipeFeedback, error)

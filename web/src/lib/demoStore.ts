@@ -15,6 +15,7 @@ import type {
   Favourite,
   FeedbackView,
   GuestSummary,
+  HomeConfig,
   HourLoad,
   LoginResponse,
   MenuRecipeView,
@@ -39,7 +40,7 @@ import type {
 } from "../types";
 
 export const DEMO_RID = "demo-venue";
-export const DEMO_TABLE = "7";
+export const DEMO_TABLE = "4";
 
 const NOW = "2026-07-04T18:00:00Z";
 const DAY = 86400000;
@@ -76,44 +77,86 @@ const TODAY_YMD = nowISO().slice(0, 10);
 const TOMORROW_YMD = new Date(Date.now() + DAY).toISOString().slice(0, 10);
 
 // ---------- restaurant ----------
-const restaurant: Restaurant = { id: DEMO_RID, name: "Дымная Гавань", code: "DEMO0000" };
+const restaurant: Restaurant = { id: DEMO_RID, name: "Example lounge", code: "DEMO0000" };
 
 // ---------- employees ----------
 let employees: EmployeeFull[] = [
+  { id: "m-manu", firstName: "Ману", lastName: "", middleName: "", shortName: "Ману", position: "Главный", phone: "+7 903 555-10-00", photoSlug: "manu", tipUrl: "https://netmonet.co/p/manu", rating: 5.0, ratingCount: 214, onShift: true, status: "active" },
   { id: "m-timur", firstName: "Тимур", lastName: "Азизов", middleName: "Русланович", shortName: "Тимур", position: "Старший мастер", phone: "+7 903 555-10-01", photoSlug: "timur", tipUrl: "https://netmonet.co/p/timur", rating: 4.9, ratingCount: 128, onShift: true, status: "active" },
   { id: "m-alina", firstName: "Алина", lastName: "Ковалёва", middleName: "Игоревна", shortName: "Алина", position: "Кальянный мастер", phone: "+7 903 555-10-02", photoSlug: "alina", tipUrl: "https://netmonet.co/p/alina", rating: 4.6, ratingCount: 96, onShift: true, status: "active" },
   { id: "m-din", firstName: "Дин", lastName: "Соколов", middleName: "Артёмович", shortName: "Дин", position: "Стажёр", phone: "+7 903 555-10-03", photoSlug: "din", tipUrl: "https://netmonet.co/p/din", rating: 4.4, ratingCount: 41, onShift: true, status: "active" },
   { id: "m-vera", firstName: "Вера", lastName: "Лапина", middleName: "Сергеевна", shortName: "Вера", position: "Официант", phone: "+7 903 555-10-04", tipUrl: "https://netmonet.co/p/vera", rating: 4.7, ratingCount: 33, onShift: false, status: "active" },
   { id: "m-oleg", firstName: "Олег", lastName: "Гринёв", middleName: "Петрович", shortName: "Олег", position: "Менеджер", phone: "+7 903 555-10-05", rating: 0, ratingCount: 0, onShift: false, status: "inactive" },
 ];
-const MASTER_IDS = ["m-timur", "m-alina", "m-din"];
+const MASTER_IDS = ["m-manu", "m-timur", "m-alina", "m-din"];
 
-// ---------- menu ----------
-let menu: MenuRecipeView[] = [
-  { id: "menu-1", restaurantId: DEMO_RID, authorEmployeeId: "m-timur", name: "Северное сияние", description: "Свежо и тропически, с прохладным шлейфом.", strength: 5, price: 1200, rating: 4.8, badge: "Хит", tags: ["Манго", "Маракуйя", "Лёд"], createdAt: NOW, category: "Хиты", available: true, sortOrder: 0, imageSlug: "severnoe-siyanie", components: [{ brand: "Darkside", flavour: "Манго", percent: 40 }, { brand: "Darkside", flavour: "Маракуйя", percent: 35 }, { brand: "Element", flavour: "Лёд", percent: 25 }] },
-  { id: "menu-2", restaurantId: DEMO_RID, authorEmployeeId: "m-alina", name: "Гранатовый дым", description: "Терпкий гранат с ягодной кислинкой.", strength: 7, price: 1200, rating: 4.6, badge: "MustHave", tags: ["Гранат", "Барбарис", "Мята"], createdAt: NOW, category: "Классика", available: true, sortOrder: 1, imageSlug: "granatovyy-dym", components: [{ brand: "MustHave", flavour: "Гранат", percent: 45 }, { brand: "Element", flavour: "Барбарис", percent: 30 }, { brand: "Darkside", flavour: "Мята", percent: 25 }] },
-  { id: "menu-3", restaurantId: DEMO_RID, authorEmployeeId: "m-timur", name: "Тропик Лайт", description: "Лёгкий, для долгого вечера.", strength: 3, price: 1100, rating: 4.7, badge: null, tags: ["Кокос", "Личи", "Манго"], createdAt: NOW, category: "Лёгкие", available: true, sortOrder: 2, imageSlug: "tropik-layt", components: [{ brand: "Darkside", flavour: "Кокос", percent: 40 }, { brand: "MustHave", flavour: "Личи", percent: 35 }, { brand: "Darkside", flavour: "Манго", percent: 25 }] },
-  { id: "menu-4", restaurantId: DEMO_RID, authorEmployeeId: "m-alina", name: "Цитрус Стронг", description: "Мощный цитрус для любителей крепкого.", strength: 9, price: 1300, rating: 4.5, badge: null, tags: ["Лимон", "Грейпфрут", "Лёд"], createdAt: NOW, category: "Крепкие", available: true, sortOrder: 3, imageSlug: "tsitrus-strong", components: [{ brand: "Darkside", flavour: "Лимон", percent: 40 }, { brand: "MustHave", flavour: "Грейпфрут", percent: 35 }, { brand: "Element", flavour: "Лёд", percent: 25 }] },
-  { id: "menu-5", restaurantId: DEMO_RID, authorEmployeeId: "m-timur", name: "Тёмная сторона × MOON", description: "Коллаборация месяца.", strength: 6, price: 1600, rating: 4.9, badge: "Limited", tags: ["Виноград", "Черника", "Дыня"], createdAt: NOW, category: "Лимитки", available: true, sortOrder: 4, imageSlug: "temnaya-storona", components: [{ brand: "MustHave", flavour: "Виноград", percent: 45 }, { brand: "Element", flavour: "Черника", percent: 30 }, { brand: "Darkside", flavour: "Дыня", percent: 25 }] },
-  { id: "menu-6", restaurantId: DEMO_RID, authorEmployeeId: "m-din", name: "Секретный вкус", description: "Заказ вслепую — доверьтесь мастеру.", strength: 6, price: 1400, rating: null, badge: "?", tags: ["Секрет", "Секрет", "Секрет"], createdAt: NOW, category: "Секретные", available: true, sortOrder: 5, imageSlug: "sekret", components: [{ brand: "MustHave", flavour: "Виноград", percent: 45 }, { brand: "Element", flavour: "Черника", percent: 30 }, { brand: "Darkside", flavour: "Дыня", percent: 25 }] },
-  { id: "menu-7", restaurantId: DEMO_RID, authorEmployeeId: "m-alina", name: "Комбо со звездой", description: "Фирменное промо месяца — виноград, дыня и личи.", strength: 5, price: 2100, rating: 4.8, badge: "Звезда", tags: ["Виноград", "Дыня", "Личи"], createdAt: NOW, category: "Промо", available: true, sortOrder: 6, imageSlug: "temnaya-storona", components: [{ brand: "MustHave", flavour: "Виноград", percent: 40 }, { brand: "Darkside", flavour: "Дыня", percent: 35 }, { brand: "MustHave", flavour: "Личи", percent: 25 }] },
+// ---------- menu (кальянное меню: 3 раздела) ----------
+// Разделы: «Авторские миксы» (карусель на главной), «Стандартный кальян», «Кальян
+// на фрукте». Плитка «Секрет» ведёт на скрытую позицию secret-1 (не в каталоге).
+type MenuSeed = {
+  id: string; name: string; category: string; price: number; strength: number;
+  master: string; rating: number; tags: string[]; description: string;
+  comps?: [string, string, number][]; badge?: string | null;
+};
+const HOOKAH_SEED: MenuSeed[] = [
+  // — Авторские миксы —
+  { id: "auth-1", name: "Ореховый раф", category: "Авторские миксы", price: 2500, strength: 6, master: "m-timur", rating: 4.9, tags: ["Десертный", "Ореховый", "Сливочный"], description: "Густой сливочный десерт с нотами жареного ореха, мёда и ванили. Напоминает растопленный шоколадный батончик с ореховой пастой; лёгкая газировка в послевкусии добавляет игривости.", comps: [["BlackBurn", "Black Honey", 40], ["DarkSide", "Nutella", 30], ["BlackBurn", "Vanilla", 20], ["DarkSide", "CreamSoda", 10]] },
+  { id: "auth-2", name: "Чёрный мускат", category: "Авторские миксы", price: 2500, strength: 8, master: "m-alina", rating: 4.8, tags: ["Терпкий", "Восточный", "Виноград"], description: "Терпкий глубокий виноград с восточными нотками муската и пан-рааса. Освежающая мята смягчает терпкость, а вишнёвая нотка добавляет благородную кислинку. Насыщенный и долгоиграющий вкус.", comps: [["Afzal", "Pan Raas", 35], ["DarkSide", "Grape", 35], ["BlackBurn", "Mint", 20], ["BlackBurn", "Dark Cherry", 10]] },
+  { id: "auth-3", name: "Манго-ласси", category: "Авторские миксы", price: 2500, strength: 5, master: "m-timur", rating: 4.9, tags: ["Сладкий", "Манго", "Сливочный"], description: "Спелое сладкое манго в сливочном йогуртовом обрамлении — точь-в-точь индийский ласси. Ваниль и крем-сода делают вкус бархатистым, а лимонная кислинка освежает и не даёт засахариться.", comps: [["DarkSide", "Mango", 45], ["BlackBurn", "Vanilla", 25], ["DarkSide", "CreamSoda", 20], ["BlackBurn", "Lemon Fresh", 10]] },
+  { id: "auth-4", name: "Клубничный мохито", category: "Авторские миксы", price: 2500, strength: 6, master: "m-din", rating: 4.8, tags: ["Ягодный", "Освежающий", "Мятный"], description: "Спелая клубника и лесные ягоды в компании с мятой и лаймом. Освежающий, слегка кисловатый коктейльный вкус с интенсивным холодком в горле — как летний мохито с ягодным топпингом.", comps: [["DarkSide", "Berry Blast", 40], ["BlackBurn", "Mint", 30], ["BlackBurn", "Lemon Fresh", 20], ["DarkSide", "Supernova", 10]] },
+  // — Стандартный кальян —
+  { id: "std-1", name: "Стандартный кальян", category: "Стандартный кальян", price: 2000, strength: 5, master: "m-timur", rating: 4.7, tags: ["Любой вкус"], description: "Любой табак на выбор, кроме Tangiers и Trofimoff's (парфюм-серия). Классический вкус и плотный дым." },
+  { id: "std-2", name: "Крепкий кальян", category: "Стандартный кальян", price: 2500, strength: 9, master: "m-alina", rating: 4.6, tags: ["Крепкий"], description: "На табаке Tangiers или Trofimoff's (парфюм-серия). Для любителей плотного, крепкого удара." },
+  { id: "std-3", name: "Лимитированная серия вкусов", category: "Стандартный кальян", price: 2500, strength: 6, master: "m-din", rating: 4.8, tags: ["Лимитка"], description: "Лимитированные вкусы от популярных брендов — уточняйте у мастера, какие в наличии сегодня." },
+  // — Кальян на фрукте —
+  { id: "fruit-1", name: "Ананасовый фреш", category: "Кальян на фрукте", price: 3500, strength: 7, master: "m-timur", rating: 4.9, tags: ["Тропический", "Кислый", "На фрукте"], description: "Сочный ананас с яркой лимонной кислинкой, охлаждённый ментоловым бризом; в послевкусии — лёгкая травянистая нота базилика. Кальян готовится на чаше из ананаса!", comps: [["BlackBurn", "Pineapple", 45], ["DarkSide", "Lemon Blast", 30], ["DarkSide", "Supernova", 15], ["BlackBurn", "Basilic", 10]] },
+  { id: "fruit-2", name: "Зелёный сад", category: "Кальян на фрукте", price: 3000, strength: 8, master: "m-alina", rating: 4.8, tags: ["Яблочный", "Свежий", "На фрукте"], description: "Хрустящее зелёное яблоко с кисло-сладкой мякотью, пряный базилик и двойное охлаждение. Напоминает мохито с яблочным сиропом. Кальян готовится на чаше из яблока!", comps: [["BlackBurn", "Green Apple", 40], ["BlackBurn", "Basilic", 25], ["DarkSide", "Supernova", 20], ["DarkSide", "Mint", 15]] },
+  // — Секрет (для плитки «Секрет»; в каталог не попадает) —
+  { id: "secret-1", name: "Секретный вкус", category: "Секрет", price: 2500, strength: 6, master: "m-din", rating: 0, tags: ["Секрет", "Секрет", "Секрет"], badge: "?", description: "Заказ вслепую — доверьтесь мастеру. Он соберёт вкус под ваше настроение." },
 ];
-// Every seeded position above is a hookah mix.
-menu.forEach((m) => { m.kind = "hookah"; });
+let menu: MenuRecipeView[] = HOOKAH_SEED.map((s, i) => ({
+  id: s.id,
+  restaurantId: DEMO_RID,
+  authorEmployeeId: s.master,
+  name: s.name,
+  description: s.description,
+  strength: s.strength,
+  price: s.price,
+  rating: s.rating || null,
+  badge: s.badge ?? null,
+  tags: s.tags,
+  createdAt: NOW,
+  category: s.category,
+  available: true,
+  sortOrder: i,
+  imageSlug: null,
+  kind: "hookah",
+  components: (s.comps ?? []).map(([brand, flavour, percent]) => ({ brand, flavour, percent })),
+}));
 
 // ---------- kitchen-bar menu (kind="kitchen") ----------
 // Lives in the SAME `menu` array (single source of truth): adminMenu returns
 // everything, guest menuList filters kitchen out, foodMenu keeps only kitchen.
 interface KitchenSeed { id: string; name: string; category: string; price: number; description: string; badge?: string }
-const KITCHEN_SEEDS: KitchenSeed[] = [
-  { id: "food-1", name: "Хумус с питой", category: "Закуски", price: 650, description: "Нежный хумус из нута с оливковым маслом и тёплой питой." },
-  { id: "food-2", name: "Сырная тарелка", category: "Закуски", price: 1200, description: "Ассорти сыров с мёдом, грецким орехом и виноградом.", badge: "Хит" },
-  { id: "food-3", name: "Стейк Рибай", category: "Горячее", price: 2400, description: "Мраморная говядина средней прожарки с соусом чимичурри." },
-  { id: "food-4", name: "Паста Карбонара", category: "Горячее", price: 890, description: "Сливочный соус, бекон, желток и пармезан." },
-  { id: "food-5", name: "Домашний лимонад", category: "Напитки", price: 450, description: "Освежающий лимонад с мятой и лаймом, 0.5 л." },
-  { id: "food-6", name: "Чай масала", category: "Напитки", price: 390, description: "Пряный индийский чай на молоке с кардамоном." },
-  { id: "food-7", name: "Чизкейк Нью-Йорк", category: "Десерты", price: 520, description: "Классический чизкейк с ягодным соусом.", badge: "MustHave" },
-  { id: "food-8", name: "Тирамису", category: "Десерты", price: 540, description: "Итальянский десерт с маскарпоне и эспрессо." },
+// section: "kitchen" (Кухня) | "bar" (Бар) — гость переключает вкладки в разделе «Меню».
+const KITCHEN_SEEDS: (KitchenSeed & { section: "kitchen" | "bar" })[] = [
+  // ---- Кухня ----
+  { id: "food-1", section: "kitchen", name: "Хумус с питой", category: "Закуски", price: 650, description: "Нежный хумус из нута с оливковым маслом и тёплой питой." },
+  { id: "food-2", section: "kitchen", name: "Сырная тарелка", category: "Закуски", price: 1200, description: "Ассорти сыров с мёдом, грецким орехом и виноградом.", badge: "Хит" },
+  { id: "food-3", section: "kitchen", name: "Стейк Рибай", category: "Горячее", price: 2400, description: "Мраморная говядина средней прожарки с соусом чимичурри." },
+  { id: "food-4", section: "kitchen", name: "Паста Карбонара", category: "Горячее", price: 890, description: "Сливочный соус, бекон, желток и пармезан." },
+  { id: "food-7", section: "kitchen", name: "Чизкейк Нью-Йорк", category: "Десерты", price: 520, description: "Классический чизкейк с ягодным соусом.", badge: "MustHave" },
+  { id: "food-8", section: "kitchen", name: "Тирамису", category: "Десерты", price: 540, description: "Итальянский десерт с маскарпоне и эспрессо." },
+  // ---- Бар ----
+  { id: "bar-1", section: "bar", name: "Домашний лимонад", category: "Лимонады", price: 450, description: "Освежающий лимонад с мятой и лаймом, 0.5 л." },
+  { id: "bar-2", section: "bar", name: "Манго-маракуйя", category: "Лимонады", price: 490, description: "Тропический лимонад с пюре манго и маракуйи." },
+  { id: "bar-3", section: "bar", name: "Клубника-базилик", category: "Лимонады", price: 490, description: "Ягодный лимонад со свежим базиликом и лаймом." },
+  { id: "bar-4", section: "bar", name: "Чай масала", category: "Чай и кофе", price: 390, description: "Пряный индийский чай на молоке с кардамоном." },
+  { id: "bar-5", section: "bar", name: "Марокканская мята", category: "Чай и кофе", price: 420, description: "Зелёный чай со свежей мятой и мёдом, чайник 0.6 л.", badge: "Хит" },
+  { id: "bar-6", section: "bar", name: "Раф лавандовый", category: "Чай и кофе", price: 380, description: "Нежный сливочный кофе с лёгкой лавандой." },
+  { id: "bar-7", section: "bar", name: "Мохито (0%)", category: "Коктейли", price: 520, description: "Безалкогольный: лайм, мята, тростниковый сироп, содовая." },
+  { id: "bar-8", section: "bar", name: "Цитрусовый физз", category: "Коктейли", price: 540, description: "Апельсин, грейпфрут, тоник и веточка розмарина." },
+  { id: "bar-9", section: "bar", name: "Пина колада (0%)", category: "Коктейли", price: 560, description: "Ананасовый сок, кокосовый крем и лёд. Без алкоголя." },
 ];
 KITCHEN_SEEDS.forEach((k, i) => {
   menu.push({
@@ -180,10 +223,10 @@ function orRecipe(orId: string, m: MenuRecipeView, master: EmployeeFull | undefi
 // Seed tables + the orders that occupy them.
 interface OccSeed { menus: string[]; master: string; minutes: number; guests: number }
 const OCCUPIED: Record<string, OccSeed> = {
-  "3": { menus: ["menu-2"], master: "m-alina", minutes: 25, guests: 2 },
-  "5": { menus: ["menu-4", "menu-3"], master: "m-din", minutes: 58, guests: 4 },
-  "10": { menus: ["menu-5"], master: "m-timur", minutes: 12, guests: 2 },
-  "12": { menus: ["menu-7", "menu-1"], master: "m-alina", minutes: 74, guests: 5 },
+  "3": { menus: ["auth-1"], master: "m-alina", minutes: 25, guests: 2 },
+  "5": { menus: ["fruit-1", "auth-3"], master: "m-din", minutes: 58, guests: 4 },
+  "10": { menus: ["std-2"], master: "m-timur", minutes: 12, guests: 2 },
+  "12": { menus: ["auth-2", "fruit-2"], master: "m-alina", minutes: 74, guests: 5 },
 };
 
 let tables: TableView[] = TABLE_SEEDS.map((s) => {
@@ -214,11 +257,24 @@ let tables: TableView[] = TABLE_SEEDS.map((s) => {
       createdAt: NOW,
       closedAt: null,
       recipes: [
-        orRecipe("or-1", menu[0], empById("m-timur")),
-        orRecipe("or-2", menu[5], empById("m-din")),
+        {
+          orderRecipeId: "or-1",
+          recipeId: "r-demo",
+          recipeName: "Ананасовый бриз",
+          strength: 5,
+          isSecret: false,
+          authorFullName: "Азизов Тимур Русланович",
+          authorShortName: "Тимур",
+          components: [
+            { brand: "Darkside", flavour: "Falling Star", percent: 40 },
+            { brand: "Tangiers", flavour: "Cane Mint", percent: 20 },
+            { brand: "MustHave", flavour: "Pineapple Rings", percent: 40 },
+          ],
+          tags: ["Сладкий", "Тропический"],
+        },
       ],
     };
-    return { ...base, status: "occupied", orderId: oid, openedAt: NOW, minutes: 42, total: 2600, guests: 3 };
+    return { ...base, status: "occupied", orderId: oid, openedAt: NOW, minutes: 24, total: 1600, guests: 3 };
   }
   const occ = OCCUPIED[s.label];
   if (occ) {
@@ -319,7 +375,7 @@ const feedbackByMaster: Record<string, RecipeFeedbackItem[]> = {
 
 // ---------- favourites + user ----------
 const favourites: Favourite[] = [
-  { orderRecipeId: "fav-1", recipeId: "r-1", recipeName: "Северное сияние", strength: 5, isSecret: false, restaurantId: DEMO_RID, restaurantName: "Дымная Гавань", authorFullName: "Азизов Тимур Русланович", authorShortName: "Тимур", components: [{ brand: "Darkside", flavour: "Манго", percent: 40 }, { brand: "Darkside", flavour: "Маракуйя", percent: 35 }, { brand: "Element", flavour: "Лёд", percent: 25 }], myScore: 5, myReview: "Идеальный жар, ароматный дым", likedAt: NOW },
+  { orderRecipeId: "fav-fruit-1", recipeId: "fruit-1", recipeName: "Ананасовый фреш", strength: 7, isSecret: false, restaurantId: DEMO_RID, restaurantName: "Example lounge", authorFullName: "Азизов Тимур Русланович", authorShortName: "Тимур", components: [{ brand: "BlackBurn", flavour: "Pineapple", percent: 45 }, { brand: "DarkSide", flavour: "Lemon Blast", percent: 30 }, { brand: "DarkSide", flavour: "Supernova", percent: 15 }, { brand: "BlackBurn", flavour: "Basilic", percent: 10 }], myScore: 5, myReview: "Освежает идеально", likedAt: NOW },
 ];
 const demoUser: User = { id: "demo-user", phoneNumber: "+7 903 555-21-40", gender: null, createdAt: NOW };
 
@@ -359,8 +415,11 @@ function ensureOpenOrder(t: TableView): Order {
 }
 
 // ---------- reservations ("Брони") ----------
-interface ResSeed { guest: string; phone: string; day: 0 | 1; time: string; tableLabel: string | null; guests: number; status: ReservationStatus; note?: string }
+interface ResSeed { guest: string; phone: string; day: 0 | 1; time: string; tableLabel: string | null; guests: number; status: ReservationStatus; note?: string; userId?: string }
 const RES_SEEDS: ResSeed[] = [
+  // Брони демо-гостя (видны в «Мои брони» его профиля).
+  { guest: "Вы", phone: "+7 999 000-00-00", day: 1, time: "20:00", tableLabel: "6", guests: 2, status: "confirmed", userId: "demo-user" },
+  { guest: "Вы", phone: "+7 999 000-00-00", day: 1, time: "21:30", tableLabel: null, guests: 4, status: "new", note: "День рождения", userId: "demo-user" },
   { guest: "Мария Соколова", phone: "+7 903 210-45-11", day: 0, time: "18:00", tableLabel: "1", guests: 4, status: "confirmed" },
   { guest: "Иван Петров", phone: "+7 903 210-45-12", day: 0, time: "19:30", tableLabel: "4", guests: 6, status: "new", note: "Стол у окна" },
   { guest: "Ольга Кузнецова", phone: "+7 903 210-45-13", day: 0, time: "20:00", tableLabel: "9", guests: 6, status: "seated" },
@@ -377,6 +436,7 @@ let reservations: Reservation[] = RES_SEEDS.map((s, i) => {
   return {
     id: "res-" + (i + 1),
     restaurantId: DEMO_RID,
+    userId: s.userId ?? null,
     guestName: s.guest,
     phone: s.phone,
     date: s.day === 0 ? TODAY_YMD : TOMORROW_YMD,
@@ -477,7 +537,7 @@ const DAILY: DayRow[] = (function build() {
 })();
 
 const HOUR_WEIGHTS = [0.5, 0.28, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.3, 0.4, 0.5, 0.5, 0.62, 0.72, 0.86, 1.0, 1.0, 0.95, 0.86, 0.7];
-const SOLD_BASE: Record<string, number> = { "menu-1": 5.0, "menu-5": 4.6, "menu-7": 4.2, "menu-3": 3.8, "menu-2": 3.5, "menu-4": 3.0, "menu-6": 2.4 };
+const SOLD_BASE: Record<string, number> = { "auth-1": 5.0, "auth-2": 4.6, "fruit-1": 4.2, "auth-3": 3.8, "auth-4": 3.5, "fruit-2": 3.2, "std-1": 3.0, "std-2": 2.6, "std-3": 2.4 };
 const MASTER_SHARE: Record<string, number> = { "m-timur": 0.42, "m-alina": 0.36, "m-din": 0.22 };
 
 function build(win: DayRow[], prev: DayRow[], spanDays: number, windowStartMs: number): AnalyticsSummary {
@@ -621,10 +681,53 @@ function analyticsRange(from: string, to: string): AnalyticsSummary {
 // The demo analytics "today" anchor (date portion), for period presets in the UI.
 export const ANALYTICS_ANCHOR = new Date(ANCHOR_MS).toISOString().slice(0, 10);
 
+// ----- home builder config (admin composes the guest home) -----
+// Persisted to localStorage so admin edits survive a page reload in the demo.
+const HOME_CFG_KEY = "mm.homeConfig";
+const DEFAULT_HOME_CONFIG: HomeConfig = {
+  blocks: [
+    { key: "masters", label: "Мастера на смене", visible: true },
+    { key: "banners", label: "Промо-баннеры", visible: true },
+    { key: "quickActions", label: "Быстрый выбор", visible: true },
+    { key: "session", label: "Сейчас вы курите", visible: true },
+    { key: "bestMixes", label: "Лучшие миксы", visible: true },
+    { key: "tobaccos", label: "Табаки в наличии", visible: true },
+  ],
+  bannerImage: null,
+  bannerTag: "Уже можно попробовать",
+};
+function loadHomeConfig(): HomeConfig {
+  try {
+    const raw = localStorage.getItem(HOME_CFG_KEY);
+    if (raw) {
+      const p = JSON.parse(raw) as HomeConfig;
+      if (Array.isArray(p.blocks) && p.blocks.length) return p;
+    }
+  } catch {
+    /* ignore */
+  }
+  return { blocks: DEFAULT_HOME_CONFIG.blocks.map((b) => ({ ...b })), bannerImage: null, bannerTag: DEFAULT_HOME_CONFIG.bannerTag };
+}
+let homeConfig: HomeConfig = loadHomeConfig();
+
 // ============================================================================
 // Public singleton — every method is synchronous; lib/demo.ts wraps in Promises.
 // ============================================================================
 export const demoStore = {
+  // ----- home builder -----
+  getHomeConfig(): HomeConfig {
+    return { blocks: homeConfig.blocks.map((b) => ({ ...b })), bannerImage: homeConfig.bannerImage ?? null, bannerTag: homeConfig.bannerTag ?? "" };
+  },
+  setHomeConfig(c: HomeConfig): HomeConfig {
+    homeConfig = { blocks: c.blocks.map((b) => ({ ...b })), bannerImage: c.bannerImage ?? null, bannerTag: c.bannerTag ?? "" };
+    try {
+      localStorage.setItem(HOME_CFG_KEY, JSON.stringify(homeConfig));
+    } catch {
+      /* ignore quota / private mode */
+    }
+    return this.getHomeConfig();
+  },
+
   // ----- guest / staff (existing api surface) -----
   createRestaurant(name: string): Restaurant {
     return { id: DEMO_RID, name, code: restaurant.code };
@@ -755,11 +858,31 @@ export const demoStore = {
   listFavourites(_userId: string): Favourite[] {
     return favourites.slice();
   },
-  addFavourite(_userId: string, _orderRecipeId: string): void {
-    /* demo no-op */
+  // Гость сохраняет позицию меню в избранное (демо: строим Favourite из микса).
+  addFavourite(_userId: string, recipeId: string): void {
+    if (favourites.some((f) => f.recipeId === recipeId)) return;
+    const item = menu.find((m) => m.id === recipeId);
+    if (!item) return;
+    const emp = item.authorEmployeeId ? empById(item.authorEmployeeId) : undefined;
+    favourites.unshift({
+      orderRecipeId: `fav-${recipeId}`,
+      recipeId,
+      recipeName: item.name,
+      strength: item.strength ?? null,
+      isSecret: false,
+      restaurantId: DEMO_RID,
+      restaurantName: "Example lounge",
+      authorFullName: emp ? `${emp.lastName} ${emp.firstName} ${emp.middleName}`.trim() : "",
+      authorShortName: emp ? emp.shortName : "",
+      components: item.components ?? [],
+      myScore: null,
+      myReview: null,
+      likedAt: nowISO(),
+    });
   },
-  removeFavourite(_userId: string, _orderRecipeId: string): void {
-    /* demo no-op */
+  removeFavourite(_userId: string, orderRecipeId: string): void {
+    const i = favourites.findIndex((f) => f.orderRecipeId === orderRecipeId || f.recipeId === orderRecipeId);
+    if (i >= 0) favourites.splice(i, 1);
   },
 
   // ----- admin CRM -----
@@ -1017,6 +1140,47 @@ export const demoStore = {
   },
   adminDeleteReservation(id: string): void {
     reservations = reservations.filter((r) => r.id !== id);
+  },
+  // Гость создаёт заявку на бронь → падает в общий список (статус «Новая»), стол
+  // назначает админ. Возвращает созданную бронь.
+  createReservation(input: {
+    restaurantId: string;
+    userId?: string | null;
+    guestName: string;
+    phone: string;
+    date: string;
+    time: string;
+    endTime?: string;
+    guests: number;
+    zone?: string | null;
+    note?: string | null;
+  }): Reservation {
+    const created: Reservation = {
+      id: uid("res"),
+      restaurantId: input.restaurantId,
+      userId: input.userId ?? null,
+      guestName: input.guestName || "Гость",
+      phone: input.phone ?? "",
+      date: input.date,
+      time: input.time,
+      endTime: input.endTime ?? addHoursHHMM(input.time, 2),
+      tableId: null,
+      tableLabel: null,
+      guests: input.guests ?? 2,
+      zone: input.zone ?? null,
+      status: "new",
+      note: input.note ?? null,
+      createdAt: nowISO(),
+    };
+    reservations.push(created);
+    return { ...created };
+  },
+  // Брони конкретного гостя (по userId) для раздела «Мои брони» в профиле.
+  myReservations(userId: string): Reservation[] {
+    return reservations
+      .filter((r) => r.userId === userId)
+      .sort((a, b) => (a.date === b.date ? a.time.localeCompare(b.time) : a.date.localeCompare(b.date)))
+      .map((r) => ({ ...r }));
   },
 
   // ----- calls ("Обращения") -----

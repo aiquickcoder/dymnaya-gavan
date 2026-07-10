@@ -3,14 +3,18 @@ import { useNavigate } from "react-router-dom";
 import SmokeBg from "./SmokeBg";
 import BottomNav from "./BottomNav";
 import CallButton from "./CallButton";
+import CartButton from "./CartButton";
+import { useCart } from "../lib/cart";
 
 /** Guest app shell: phone-width column, ambient smoke, scroll area + optional tab bar. */
-export function Shell({ children, nav }: { children: ReactNode; nav?: boolean }) {
+export function Shell({ children, nav, hideCall }: { children: ReactNode; nav?: boolean; hideCall?: boolean }) {
+  const { count } = useCart();
   return (
-    <div className="app">
+    <div className={"app" + (count > 0 ? " has-cart" : "")}>
       <SmokeBg />
       <div className={"screen" + (nav ? " has-nav" : "")}>{children}</div>
-      {nav && <CallButton />}
+      {nav && !hideCall && <CallButton />}
+      <CartButton hasNav={!!nav} />
       {nav && <BottomNav />}
     </div>
   );
@@ -23,12 +27,11 @@ export function BackHeader({ title, to }: { title: string; to?: string | number 
   return (
     <div className="back-header">
       <button className="back" onClick={goBack} aria-label="Назад">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
           <path d="M15 5l-7 7 7 7" />
         </svg>
-        <span>Назад</span>
       </button>
-      <div className="bt display">{title}</div>
+      <div className="bt">{title}</div>
     </div>
   );
 }

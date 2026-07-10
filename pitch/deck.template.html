@@ -1,0 +1,1089 @@
+<title>HookahCRM — CRM для кальянных</title>
+<style>
+/*FONTS*/
+:root{
+  --ink:#eef0f3; --ink-2:#e6e9ef; --surface:#ffffff; --surface-2:#f3f5f8;
+  --line:rgba(22,24,38,.09); --line-2:rgba(22,24,38,.14);
+  --ember:#f26722; --ember-soft:rgba(242,103,34,.12); --glow:#e0560f; --gold:#f26722;
+  --accent-soft:rgba(242,103,34,.12); --accent-ghost:rgba(242,103,34,.06);
+  --paper:#1c1d22; --muted:#868a93; --faint:#b3b6bf;
+  --live:#2bb673; --soon:#b5791a;
+  --shadow:0 1px 2px rgba(28,29,50,.04),0 8px 24px rgba(28,29,50,.07);
+  --shadow-lg:0 2px 6px rgba(28,29,50,.05),0 26px 60px -22px rgba(28,29,50,.22);
+  --radius:20px; --radius-sm:16px;
+  --maxw:1140px;
+  --disp:'Rubik',system-ui,sans-serif;
+  --body:'Manrope',system-ui,sans-serif;
+  --mono:'Rubik',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--body);
+  font-size:17px;line-height:1.6;font-weight:400;-webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+h1,h2,h3{font-family:var(--disp);font-weight:800;line-height:1.04;letter-spacing:-.02em;
+  text-wrap:balance;margin:0}
+p{margin:0}
+:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:4px}
+
+/* ---- layout primitives ---- */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+.sec{position:relative;padding:clamp(64px,9vw,120px) 0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold);display:inline-flex;align-items:center;gap:10px;margin:0 0 20px}
+.eyebrow::before{content:"";width:26px;height:1px;background:var(--gold);opacity:.7}
+.lede{font-size:clamp(17px,2.1vw,21px);color:var(--muted);max-width:60ch;line-height:1.55}
+.h-xl{font-size:clamp(40px,7vw,80px)}
+.h-lg{font-size:clamp(30px,4.6vw,52px)}
+.h-md{font-size:clamp(23px,3vw,32px)}
+.up{text-transform:uppercase}
+.mono{font-family:var(--mono)}
+.tnum{font-variant-numeric:tabular-nums}
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+/* ---- top bar ---- */
+.bar{position:sticky;top:0;z-index:50;background:rgba(238,240,243,.82);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;align-items:center;justify-content:space-between;height:62px;gap:16px}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--disp);font-weight:800;
+  letter-spacing:-.01em;font-size:18px}
+.brand .mk{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:radial-gradient(120% 120% at 30% 20%,var(--glow),var(--ember) 60%,#B8410F);
+  box-shadow:0 4px 16px rgba(242,103,34,.4),inset 0 1px 1px rgba(255,255,255,.35)}
+.brand small{display:block;font-family:var(--mono);font-weight:400;font-size:10px;
+  letter-spacing:.16em;color:var(--muted);text-transform:uppercase;margin-top:1px}
+.btn{display:inline-flex;align-items:center;gap:9px;font-weight:700;font-size:15px;
+  padding:11px 20px;border-radius:12px;cursor:pointer;border:1px solid transparent;
+  transition:transform .15s ease,box-shadow .2s ease,background .2s ease;white-space:nowrap}
+.btn-primary{background:linear-gradient(180deg,var(--glow),var(--ember));color:#ffffff;
+  box-shadow:0 8px 24px -6px rgba(242,103,34,.55)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 30px -6px rgba(242,103,34,.7)}
+.btn-ghost{background:rgba(22,24,38,.04);border-color:var(--line-2);color:var(--paper)}
+.btn-ghost:hover{background:rgba(22,24,38,.09);transform:translateY(-2px)}
+.bar .btn{padding:9px 16px;font-size:14px}
+
+/* ---- hero ---- */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);
+  background:radial-gradient(80% 80% at 90% 4%,var(--accent-ghost),transparent 56%)}
+.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center;
+  padding-top:clamp(46px,6.5vw,86px);padding-bottom:clamp(46px,6.5vw,86px)}
+.hero h1{max-width:14ch;margin:14px 0 22px}
+.hero .lede{max-width:46ch;font-size:clamp(17px,2.2vw,22px)}
+.hero-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px}
+.hero-note{margin-top:22px;font-family:var(--mono);font-size:12.5px;letter-spacing:.01em;
+  color:var(--muted);display:flex;align-items:center;gap:9px}
+.hero-visual{display:flex;justify-content:center}
+.hero-visual .phone{width:100%;max-width:288px;margin:0}
+.dot-live{width:8px;height:8px;border-radius:50%;background:var(--live);
+  box-shadow:0 0 0 4px rgba(43,182,115,.16);animation:pulse 2.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(43,182,115,.04)}}
+
+/* ---- generic cards ---- */
+.card{background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.head{max-width:64ch;margin-bottom:44px}
+.head .h-lg{margin-bottom:16px}
+
+.ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  background:var(--ember-soft);color:var(--glow);margin-bottom:16px;flex:none}
+.ic svg{width:21px;height:21px}
+.pain .card .t{font-family:var(--disp);font-weight:700;font-size:19px;margin-bottom:8px}
+.pain .card p{color:var(--muted);font-size:15px}
+.note{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.03em;
+  margin-top:22px}
+
+/* ---- solution split ---- */
+.split{display:grid;grid-template-columns:1fr auto 1fr;gap:22px;align-items:stretch}
+.col-h{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+.col-h b{color:var(--paper);font-family:var(--disp);font-size:16px;letter-spacing:-.01em;text-transform:none;font-weight:700}
+.flist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.flist li{display:flex;gap:11px;align-items:flex-start;font-size:15.5px;color:var(--text)}
+.flist li svg{width:18px;height:18px;color:var(--ember);flex:none;margin-top:2px}
+.connector{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;color:var(--gold);font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;text-align:center;max-width:120px}
+.connector .qr-ic{width:46px;height:46px;border-radius:12px;border:1px solid var(--line-2);
+  display:grid;place-items:center;color:var(--gold)}
+
+/* ---- anchor / competitor ---- */
+.anchor{background:var(--ink-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.versus{display:grid;grid-template-columns:.8fr 1.4fr;gap:22px;align-items:center;margin-top:12px}
+.vs-one{border:1px dashed var(--line-2);border-radius:18px;padding:30px;text-align:center;
+  background:rgba(22,24,38,.02)}
+.vs-one .tile{width:74px;height:74px;border-radius:16px;margin:0 auto 16px;display:grid;
+  place-items:center;background:rgba(22,24,38,.05);color:var(--muted);border:1px solid var(--line)}
+.vs-one .tile svg{width:32px;height:32px}
+.vs-one .lab{font-family:var(--disp);font-weight:700;font-size:17px}
+.vs-one .price{font-family:var(--mono);color:var(--muted);font-size:14px;margin-top:6px}
+.vs-many{border:1px solid rgba(242,103,34,.34);border-radius:18px;padding:26px;
+  background:linear-gradient(180deg,rgba(242,103,34,.10),rgba(242,103,34,.02))}
+.mods{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.mod{aspect-ratio:1;border-radius:12px;border:1px solid var(--line-2);display:flex;
+  flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center;
+  padding:8px;font-size:11px;font-weight:600;color:var(--text);
+  background:linear-gradient(180deg,rgba(255,138,61,.12),rgba(255,138,61,.02))}
+.mod svg{width:20px;height:20px;color:var(--glow)}
+.mod.on{outline:1px solid rgba(242,103,34,.5)}
+.vs-tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:14px}
+.kicker{font-size:clamp(19px,2.4vw,26px);font-family:var(--disp);font-weight:700;
+  line-height:1.25;margin-top:34px;max-width:30ch}
+.kicker b{color:var(--glow)}
+
+/* ---- value axes ---- */
+.axis{display:grid;grid-template-columns:1.15fr 1fr;gap:40px;align-items:center;
+  padding:clamp(40px,6vw,72px) 0;border-top:1px solid var(--line)}
+.axis:nth-child(even) .axis-media{order:-1}
+.axis-tag{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--gold);
+  border:1px solid var(--line-2);border-radius:999px;padding:6px 13px;margin-bottom:18px}
+.axis h3{font-size:clamp(26px,3.4vw,38px);margin-bottom:18px}
+.axis .flist li{font-size:16px;margin-bottom:2px}
+.outcome{margin-top:24px;display:flex;gap:13px;align-items:flex-start;
+  background:var(--ember-soft);border:1px solid rgba(242,103,34,.28);border-radius:14px;
+  padding:16px 18px}
+.outcome svg{width:20px;height:20px;color:var(--glow);flex:none;margin-top:2px}
+.outcome b{color:var(--paper)}
+.outcome span{color:var(--text);font-size:15px}
+.axis-media{position:relative}
+.media-img{border-radius:20px;border:1px solid var(--line-2);overflow:hidden;
+  aspect-ratio:4/3;background-size:cover;background-position:center;
+  box-shadow:0 30px 70px -30px rgba(0,0,0,.8)}
+.media-stat{position:absolute;left:-14px;bottom:-16px;background:var(--surface-2);
+  border:1px solid var(--line-2);border-radius:14px;padding:13px 17px;
+  box-shadow:0 20px 40px -18px rgba(0,0,0,.7)}
+.media-stat .n{font-family:var(--mono);font-weight:700;font-size:24px;color:var(--glow);letter-spacing:-.02em}
+.media-stat .l{font-size:11.5px;color:var(--muted);letter-spacing:.02em}
+
+/* ---- product mockups (in value axes) ---- */
+.mock{border-radius:20px;border:1px solid var(--line-2);overflow:hidden;background:#0f0b08;
+  box-shadow:0 30px 70px -30px rgba(0,0,0,.85)}
+.mock .mtop{display:flex;align-items:center;gap:7px;padding:11px 15px;
+  border-bottom:1px solid var(--line);background:rgba(22,24,38,.02)}
+.mock .mtop i{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.mock .mtop .mt{margin-left:8px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.03em}
+.mock .mbody{padding:15px;display:flex;flex-direction:column;gap:10px}
+.mlabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.mav{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-family:var(--disp);
+  font-weight:700;font-size:15px;background:var(--ember-soft);color:var(--glow);flex:none}
+.mrow{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:12px;
+  padding:9px 11px;background:rgba(22,24,38,.02)}
+.mrow .th{width:42px;height:42px;border-radius:9px;flex:none}
+.mrow .info{flex:1;min-width:0}
+.mrow .info b{font-family:var(--disp);font-weight:700;font-size:14px;display:block}
+.mrow .info span{color:var(--muted);font-size:11.5px}
+.mrow .pz{font-family:var(--mono);font-weight:700;font-size:13.5px;color:var(--glow)}
+.mchips{display:flex;gap:6px;flex-wrap:wrap}
+.mchip{font-size:10.5px;color:var(--text);border:1px solid var(--line-2);border-radius:999px;padding:2px 9px}
+.mstats{display:flex;gap:16px;flex-wrap:wrap}
+.mstats .v{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--paper);display:block}
+.mstats .k{font-size:10.5px;color:var(--muted)}
+.shrow{display:flex;align-items:center;gap:11px}
+.shrow .nm{flex:1}
+.shrow .nm b{font-size:13.5px;font-weight:600;display:block}
+.shrow .nm span{font-size:11px;color:var(--muted)}
+.shpill{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;white-space:nowrap}
+.shpill.on{background:rgba(43,182,115,.14);color:var(--live);border:1px solid rgba(43,182,115,.3)}
+.shpill.off{background:rgba(22,24,38,.05);color:var(--faint);border:1px solid var(--line)}
+.shpill.seg{background:rgba(233,184,114,.12);color:var(--gold);border:1px solid rgba(233,184,114,.3)}
+.fmap{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.tnode{aspect-ratio:1;border-radius:10px;display:grid;place-items:center;font-family:var(--mono);
+  font-weight:700;font-size:13px;position:relative;border:1px solid transparent}
+.tnode.free{background:rgba(43,182,115,.12);color:var(--live);border-color:rgba(43,182,115,.28)}
+.tnode.busy{background:rgba(242,103,34,.16);color:var(--glow);border-color:rgba(242,103,34,.4)}
+.tnode .bell{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;
+  background:var(--ember);display:grid;place-items:center;color:#ffffff}
+.tnode .bell svg{width:10px;height:10px}
+.mrz{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11.5px;
+  color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.mrz b{color:var(--paper);font-weight:600}
+
+/* ---- real product screenshots (framed) ---- */
+.phone{max-width:262px;margin:0 auto;border:7px solid #16181f;border-radius:36px;overflow:hidden;
+  background:#16181f;box-shadow:0 30px 60px -26px rgba(28,29,50,.34),0 6px 14px rgba(28,29,50,.1)}
+.phone .pscr{aspect-ratio:404/880;background-size:cover;background-position:top center}
+.win{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);
+  box-shadow:var(--shadow-lg)}
+.win .wbar{display:flex;align-items:center;gap:7px;padding:10px 14px;
+  border-bottom:1px solid var(--line);background:var(--surface-2)}
+.win .wbar i{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none}
+.win .wbar .u{margin-left:8px;font-family:var(--mono);font-size:10.5px;color:var(--muted);
+  background:rgba(22,24,38,.04);border:1px solid var(--line);border-radius:6px;padding:3px 12px;
+  flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win .wscr{aspect-ratio:1440/900;background-size:cover;background-position:top left}
+.book-shots{display:grid;grid-template-columns:.82fr 1.18fr;gap:28px;align-items:center;margin-top:8px}
+.book-shots .phone{width:100%;max-width:228px;margin:0 auto 0 0}
+.book-shots .win{width:100%}
+.screens{display:flex;gap:20px;overflow-x:auto;padding:6px 2px 20px;scroll-snap-type:x mandatory;align-items:flex-start}
+.scol{flex:0 0 min(74%,244px);scroll-snap-align:center;display:flex;flex-direction:column;gap:15px}
+.scol .phone{margin:0;max-width:none}
+.pcap{font-size:12.5px;line-height:1.45;color:var(--muted);text-align:center;padding:0 6px}
+.pcap b{display:block;font-family:var(--disp);font-weight:700;font-size:14.5px;color:var(--paper);
+  margin-bottom:4px;letter-spacing:-.01em}
+
+/* ---- showcase gallery ---- */
+.gallery{display:flex;gap:16px;overflow-x:auto;padding:6px 2px 18px;scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch}
+.gcard{flex:0 0 min(74%,300px);scroll-snap-align:center;border-radius:18px;overflow:hidden;
+  border:1px solid var(--line);background:var(--surface)}
+.gcard .ph{aspect-ratio:16/11;background-size:cover;background-position:center;position:relative}
+.gcard .ph .rate{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:11px;
+  font-weight:700;background:rgba(0,0,0,.5);border:1px solid var(--line);color:#ffe;
+  padding:3px 8px;border-radius:8px;backdrop-filter:blur(3px)}
+.gcard .b{padding:15px 16px 17px}
+.gcard .nm{font-family:var(--disp);font-weight:700;font-size:17px}
+.gcard .mt{color:var(--muted);font-size:13px;margin:3px 0 11px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:11.5px;color:var(--text);border:1px solid var(--line-2);border-radius:999px;
+  padding:3px 10px;background:rgba(22,24,38,.03)}
+.gcard .pr{margin-top:12px;font-family:var(--mono);font-weight:700;color:var(--glow);font-size:16px}
+
+/* ---- comparison table ---- */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:18px;
+  background:var(--surface);box-shadow:var(--shadow)}
+table.cmp{width:100%;border-collapse:collapse;min-width:640px;font-size:15px}
+table.cmp th,table.cmp td{padding:15px 16px;text-align:left;border-bottom:1px solid var(--line)}
+table.cmp thead th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);font-weight:400;vertical-align:bottom}
+table.cmp thead th.us{color:var(--glow)}
+table.cmp tbody td{text-align:center;color:var(--muted)}
+table.cmp tbody td:first-child{text-align:left;color:var(--text);font-weight:500}
+table.cmp .us{background:rgba(242,103,34,.06)}
+table.cmp tbody tr:last-child td{border-bottom:none}
+.yes{color:var(--live)} .no{color:var(--faint)} .part{color:var(--soon)}
+table.cmp .colhead-us{display:inline-flex;flex-direction:column;gap:2px}
+table.cmp .colhead-us b{font-family:var(--disp);font-size:14px;color:var(--glow);letter-spacing:-.01em}
+
+/* ---- live / soon ---- */
+.status{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.status .card{padding:24px}
+.status h3{font-size:19px;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.badge{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px}
+.badge.live{background:rgba(43,182,115,.14);color:var(--live);border:1px solid rgba(43,182,115,.3)}
+.badge.soon{background:rgba(192,121,26,.12);color:var(--soon);border:1px solid rgba(192,121,26,.3)}
+.status ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+.status li{display:flex;gap:11px;font-size:15px;color:var(--text);align-items:flex-start}
+.status li svg{width:17px;height:17px;flex:none;margin-top:3px}
+.status .live li svg{color:var(--live)} .status .soon li svg{color:var(--soon)}
+
+/* ---- availability / speed ---- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:34px}
+.stat{border:1px solid var(--line);border-radius:16px;padding:24px 22px;
+  background:var(--surface);box-shadow:var(--shadow)}
+.stat .n{font-family:var(--mono);font-weight:700;font-size:clamp(28px,3.6vw,42px);
+  letter-spacing:-.03em;color:var(--glow);line-height:1}
+.stat .l{color:var(--muted);font-size:13.5px;margin-top:11px;line-height:1.4}
+.avail{display:grid;grid-template-columns:1fr 1fr;gap:16px 34px}
+.avail .pt{display:flex;gap:13px;align-items:flex-start}
+.avail .pt svg{width:20px;height:20px;color:var(--ember);flex:none;margin-top:3px}
+.avail .pt b{font-family:var(--disp);font-weight:700;font-size:16px;display:block;margin-bottom:3px}
+.avail .pt span{color:var(--muted);font-size:14.5px}
+.resil{margin-bottom:30px;border:1px solid rgba(242,103,34,.30);border-radius:18px;
+  background:linear-gradient(180deg,rgba(242,103,34,.10),rgba(242,103,34,.02));padding:26px 28px}
+.resil .rt{font-family:var(--disp);font-weight:800;font-size:clamp(19px,2.4vw,25px);
+  display:flex;align-items:center;gap:13px;margin-bottom:18px;letter-spacing:-.01em}
+.resil .rt svg{width:25px;height:25px;color:var(--glow);flex:none}
+.resil .rl{display:grid;grid-template-columns:repeat(2,1fr);gap:20px 30px}
+.resil .ri b{font-family:var(--disp);font-weight:700;font-size:15.5px;display:block;margin-bottom:5px}
+.resil .ri span{color:var(--muted);font-size:14px;line-height:1.5}
+
+/* ---- feedback flow ---- */
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:14px;align-items:stretch}
+.fnode{border:1px solid var(--line);border-radius:16px;padding:22px;
+  background:var(--surface);box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:11px}
+.fnode.key{border-color:rgba(242,103,34,.42);
+  background:linear-gradient(180deg,rgba(242,103,34,.09),var(--surface))}
+.fnode .fi{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  background:var(--ember-soft);color:var(--glow)}
+.fnode .fi svg{width:21px;height:21px}
+.fnode b{font-family:var(--disp);font-weight:700;font-size:18px}
+.fnode span{color:var(--muted);font-size:14.5px;line-height:1.5}
+.farrow{display:flex;align-items:center;justify-content:center;color:var(--ember)}
+.farrow svg{width:26px;height:26px}
+
+/* ---- onboarding ---- */
+.qr3d-fig{max-width:520px;margin:10px auto 34px;text-align:center}
+.qr3d-fig .qimg{width:100%;aspect-ratio:1200/900;background-size:cover;background-position:center;border-radius:24px;box-shadow:0 22px 55px rgba(120,64,20,.20);border:1px solid var(--line-2)}
+.qr3d-fig .qcap{margin:14px 6px 0;font-size:14.5px;line-height:1.5;color:var(--muted)}
+.qr3d-fig .qcap b{color:var(--text)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.step{position:relative;padding-top:8px}
+.step .num{font-family:var(--mono);font-size:13px;color:var(--ember);letter-spacing:.1em}
+.step .t{font-family:var(--disp);font-weight:700;font-size:20px;margin:10px 0 8px}
+.step p{color:var(--muted);font-size:15px}
+.zero{margin-top:30px;display:inline-flex;align-items:center;gap:12px;font-family:var(--disp);
+  font-weight:700;font-size:clamp(18px,2.4vw,24px);color:var(--paper)}
+.zero span{color:var(--glow);font-size:1.5em}
+
+/* ---- pricing ---- */
+.pricing{background:var(--ink-2);border-top:1px solid var(--line)}
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+.tier{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:20px;
+  padding:28px;background:var(--surface);box-shadow:var(--shadow)}
+.tier.pop{border-color:rgba(242,103,34,.45);box-shadow:var(--shadow-lg);
+  background:linear-gradient(180deg,rgba(242,103,34,.07),var(--surface));position:relative}
+.tier.pop::before{content:"Популярный";position:absolute;top:-11px;left:28px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  background:linear-gradient(180deg,var(--glow),var(--ember));color:#ffffff;font-weight:700;
+  padding:4px 12px;border-radius:999px}
+.tier .nm{font-family:var(--disp);font-weight:800;font-size:22px}
+.tier .pr{font-family:var(--mono);font-weight:700;font-size:28px;margin:12px 0 4px;color:var(--paper)}
+.tier .pr small{font-size:14px;color:var(--muted);font-weight:400}
+.tier .sub{color:var(--muted);font-size:13.5px;min-height:38px}
+.tier ul{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.tier li{display:flex;gap:10px;font-size:14.5px;color:var(--text);align-items:flex-start}
+.tier li svg{width:16px;height:16px;color:var(--ember);flex:none;margin-top:3px}
+.anchor-note{text-align:center;font-family:var(--disp);font-weight:700;
+  font-size:clamp(17px,2.2vw,22px);margin:8px auto 30px;max-width:34ch}
+.anchor-note b{color:var(--glow)}
+.offer{margin-top:22px;text-align:center;font-family:var(--mono);font-size:13px;
+  letter-spacing:.03em;color:var(--gold)}
+
+/* ---- final CTA ---- */
+.cta{position:relative;overflow:hidden;text-align:center;border-top:1px solid var(--line)}
+.cta-bg{position:absolute;inset:0;background:
+  radial-gradient(80% 60% at 50% 0%,rgba(242,103,34,.20),transparent 70%)}
+.cta .wrap{position:relative;z-index:2}
+.cta h2{margin:0 auto 18px;max-width:20ch}
+.cta .lede{margin:0 auto}
+.qbox{display:inline-flex;align-items:center;gap:22px;margin-top:36px;padding:20px;
+  border:1px solid var(--line);border-radius:20px;background:var(--surface);text-align:left;
+  flex-wrap:wrap;justify-content:center;box-shadow:var(--shadow)}
+.qbox img{width:124px;height:124px;border-radius:12px;background:#fff;padding:7px;border:1px solid var(--line)}
+.qbox .qt{display:flex;flex-direction:column;gap:6px}
+.qbox .qt .big{font-family:var(--disp);font-weight:800;font-size:20px}
+.qbox .qt .sm{color:var(--muted);font-size:13.5px}
+.qbox .qt .lnk{font-family:var(--mono);font-size:13px;color:var(--glow);word-break:break-all}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:34px;text-align:left}
+.qcard{display:flex;align-items:center;gap:18px;padding:20px;border:1px solid var(--line);
+  border-radius:20px;background:var(--surface);box-shadow:var(--shadow)}
+.qcard img{width:118px;height:118px;border-radius:12px;background:#fff;padding:7px;border:1px solid var(--line);flex:none}
+.qcard .qt{display:flex;flex-direction:column;gap:5px;min-width:0}
+.qcard .qt .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.qcard .qt .big{font-family:var(--disp);font-weight:800;font-size:19px;letter-spacing:-.01em}
+.qcard .qt .sm{color:var(--muted);font-size:13px;line-height:1.4}
+.qcard .qt .lnk{font-family:var(--mono);font-size:12.5px;color:var(--glow);word-break:break-all}
+@media(max-width:720px){.qgrid{grid-template-columns:1fr}}
+.cta-actions{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:30px}
+.foot{padding:34px 0;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;
+  font-family:var(--mono);letter-spacing:.02em;line-height:1.7}
+.foot .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+
+/* ---- ROI ---- */
+.roi-in{display:flex;flex-wrap:wrap;gap:8px 22px;margin:0 0 26px;font-family:var(--mono);
+  font-size:13px;color:var(--muted)}
+.roi-in b{color:var(--paper);font-weight:700}
+table.roi{width:100%;border-collapse:collapse;min-width:620px;font-size:15px}
+table.roi th,table.roi td{padding:15px 16px;border-bottom:1px solid var(--line);text-align:right;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+table.roi th:first-child,table.roi td:first-child{text-align:left}
+table.roi thead th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;vertical-align:bottom}
+table.roi tbody td:first-child{font-family:var(--disp);font-weight:700;color:var(--paper)}
+table.roi tbody tr:last-child td{border-bottom:none}
+table.roi .gain{color:var(--accent);font-family:var(--mono);font-weight:700}
+table.roi tr.base td{background:var(--accent-soft)}
+table.roi tr.base td:first-child::after{content:" · ходовой";font-family:var(--mono);font-weight:400;
+  font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.payback{margin-top:24px;display:flex;flex-wrap:wrap;align-items:center;gap:20px 32px;
+  background:var(--accent-soft);border:1px solid rgba(242,103,34,.28);border-radius:16px;padding:22px 26px}
+.pb-stat{display:flex;flex-direction:column;gap:4px}
+.pb-n{font-family:var(--disp);font-weight:800;font-size:clamp(26px,3.6vw,38px);color:var(--accent);
+  letter-spacing:-.02em;line-height:1}
+.pb-n small{font-size:.42em;color:var(--muted);font-weight:700}
+.pb-l{font-size:12.5px;color:var(--muted)}
+.pb-div{width:1px;align-self:stretch;background:rgba(242,103,34,.3)}
+.pb-note{flex:1;min-width:230px;font-size:15px;color:var(--paper);font-weight:500;line-height:1.5}
+.pb-note b{color:var(--accent)}
+/* ---- why / closing arguments ---- */
+.why .t{font-family:var(--disp);font-weight:700;font-size:19px;margin-bottom:8px}
+.why p{color:var(--muted);font-size:15px}
+
+/* ---- responsive ---- */
+@media(max-width:920px){
+  .hero .wrap{grid-template-columns:1fr;gap:30px}
+  .hero-visual{order:-1}
+  .hero-visual .phone{max-width:238px}
+  .g4{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:1fr}
+  .split{grid-template-columns:1fr;gap:18px}
+  .connector{flex-direction:row;max-width:none;padding:6px 0}
+  .versus{grid-template-columns:1fr}
+  .axis{grid-template-columns:1fr;gap:26px}
+  .axis:nth-child(even) .axis-media{order:0}
+  .axis-media{max-width:440px}
+  .status{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .tiers{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .avail{grid-template-columns:1fr;gap:16px}
+  .resil .rl{grid-template-columns:1fr;gap:16px}
+  .flow{grid-template-columns:1fr;gap:12px}
+  .flow .farrow{transform:rotate(90deg);padding:2px 0}
+  .book-shots{grid-template-columns:1fr;gap:22px}
+  .book-shots .phone{max-width:220px}
+}
+@media(max-width:560px){
+  body{font-size:16px}
+  .g4{grid-template-columns:1fr 1fr}
+  .mods{grid-template-columns:repeat(3,1fr)}
+  .bar .brand small{display:none}
+  .hero-cta .btn{flex:1 1 auto;justify-content:center}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .reveal{transition:none;opacity:1;transform:none}
+  .dot-live{animation:none}
+}
+</style>
+
+<!-- ================= TOP BAR ================= -->
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <span class="mk" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"><path d="M12 3c0 3-3 3-3 6a3 3 0 0 0 6 0c0-3-3-3-3-6z"/><path d="M6 21h12"/><path d="M9 21c-2-2-3-4-3-7"/><path d="M15 21c2-2 3-4 3-7"/></svg>
+      </span>
+      <span>HookahCRM<small>CRM для кальянных заведений</small></span>
+    </a>
+    <a class="btn btn-primary" href="{{DEMO_URL}}" target="_blank" rel="noopener">
+      Открыть живое демо
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+    </a>
+  </div>
+</header>
+
+<span id="top"></span>
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-copy">
+      <p class="eyebrow reveal">Гостевое приложение + CRM зала</p>
+      <h1 class="h-xl reveal">Вся кальянная —<br>в одном экране.</h1>
+      <p class="lede reveal">Гость заходит по QR со стола: меню, миксы, вызов мастера, безналичные чаевые. Вы видите весь зал в реальном времени и знаете каждого гостя. Это не «кнопка вызова» — это полноценная система, которая растит чек и возвращает гостей.</p>
+      <div class="hero-cta reveal">
+        <a class="btn btn-primary" href="{{DEMO_URL}}" target="_blank" rel="noopener">Попробовать вживую</a>
+        <a class="btn btn-ghost" href="#value">Как это зарабатывает →</a>
+      </div>
+      <p class="hero-note reveal"><span class="dot-live"></span>Работает уже сегодня. Гостю нужен только телефон — никакого оборудования.</p>
+    </div>
+    <div class="hero-visual reveal">
+      <div class="phone"><div class="pscr" style="background-image:var(--sh-home)"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PAIN ================= -->
+<section class="sec pain">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Проблема</p>
+      <h2 class="h-lg">Деньги утекают там, где их не видно</h2>
+      <p class="lede">В кальянной всё держится на сервисе и мастере. Но именно здесь чаще всего протекает выручка — тихо и каждый вечер.</p>
+    </div>
+    <div class="grid g4">
+      <div class="card reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div class="t">Гость ждёт и уходит</div>
+        <p>Не поймал мастера, не сменили угли вовремя, не понравился кальян — ушёл и не вернулся. Каждый такой вечер — минус повторный визит.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 4-6"/></svg></div>
+        <div class="t">Чек ниже потолка</div>
+        <p>Бумажное меню не продаёт: гость не видит весь спектр вкусов, визуализацию позиций кухни и бара. Средний чек держится на привычках и только.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg></div>
+        <div class="t">Гости привыкают</div>
+        <p>Гости берут одни и те же миксы и табаки. Предложите им новое, чего они ещё не пробовали, — и они готовы платить за это больше.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/></svg></div>
+        <div class="t">Гости безымянны</div>
+        <p>Кто приходил, что любит, почему не вернулся — неизвестно. Работать с базой и возвращать гостей нечем.</p>
+      </div>
+    </div>
+    <p class="note">Цифры дальше — отраслевые оценки и примеры, а не замеры вашего зала. На бесплатном пилоте посчитаем ваши реальные.</p>
+  </div>
+</section>
+
+<!-- ================= SOLUTION ================= -->
+<section class="sec" style="background:var(--ink-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)" id="solution">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Решение</p>
+      <h2 class="h-lg">Одна система вместо разрозненных инструментов</h2>
+      <p class="lede">Гостю — удобное приложение по QR. Вам — управление всем залом. Обе стороны связаны одним столом.</p>
+    </div>
+    <div class="split reveal">
+      <div class="card">
+        <div class="col-h"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--glow)" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg> Гость · <b>телефон</b></div>
+        <ul class="flist">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Цифровое меню миксов, кухни и бара с фото</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>AI-подбор вкуса под настроение</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Позвать мастера, сменить угли, попросить счёт</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Чаевые мастеру в один тап, безнал</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Избранные миксы</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Рейтинги миксов</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Отзывы и оценки</li>
+        </ul>
+      </div>
+      <div class="connector">
+        <div class="qr-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M20 20v.01M14 20v.01M20 14v.01"/></svg></div>
+        QR&nbsp;на&nbsp;столе<br>связывает
+      </div>
+      <div class="card">
+        <div class="col-h"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--glow)" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg> Вы · <b>управление заведением</b></div>
+        <ul class="flist">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Живая карта зала: столы, статусы, заказы</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Брони столов с наглядным таймлайном</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Конструктор меню и миксов с составом</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Команда, смены и график работы</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>База гостей: визиты, любимые миксы, сегменты</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ANCHOR vs COMPETITOR ================= -->
+<section class="sec anchor">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Честное сравнение</p>
+      <h2 class="h-lg">Кто-то берёт 3 000 ₽ за одну функцию — мы даём комплексный продукт за те же деньги</h2>
+      <p class="lede">На рынке есть сервисы, каждый из которых закрывает лишь одну функцию. Заведению нужно 2–3 таких продукта, чтобы покрыть все потребности — меню, вызов персонала, бронирование. У нас это части одного продукта: полный спектр функций за ту же сумму.</p>
+    </div>
+    <div class="versus reveal">
+      <div class="vs-one">
+        <p class="vs-tag">Конкурент</p>
+        <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+        <div class="lab">Только вызов персонала</div>
+        <div class="price">3 000 ₽ / мес · 1 функция</div>
+      </div>
+      <div class="vs-many">
+        <p class="vs-tag" style="color:var(--gold)">HookahCRM · 10 модулей</p>
+        <div class="mods">
+          <div class="mod on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg>Вызов</div>
+          <div class="mod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Меню</div>
+          <div class="mod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c0 3-3 3-3 6a3 3 0 0 0 6 0c0-3-3-3-3-6z"/><path d="M7 21h10"/></svg>Миксы</div>
+          <div class="mod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v4M12 18v4M4 12H2m20 0h-2"/><circle cx="12" cy="12" r="4"/></svg>AI-подбор</div>
+          <div class="mod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v7H4v-7"/><path d="M2 7h20v5H2zM12 22V7M12 7H8a2 2 0 1 1 2-2c1 0 2 2 2 2z"/></svg>Чаевые</div>
+          <div class="mod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="9" r="2"/><rect x="14" y="7" width="4" height="4" rx="1"/><circle cx="9" cy="16" r="2"/></svg>Карта зала</div>
+          <div class="mod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>Брони</div>
+          <div class="mod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="7" r="3"/><path d="M3 21a6 6 0 0 1 12 0M16 3.5a3 3 0 0 1 0 7M21 21a6 6 0 0 0-4-5.6"/></svg>Команда</div>
+          <div class="mod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Гости</div>
+          <div class="mod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5m0 14h16M8 16l3-3 3 2 4-5"/></svg>Аналитика</div>
+        </div>
+      </div>
+    </div>
+    <p class="kicker reveal">Вопрос не в отдельной функции. Вопрос — <b>зачем платить за одну</b>, когда за сопоставимые деньги вы получаете весь продукт.</p>
+  </div>
+</section>
+
+<!-- ================= VALUE AXES ================= -->
+<section class="sec" id="value">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Что вы с этого получаете</p>
+      <h2 class="h-lg">Четыре способа, которыми система приносит деньги</h2>
+    </div>
+
+    <!-- Axis 1 -->
+    <div class="axis reveal">
+      <div class="axis-body">
+        <span class="axis-tag">₽ · Средний чек</span>
+        <h3>Больше с каждого гостя</h3>
+        <ul class="flist">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Меню с фото вместо бумаги — гость видит и хочет больше</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Карусель «Лучшие миксы» — витрина маржинальных спецвкусов на первом экране</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>AI-подбор — сомневающийся гость находит свой вкус, а не берёт наугад</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Кухня и бар с корзиной — допродажа к каждому кальяну</li>
+        </ul>
+        <div class="outcome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg><span><b>Результат:</b> выше средний чек с каждого стола. Кальян становится не просто продуктом, а философией вкуса.</span></div>
+      </div>
+      <div class="axis-media">
+        <div class="phone"><div class="pscr" style="background-image:var(--sh-menu)"></div></div>
+      </div>
+    </div>
+
+    <!-- Axis 2 -->
+    <div class="axis reveal">
+      <div class="axis-body">
+        <span class="axis-tag">↺ · Возвраты</span>
+        <h3>Гости возвращаются</h3>
+        <ul class="flist">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Узнавание «С возвращением» — гость чувствует себя своим</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>База гостей: визиты, любимый микс, сегменты VIP / новичок / давно не был</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Избранное — гость сохраняет свой вкус и возвращается за ним</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Брони — стол ждёт гостя, а не уходит к соседям</li>
+        </ul>
+        <div class="outcome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg><span><b>Результат:</b> больше retention (возвращаемость) и frequency (частота визитов). Самый дешёвый «новый» гость — это вернувшийся старый.</span></div>
+      </div>
+      <div class="axis-media">
+        <div class="win"><div class="wbar"><i></i><i></i><i></i><span class="u">CRM · Гости</span></div><div class="wscr" style="background-image:var(--sh-clients)"></div></div>
+      </div>
+    </div>
+
+    <!-- Axis 3 -->
+    <div class="axis reveal">
+      <div class="axis-body">
+        <span class="axis-tag">★ · Персонал</span>
+        <h3>Сильнее команда</h3>
+        <ul class="flist">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Именные профили мастеров с рейтингом — гость просит «своего»</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Чаевые в один тап на конкретного мастера — мотивация и удержание</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Оценки и отзывы по миксам и мастерам — контроль качества по данным</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Смены, график и монитор смены — видно, кто на смене прямо сейчас</li>
+        </ul>
+        <div class="outcome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg><span><b>Результат:</b> ниже текучка мастеров и выше сервис. Мастер — это и есть ваш продукт.</span></div>
+      </div>
+      <div class="axis-media">
+        <div class="win"><div class="wbar"><i></i><i></i><i></i><span class="u">CRM · Команда · Смены</span></div><div class="wscr" style="background-image:var(--sh-staff)"></div></div>
+      </div>
+    </div>
+
+    <!-- Axis 4 -->
+    <div class="axis reveal">
+      <div class="axis-body">
+        <span class="axis-tag">▦ · Контроль</span>
+        <h3>Зал под контролем</h3>
+        <ul class="flist">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Живая карта зала: кто где сидит, сколько времени, какой заказ</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Онлайн-бронирование столов: заявки, статусы и загрузка по времени</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Вызовы «угли / счёт / мастер» прилетают мгновенно с номером стола</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Аналитика загрузки по часам, топ-вкусов и оборачиваемости столов</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Всё по столам и зонам — видно зал, даже когда вас в нём нет</li>
+        </ul>
+        <div class="outcome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg><span><b>Результат:</b> быстрее реакция, меньше простой столов, решения по цифрам, а не на глаз.</span></div>
+      </div>
+      <div class="axis-media">
+        <div class="win"><div class="wbar"><i></i><i></i><i></i><span class="u">CRM · Карта зала</span></div><div class="wscr" style="background-image:var(--sh-tables)"></div></div>
+      </div>
+    </div>
+    <p class="note">* Диапазоны — отраслевые оценки и ориентиры, а не гарантия. Точные цифры считаем на вашем пилоте.</p>
+  </div>
+</section>
+
+<!-- ================= FEEDBACK / REPUTATION ================= -->
+<section class="sec" style="background:var(--ink-2);border-top:1px solid var(--line)">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Обратная связь и качество</p>
+      <h2 class="h-lg">Видите, что проседает, — и устраняете причину</h2>
+      <p class="lede">Гость оценивает мастера и микс прямо в приложении. Вы видите, где и у кого просела оценка, находите причину и устраняете её — чтобы проблема не повторилась. А негатив при этом остаётся внутри: вы разбираете его сами, до того как он станет публичным отзывом на картах.</p>
+    </div>
+    <div class="flow reveal">
+      <div class="fnode">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg></div>
+        <b>Гость оценивает</b>
+        <span>Звёзды мастеру и миксу, быстрые причины и текст — сразу после сеанса, пока впечатление свежее.</span>
+      </div>
+      <div class="farrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      <div class="fnode key">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+        <b>Видите слабые места</b>
+        <span>Отзывы и оценки по каждому мастеру и миксу: где и почему просело. Понятно, что именно пошло не так и у кого.</span>
+      </div>
+      <div class="farrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      <div class="fnode">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3.2"/></svg></div>
+        <b>Устраняете на будущее</b>
+        <span>Правите причину, а не следствие, — и повторная жалоба не приходит. Качество растёт по данным, а не на ощущениях.</span>
+      </div>
+    </div>
+    <p class="kicker reveal" style="margin-top:34px;max-width:40ch">Каждый отзыв — это <b>конкретная правка в сервисе</b>: слабые места устраняются по одному, а не копятся до оттока гостей.</p>
+  </div>
+</section>
+
+<!-- ================= BOOKING ================= -->
+<section class="sec">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Онлайн-бронирование</p>
+      <h2 class="h-lg">Гость бронирует сам — стол ждёт его, а не соседей</h2>
+      <p class="lede">Гость выбирает дату и время в приложении, заявка мгновенно падает в вашу CRM. Вы подтверждаете и назначаете стол. Столы заполняются заранее — без переписок в директе и потерянных вечеров.</p>
+    </div>
+    <div class="flow reveal">
+      <div class="fnode">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></div>
+        <b>Гость выбирает дату и время</b>
+        <span>За 20 секунд в приложении: день, время, число гостей, зона. Без звонков и переписок.</span>
+      </div>
+      <div class="farrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      <div class="fnode key">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5.5 5h13l3.5 8v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4z"/></svg></div>
+        <b>Заявка падает в вашу CRM</b>
+        <span>Мгновенно в разделе «Брони», колонка «Новая»: имя, время, гости — всё видно управляющему.</span>
+      </div>
+      <div class="farrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      <div class="fnode">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></div>
+        <b>Вы подтверждаете и сажаете</b>
+        <span>Назначаете стол, статус меняется — гость видит подтверждение в «Мои брони».</span>
+      </div>
+    </div>
+    <div class="book-shots reveal">
+      <div class="phone"><div class="pscr" style="background-image:var(--sh-book)"></div></div>
+      <div class="win"><div class="wbar"><i></i><i></i><i></i><span class="u">CRM · Брони</span></div><div class="wscr" style="background-image:var(--sh-reserv)"></div></div>
+    </div>
+    <div class="outcome reveal" style="max-width:760px;margin-top:26px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+      <span><b>Результат:</b> столы заполнены заранее, меньше простоя в будни, ноль двойных броней — и гость возвращается по брони, а не «как получится».</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SHOWCASE ================= -->
+<section class="sec" style="background:var(--ink-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Экраны продукта</p>
+      <h2 class="h-lg">Меню в телефоне поднимает средний чек</h2>
+      <p class="lede">Гость сам изучает витрину с фото и составом, находит спецвкусы и добирает кухню к кальяну. Заказ растёт без лишних официантов, а мастер занят гостями, а не пересказом меню.</p>
+    </div>
+    <div class="screens reveal">
+      <div class="scol">
+        <div class="phone"><div class="pscr" style="background-image:var(--sh-home)"></div></div>
+        <p class="pcap"><b>Главная</b>Мастера на смене и топ-миксы сразу на экране — гость выбирает сам и меньше занимает персонал.</p>
+      </div>
+      <div class="scol">
+        <div class="phone"><div class="pscr" style="background-image:var(--sh-menu)"></div></div>
+        <p class="pcap"><b>Витрина миксов</b>Фото и состав продают спецвкусы и кухню — выше средний чек с каждого стола.</p>
+      </div>
+      <div class="scol">
+        <div class="phone"><div class="pscr" style="background-image:var(--sh-menu2)"></div></div>
+        <p class="pcap"><b>Меню: кальяны, кухня, бар</b>Три раздела в один тап. Гость листает и заказывает сам — столик не ждёт официанта.</p>
+      </div>
+      <div class="scol">
+        <div class="phone"><div class="pscr" style="background-image:var(--sh-mix)"></div></div>
+        <p class="pcap"><b>Карточка микса</b>Крепость, состав и цена на одном экране — быстрее заказ и оборот стола.</p>
+      </div>
+    </div>
+    <p class="note">Это живое демо — откройте с телефона и полистайте сами: <a href="{{DEMO_URL}}" target="_blank" rel="noopener" style="color:var(--glow)">попробовать →</a></p>
+  </div>
+</section>
+
+<!-- ================= COMPARISON ================= -->
+<section class="sec">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Почему мы</p>
+      <h2 class="h-lg">Не бумага, не «кнопка», не тяжёлый POS</h2>
+      <p class="lede">У каждого инструмента своя часть. Мы закрываем всё сразу — и умеем то, чего нет ни у кого: специфику кальянной.</p>
+    </div>
+    <div class="tbl-wrap reveal">
+      <table class="cmp">
+        <thead>
+          <tr>
+            <th>Что важно кальянной</th>
+            <th>Бумага / тетрадь</th>
+            <th>Кнопка‑вызов</th>
+            <th>POS (iiko и др.)</th>
+            <th class="us"><span class="colhead-us"><b>HookahCRM</b>вся в одном</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Цифровое меню с фото</td><td class="no">—</td><td class="no">—</td><td class="part">частично</td><td class="us yes">✓</td></tr>
+          <tr><td>Вызов мастера / углей / счёта</td><td class="no">—</td><td class="yes">✓</td><td class="no">—</td><td class="us yes">✓</td></tr>
+          <tr><td>Миксы, мастера, угли (специфика)</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="us yes">✓</td></tr>
+          <tr><td>Чаевые мастеру безналом</td><td class="no">—</td><td class="no">—</td><td class="part">редко</td><td class="us yes">✓</td></tr>
+          <tr><td>База гостей и повторные визиты</td><td class="no">—</td><td class="no">—</td><td class="part">частично</td><td class="us yes">✓</td></tr>
+          <tr><td>Живая карта зала и брони</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="us yes">✓</td></tr>
+          <tr><td>Оборудование на входе</td><td class="yes">не нужно</td><td class="yes">не нужно</td><td class="no">терминалы</td><td class="us yes">не нужно</td></tr>
+          <tr><td>Цена входа</td><td class="yes">0</td><td class="part">низкая</td><td class="no">высокая</td><td class="us yes">средняя</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LIVE / SOON ================= -->
+<section class="sec" style="background:var(--ink-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Честно о продукте</p>
+      <h2 class="h-lg">Что уже работает, а что — на подключении</h2>
+      <p class="lede">Показываем и то, и другое — чтобы вы принимали решение по фактам, а не по обещаниям.</p>
+    </div>
+    <div class="status reveal">
+      <div class="card live">
+        <h3><span class="badge live">Работает сегодня</span></h3>
+        <ul class="live">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Гостевое приложение: меню, миксы, кухня-бар, корзина</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Вызов персонала и чаевые мастеру в реальном времени</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Живая карта зала, зоны, брони столов</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Конструктор меню и миксов, команда, смены и график</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>База гостей, оценки, отзывы</li>
+        </ul>
+      </div>
+      <div class="card soon">
+        <h3><span class="badge soon">На подключении</span></h3>
+        <ul class="soon">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Сквозная выручка-аналитика и дашборд по деньгам</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Программа лояльности и достижения гостя</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Точный LTV гостя по чекам</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Мобильное приложение гостя</li>
+        </ul>
+        <p style="color:var(--faint);font-size:13px;margin-top:16px;font-family:var(--mono)">На пилоте согласуем приоритет под ваш зал.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= AVAILABILITY / SPEED ================= -->
+<section class="sec">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Доступность и скорость</p>
+      <h2 class="h-lg">Открывается всегда, везде и мгновенно</h2>
+      <p class="lede">Это веб, а не приложение из маркета. Гость наводит камеру на QR — и через секунду он уже в меню. Ни установки, ни «скачайте приложение», ни зависаний в час пик.</p>
+    </div>
+    <div class="stats reveal">
+      <div class="stat"><div class="n tnum">~1,5 сек</div><div class="l">до загрузки меню на телефоне гостя</div></div>
+      <div class="stat"><div class="n tnum">99,9%</div><div class="l">доступность сервиса — аптайм по мониторингу</div></div>
+      <div class="stat"><div class="n tnum">0</div><div class="l">установок: открывается прямо в браузере</div></div>
+      <div class="stat"><div class="n tnum">~140 КБ</div><div class="l">вес приложения — легче одной фотографии</div></div>
+    </div>
+    <div class="resil reveal">
+      <div class="rt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+        Работает при слабом интернете, блокировках и белых списках
+      </div>
+      <div class="rl">
+        <div class="ri"><b>При любых блокировках и в белых списках</b><span>Не завязан на зарубежные сервисы и маркеты — сервис остаётся доступным гостю, даже когда сторонние сайты и приложения не открываются.</span></div>
+        <div class="ri"><b>Быстрый на слабом интернете</b><span>Приложение весит ~140 КБ и открывается даже на медленном мобильном интернете (3G/EDGE), когда тяжёлые сервисы не грузятся.</span></div>
+        <div class="ri"><b>Кэшируется после первого входа</b><span>Ассеты сохраняются в браузере гостя — повторный вход открывает меню почти мгновенно, даже если связь слабая.</span></div>
+        <div class="ri"><b>Без зарубежных маркетов</b><span>Гостю не нужен App Store или Google Play — он просто сканирует QR и сразу попадает в браузер.</span></div>
+      </div>
+    </div>
+    <div class="avail reveal">
+      <div class="pt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>
+        <div><b>Любой телефон, любой браузер</b><span>iPhone, Android, новый или старый — работает одинаково. Гостю не нужно ничего ставить.</span></div>
+      </div>
+      <div class="pt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+        <div><b>Стабилен в час пик</b><span>Статика раздаётся с ближайшего к гостю сервера CDN. Даже при полном зале сайт остаётся быстрым.</span></div>
+      </div>
+      <div class="pt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
+        <div><b>Обновления прилетают сами</b><span>Новые функции появляются у всех автоматически. Ничего не переустанавливать — ни гостю, ни вам.</span></div>
+      </div>
+      <div class="pt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
+        <div><b>Не занимает память телефона</b><span>Гость не идёт в App Store и не ставит ещё одно приложение — открыл по QR и закрыл.</span></div>
+      </div>
+    </div>
+    <p class="note">Вес ~140 КБ — реальный gzip-размер кода приложения. Скорость и доступность зависят от связи гостя и хостинга; фактические показатели меряем на пилоте.</p>
+  </div>
+</section>
+
+<!-- ================= ONBOARDING ================= -->
+<section class="sec">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Простота внедрения</p>
+      <h2 class="h-lg">За один день. Без стройки и терминалов</h2>
+      <p class="lede">Подключаем поверх того, что у вас уже работает: не нужно менять кассу, останавливать зал или переучивать всю команду. Всё удалённо, вы только клеите QR.</p>
+    </div>
+    <div class="qr3d-fig reveal">
+      <div class="qimg" style="background-image:var(--qr3d)"></div>
+      <p class="qcap"><b>Брендированная QR-подставка на стол.</b> Печатаем под ваш фирменный стиль — гость наводит камеру и через секунду он в приложении.</p>
+    </div>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="num">Шаг 01</div>
+        <div class="t">Клеим QR на столы</div>
+        <p>Готовим макеты подставок и наклеек под ваш бренд. Гость сканирует — и он уже в приложении.</p>
+      </div>
+      <div class="step">
+        <div class="num">Шаг 02</div>
+        <div class="t">Переносим меню и мастеров</div>
+        <p>Загружаем ваши миксы, кухню, бар и команду. Меню становится живой витриной с фото.</p>
+      </div>
+      <div class="step">
+        <div class="num">Шаг 03</div>
+        <div class="t">Обучаем смену за час</div>
+        <p>Показываем карту зала, вызовы и брони. Интерфейс простой — разберётся любой мастер.</p>
+      </div>
+    </div>
+    <div class="zero reveal"><span>0</span>&nbsp;оборудования — гостю нужен только его телефон.</div>
+  </div>
+</section>
+
+<!-- ================= ROI ================= -->
+<section class="sec">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Сколько это в деньгах</p>
+      <h2 class="h-lg">Средний зал зарабатывает +300–600 тыс ₽ в месяц</h2>
+      <p class="lede">Считаем два денежных рычага — средний чек и частоту визитов. Диапазоны — отраслевые бенчмарки цифрового меню и QR-заказа, не гарантия.</p>
+    </div>
+    <p class="roi-in reveal">Вводные среднего зала: <b>15 столов</b> · <b>~45 кальянов/день</b> · средний чек <b>1 800 ₽</b> · выручка <b>≈ 2,43 млн ₽/мес</b></p>
+    <div class="tbl-wrap reveal">
+      <table class="roi">
+        <thead>
+          <tr><th>Сценарий</th><th>Средний чек</th><th>Визиты</th><th>Прирост / мес</th><th>Прирост / год</th><th>ROI к подписке</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Консервативный</td><td>+8%</td><td>+5%</td><td class="gain">+316 000 ₽</td><td class="gain">+3,8 млн ₽</td><td>×105</td></tr>
+          <tr class="base"><td>Базовый</td><td>+12%</td><td>+8%</td><td class="gain">+486 000 ₽</td><td class="gain">+5,8 млн ₽</td><td>×162</td></tr>
+          <tr><td>Оптимистичный</td><td>+15%</td><td>+10%</td><td class="gain">+608 000 ₽</td><td class="gain">+7,3 млн ₽</td><td>×203</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="payback reveal">
+      <div class="pb-stat"><div class="pb-n">3 000 ₽<small> /мес</small></div><div class="pb-l">подписка · это ≈ 2 кальяна</div></div>
+      <div class="pb-div"></div>
+      <div class="pb-stat"><div class="pb-n">×105</div><div class="pb-l">ROI · консервативный сценарий</div></div>
+      <div class="pb-div"></div>
+      <div class="pb-note">Прирост выручки в <b>сотню раз</b> больше подписки — окупается в первый вечер. Пилот 2 недели бесплатно: не выросли цифры — просто отключаем.</div>
+    </div>
+    <p class="note">Расчёт — отраслевая оценка на модельном зале, а не замер вашего. На бесплатном пилоте посчитаем ваши реальные цифры.</p>
+  </div>
+</section>
+
+<!-- ================= PRICING ================= -->
+<section class="sec pricing">
+  <div class="wrap">
+    <div class="head reveal" style="text-align:center;margin-left:auto;margin-right:auto">
+      <p class="eyebrow" style="justify-content:center">Тарифы</p>
+      <h2 class="h-lg">Платите за результат, а не за кнопку</h2>
+    </div>
+    <p class="anchor-note reveal">Конкурент берёт <b>3 000 ₽</b> за одну функцию. Здесь за сопоставимые деньги — <b>вся кальянная</b>.</p>
+    <div class="tiers reveal">
+      <div class="tier">
+        <div class="nm">Старт</div>
+        <div class="pr">3 000 ₽<small> /мес</small></div>
+        <div class="sub">Гостевое приложение по QR. Для одного зала — быстрый старт.</div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Цифровое меню: миксы, кухня и бар с фото</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Витрина «Лучшие миксы» + AI-подбор вкуса</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Вызов персонала: мастер / угли / счёт</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>QR-макеты на столы, запуск за 1 день</li>
+        </ul>
+      </div>
+      <div class="tier pop">
+        <div class="nm">Бизнес</div>
+        <div class="pr">4 990 ₽<small> /мес</small></div>
+        <div class="sub">Управление залом и гостями. Самый ходовой.</div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><b>Всё из «Старт», плюс:</b></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Живая карта зала: статусы, заказы, время</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Онлайн-бронирование столов</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Команда, смены и график</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>База гостей: визиты, любимые миксы, сегменты</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Чаевые мастерам + оценки и отзывы</li>
+        </ul>
+      </div>
+      <div class="tier">
+        <div class="nm">Сеть · Про</div>
+        <div class="pr">7 000 ₽<small> /мес</small></div>
+        <div class="sub">Для сетей и точек с амбициями.</div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><b>Всё из «Бизнес», плюс:</b></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Сквозная аналитика: выручка, загрузка, топ-вкусы</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Программа лояльности гостей</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Мультизал под одним аккаунтом</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Приоритетная поддержка и онбординг</li>
+        </ul>
+      </div>
+    </div>
+    <p class="offer reveal">▲ Первые 2 недели — бесплатно.</p>
+  </div>
+</section>
+
+<!-- ================= WHY NOW ================= -->
+<section class="sec why">
+  <div class="wrap">
+    <div class="head reveal">
+      <p class="eyebrow">Почему подключиться</p>
+      <h2 class="h-lg">Три причины начать сегодня</h2>
+    </div>
+    <div class="grid g3">
+      <div class="card reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="t">Окупаемость и нулевой риск</div>
+        <p>Подписка ≈ 4–5 кальянов в месяц и окупается в первый вечер. Пилот 2 недели бесплатно: не выросли цифры — просто отключаем, вы ничего не теряете.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></div>
+        <div class="t">Гость-база — ваш актив</div>
+        <p>Вы собираете собственную базу гостей и их вкусов. Она остаётся у вас и работает на возвраты — у конкурентов-«кнопок» этого нет и не будет.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+        <div class="t">Запуск за 1 день</div>
+        <p>0 оборудования, ставим поверх текущих процессов, обучаем смену за час. Никакой стройки и простоя зала — вы просто клеите QR.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section class="sec cta">
+  <div class="cta-bg" aria-hidden="true"></div>
+  <div class="wrap">
+    <p class="eyebrow reveal" style="justify-content:center">Следующий шаг</p>
+    <h2 class="h-lg reveal">Запустим пилот на вашем зале за 1 день — бесплатно</h2>
+    <p class="lede reveal" style="text-align:center">Вы ничем не рискуете: подключаем, обучаем смену, две недели работаете и смотрите на цифры. Не подойдёт — просто отключаем.</p>
+    <div class="qgrid reveal">
+      <div class="qcard">
+        <img src="{{QR}}" alt="QR-код на гостевое демо HookahCRM">
+        <div class="qt">
+          <span class="tag">Для гостя</span>
+          <span class="big">Гостевое приложение</span>
+          <span class="sm">Сканирует гость со стола: меню, миксы, вызов, бронь</span>
+          <span class="lnk">{{DEMO_SHORT}}</span>
+        </div>
+      </div>
+      <div class="qcard">
+        <img src="{{QR_ADMIN}}" alt="QR-код на админку HookahCRM">
+        <div class="qt">
+          <span class="tag">Для управляющего</span>
+          <span class="big">Админка (CRM)</span>
+          <span class="sm">Карта зала, брони, база гостей, аналитика</span>
+          <span class="lnk">{{DEMO_SHORT}}/admin</span>
+          <span class="sm">Код входа <b class="mono" style="color:var(--glow)">DEMO0000</b> → выберите любого сотрудника</span>
+        </div>
+      </div>
+    </div>
+    <div class="cta-actions reveal">
+      <a class="btn btn-primary" href="{{DEMO_URL}}" target="_blank" rel="noopener">Открыть гостевое демо</a>
+      <a class="btn btn-ghost" href="{{DEMO_URL}}admin/login" target="_blank" rel="noopener">Открыть админку (CRM)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>HookahCRM — CRM для кальянных. Гость по QR · зал под контролем.</span>
+    <span>Демо-данные — для показа. Цифры эффекта — отраслевые оценки, не гарантия.</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var els=document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion:reduce)').matches){
+    els.forEach(function(e){e.classList.add('in')});return;
+  }
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);} });
+  },{threshold:.12,rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>

@@ -15,7 +15,7 @@ import (
 const createEmployee = `-- name: CreateEmployee :one
 insert into employees (first_name, last_name, middle_name, short_name)
 values ($1, $2, $3, $4)
-returning id, first_name, last_name, middle_name, short_name, created_at, updated_at
+returning id, first_name, last_name, middle_name, short_name, created_at, updated_at, phone, photo_slug, tip_url
 `
 
 type CreateEmployeeParams struct {
@@ -41,6 +41,9 @@ func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) 
 		&i.ShortName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Phone,
+		&i.PhotoSlug,
+		&i.TipUrl,
 	)
 	return i, err
 }
@@ -69,8 +72,102 @@ func (q *Queries) CreateRestaurant(ctx context.Context, arg CreateRestaurantPara
 	return i, err
 }
 
+const getEmployeeAnyRestaurant = `-- name: GetEmployeeAnyRestaurant :one
+select restaurant_id from employee_restaurants
+where employee_id = $1
+order by created_at
+limit 1
+`
+
+func (q *Queries) GetEmployeeAnyRestaurant(ctx context.Context, employeeID uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getEmployeeAnyRestaurant, employeeID)
+	var restaurant_id uuid.UUID
+	err := row.Scan(&restaurant_id)
+	return restaurant_id, err
+}
+
+const getEmployeeFull = `-- name: GetEmployeeFull :one
+select
+    e.id,
+    e.first_name,
+    e.last_name,
+    e.middle_name,
+    e.short_name,
+    e.phone,
+    e.photo_slug,
+    e.tip_url,
+    coalesce(er.position, '')::text as position,
+    er.status,
+    coalesce(avg(rat.score), 0)::float8 as rating,
+    count(distinct rat.id)::int as rating_count,
+    coalesce(bool_or(s.id is not null), false) as on_shift
+from employee_restaurants er
+join employees e on e.id = er.employee_id
+left join employee_ratings rat on rat.employee_id = e.id
+left join shifts s
+    on s.employee_id = e.id
+   and s.restaurant_id = er.restaurant_id
+   and s.shift_date = current_date
+where er.employee_id = $1 and er.restaurant_id = $2
+group by e.id, er.position, er.status
+`
+
+type GetEmployeeFullParams struct {
+	EmployeeID   uuid.UUID `json:"employee_id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+}
+
+type GetEmployeeFullRow struct {
+	ID          uuid.UUID   `json:"id"`
+	FirstName   string      `json:"first_name"`
+	LastName    string      `json:"last_name"`
+	MiddleName  string      `json:"middle_name"`
+	ShortName   string      `json:"short_name"`
+	Phone       *string     `json:"phone"`
+	PhotoSlug   *string     `json:"photo_slug"`
+	TipUrl      *string     `json:"tip_url"`
+	Position    string      `json:"position"`
+	Status      string      `json:"status"`
+	Rating      float64     `json:"rating"`
+	RatingCount int32       `json:"rating_count"`
+	OnShift     interface{} `json:"on_shift"`
+}
+
+// Single master in a venue context (used to echo back the row after a write).
+func (q *Queries) GetEmployeeFull(ctx context.Context, arg GetEmployeeFullParams) (GetEmployeeFullRow, error) {
+	row := q.db.QueryRow(ctx, getEmployeeFull, arg.EmployeeID, arg.RestaurantID)
+	var i GetEmployeeFullRow
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.MiddleName,
+		&i.ShortName,
+		&i.Phone,
+		&i.PhotoSlug,
+		&i.TipUrl,
+		&i.Position,
+		&i.Status,
+		&i.Rating,
+		&i.RatingCount,
+		&i.OnShift,
+	)
+	return i, err
+}
+
+const getEmployeeTipUrl = `-- name: GetEmployeeTipUrl :one
+select tip_url from employees where id = $1
+`
+
+func (q *Queries) GetEmployeeTipUrl(ctx context.Context, id uuid.UUID) (*string, error) {
+	row := q.db.QueryRow(ctx, getEmployeeTipUrl, id)
+	var tip_url *string
+	err := row.Scan(&tip_url)
+	return tip_url, err
+}
+
 const getEmployeesByIDs = `-- name: GetEmployeesByIDs :many
-select id, first_name, last_name, middle_name, short_name, created_at, updated_at from employees
+select id, first_name, last_name, middle_name, short_name, created_at, updated_at, phone, photo_slug, tip_url from employees
 where id = any($1::uuid[])
 `
 
@@ -91,6 +188,9 @@ func (q *Queries) GetEmployeesByIDs(ctx context.Context, dollar_1 []uuid.UUID) (
 			&i.ShortName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Phone,
+			&i.PhotoSlug,
+			&i.TipUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -139,7 +239,7 @@ func (q *Queries) LinkEmployeeRestaurant(ctx context.Context, arg LinkEmployeeRe
 }
 
 const listEmployeesByRestaurant = `-- name: ListEmployeesByRestaurant :many
-select e.id, e.first_name, e.last_name, e.middle_name, e.short_name, e.created_at, e.updated_at, er.position
+select e.id, e.first_name, e.last_name, e.middle_name, e.short_name, e.created_at, e.updated_at, e.phone, e.photo_slug, e.tip_url, er.position
 from employees e
 join employee_restaurants er on er.employee_id = e.id
 where er.restaurant_id = $1
@@ -154,6 +254,9 @@ type ListEmployeesByRestaurantRow struct {
 	ShortName  string    `json:"short_name"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
+	Phone      *string   `json:"phone"`
+	PhotoSlug  *string   `json:"photo_slug"`
+	TipUrl     *string   `json:"tip_url"`
 	Position   *string   `json:"position"`
 }
 
@@ -174,7 +277,89 @@ func (q *Queries) ListEmployeesByRestaurant(ctx context.Context, restaurantID uu
 			&i.ShortName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Phone,
+			&i.PhotoSlug,
+			&i.TipUrl,
 			&i.Position,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listEmployeesFullByRestaurant = `-- name: ListEmployeesFullByRestaurant :many
+select
+    e.id,
+    e.first_name,
+    e.last_name,
+    e.middle_name,
+    e.short_name,
+    e.phone,
+    e.photo_slug,
+    e.tip_url,
+    coalesce(er.position, '')::text as position,
+    er.status,
+    coalesce(avg(rat.score), 0)::float8 as rating,
+    count(distinct rat.id)::int as rating_count,
+    coalesce(bool_or(s.id is not null), false) as on_shift
+from employee_restaurants er
+join employees e on e.id = er.employee_id
+left join employee_ratings rat on rat.employee_id = e.id
+left join shifts s
+    on s.employee_id = e.id
+   and s.restaurant_id = er.restaurant_id
+   and s.shift_date = current_date
+where er.restaurant_id = $1
+group by e.id, er.position, er.status
+order by e.last_name, e.first_name
+`
+
+type ListEmployeesFullByRestaurantRow struct {
+	ID          uuid.UUID   `json:"id"`
+	FirstName   string      `json:"first_name"`
+	LastName    string      `json:"last_name"`
+	MiddleName  string      `json:"middle_name"`
+	ShortName   string      `json:"short_name"`
+	Phone       *string     `json:"phone"`
+	PhotoSlug   *string     `json:"photo_slug"`
+	TipUrl      *string     `json:"tip_url"`
+	Position    string      `json:"position"`
+	Status      string      `json:"status"`
+	Rating      float64     `json:"rating"`
+	RatingCount int32       `json:"rating_count"`
+	OnShift     interface{} `json:"on_shift"`
+}
+
+// Full admin roster for a venue: profile + per-venue position/status + global
+// rating aggregate + whether the master is on today's shift here.
+func (q *Queries) ListEmployeesFullByRestaurant(ctx context.Context, restaurantID uuid.UUID) ([]ListEmployeesFullByRestaurantRow, error) {
+	rows, err := q.db.Query(ctx, listEmployeesFullByRestaurant, restaurantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListEmployeesFullByRestaurantRow{}
+	for rows.Next() {
+		var i ListEmployeesFullByRestaurantRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirstName,
+			&i.LastName,
+			&i.MiddleName,
+			&i.ShortName,
+			&i.Phone,
+			&i.PhotoSlug,
+			&i.TipUrl,
+			&i.Position,
+			&i.Status,
+			&i.Rating,
+			&i.RatingCount,
+			&i.OnShift,
 		); err != nil {
 			return nil, err
 		}
@@ -192,9 +377,12 @@ set first_name  = coalesce($1, first_name),
     last_name   = coalesce($2, last_name),
     middle_name = coalesce($3, middle_name),
     short_name  = coalesce($4, short_name),
+    phone       = coalesce($5, phone),
+    photo_slug  = coalesce($6, photo_slug),
+    tip_url     = coalesce($7, tip_url),
     updated_at  = now()
-where id = $5
-returning id, first_name, last_name, middle_name, short_name, created_at, updated_at
+where id = $8
+returning id, first_name, last_name, middle_name, short_name, created_at, updated_at, phone, photo_slug, tip_url
 `
 
 type UpdateEmployeeParams struct {
@@ -202,6 +390,9 @@ type UpdateEmployeeParams struct {
 	LastName   *string   `json:"last_name"`
 	MiddleName *string   `json:"middle_name"`
 	ShortName  *string   `json:"short_name"`
+	Phone      *string   `json:"phone"`
+	PhotoSlug  *string   `json:"photo_slug"`
+	TipUrl     *string   `json:"tip_url"`
 	ID         uuid.UUID `json:"id"`
 }
 
@@ -211,6 +402,9 @@ func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) 
 		arg.LastName,
 		arg.MiddleName,
 		arg.ShortName,
+		arg.Phone,
+		arg.PhotoSlug,
+		arg.TipUrl,
 		arg.ID,
 	)
 	var i Employee
@@ -222,6 +416,38 @@ func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) 
 		&i.ShortName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Phone,
+		&i.PhotoSlug,
+		&i.TipUrl,
 	)
 	return i, err
+}
+
+const updateEmployeeRestaurant = `-- name: UpdateEmployeeRestaurant :exec
+update employee_restaurants
+set position = coalesce($1, position),
+    status   = coalesce($2, status)
+where employee_id = $3
+  and ($4::uuid is null
+       or restaurant_id = $4::uuid)
+`
+
+type UpdateEmployeeRestaurantParams struct {
+	Position     *string    `json:"position"`
+	Status       *string    `json:"status"`
+	EmployeeID   uuid.UUID  `json:"employee_id"`
+	RestaurantID *uuid.UUID `json:"restaurant_id"`
+}
+
+// Partial update of the per-restaurant link (position/status). When
+// restaurant_id is null the change lands on every restaurant the master is
+// linked to (the admin usually operates within a single venue).
+func (q *Queries) UpdateEmployeeRestaurant(ctx context.Context, arg UpdateEmployeeRestaurantParams) error {
+	_, err := q.db.Exec(ctx, updateEmployeeRestaurant,
+		arg.Position,
+		arg.Status,
+		arg.EmployeeID,
+		arg.RestaurantID,
+	)
+	return err
 }
