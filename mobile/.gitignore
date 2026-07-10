@@ -1,0 +1,25 @@
+# Dart/Flutter build
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# Platform folders — regenerated locally via `flutter create` (see README)
+/android/
+/ios/
+/linux/
+/macos/
+/windows/
+/web/
+
+# Firebase config (secrets — never commit)
+**/google-services.json
+**/GoogleService-Info.plist
+lib/firebase_options.dart
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
