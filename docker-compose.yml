@@ -16,5 +16,21 @@ services:
       timeout: 3s
       retries: 5
 
+  api:
+    build: .
+    container_name: mixmaster-api
+    environment:
+      DATABASE_URL: postgres://mixmaster:mixmaster@postgres:5432/mixmaster?sslmode=disable
+      PORT: "8080"
+      # FCM (staff-app пуши) — опционально:
+      FCM_CREDENTIALS_FILE: ""
+      FCM_PROJECT_ID: ""
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   mixmaster_pg:
