@@ -301,6 +301,18 @@ export interface Reservation {
 // A guest taps "Позвать" at their table → a Call lands in /admin/calls, where
 // staff acknowledge and complete it. ToastHost beeps on new ones.
 export type CallType = "master" | "coals" | "waiter" | "bill";
+
+// Заполненный онбординг-бриф от заведения (публичная форма настройки).
+export interface OnboardingBrief {
+  id: string;
+  venue: string;
+  city: string;
+  contact: string;
+  phone: string;
+  status: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+}
 export type CallStatus = "new" | "ack" | "done";
 
 export interface Call {

@@ -19,6 +19,7 @@ import (
 	"mixmaster/internal/employees"
 	"mixmaster/internal/health"
 	"mixmaster/internal/menu"
+	"mixmaster/internal/onboarding"
 	"mixmaster/internal/orders"
 	"mixmaster/internal/push"
 	"mixmaster/internal/recipes"
@@ -71,6 +72,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) http.Handler {
 	callsH := calls.New(pool, queries, sender)
 	tablesH := tables.New(pool, queries)
 	devicesH := devices.New(pool, queries)
+	onboardingH := onboarding.New(pool, queries)
 
 	r.Route("/users", usersH.Routes)
 	r.Route("/recipes", recipesH.Routes)
@@ -81,6 +83,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) http.Handler {
 	r.Route("/calls", callsH.Routes)
 	r.Route("/tables", tablesH.Routes)
 	r.Route("/devices", devicesH.Routes)
+	r.Route("/onboarding", onboardingH.Routes)
 	employeesH.Mount(r) // mounts /employees and /restaurants
 
 	return r

@@ -9,6 +9,7 @@ import {
   IconAnalytics,
   IconReservations,
   IconBell,
+  IconClipboard,
   type IconProps,
 } from "./icons";
 import { asset } from "../../lib/asset";
@@ -68,4 +69,5 @@ const NAV: { to: string; label: string; end?: boolean; icon: (p: IconProps) => J
   { to: "/admin/clients", label: "Гости", icon: IconGuests },
   { to: "/admin/calls", label: "Обращения", icon: IconBell },
   { to: "/admin/analytics", label: "Аналитика", icon: IconAnalytics },
+  { to: "/admin/onboarding", label: "Онбординг", icon: IconClipboard },
 ];

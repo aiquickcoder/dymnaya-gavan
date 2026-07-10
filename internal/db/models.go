@@ -107,6 +107,17 @@ type MenuRecipe struct {
 	Components       []byte     `json:"components"`
 }
 
+type OnboardingBrief struct {
+	ID        uuid.UUID `json:"id"`
+	Venue     string    `json:"venue"`
+	City      string    `json:"city"`
+	Contact   string    `json:"contact"`
+	Phone     string    `json:"phone"`
+	Payload   []byte    `json:"payload"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type Order struct {
 	ID           uuid.UUID  `json:"id"`
 	TableID      string     `json:"table_id"`

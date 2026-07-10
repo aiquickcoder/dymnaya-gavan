@@ -29,6 +29,7 @@ import Clients from "./pages/admin/Clients";
 import Analytics from "./pages/admin/Analytics";
 import Reservations from "./pages/admin/Reservations";
 import Calls from "./pages/admin/Calls";
+import Onboarding from "./pages/admin/Onboarding";
 import AdminLogin from "./pages/admin/Login";
 
 function StaffLayout() {
@@ -88,6 +89,7 @@ export default function App() {
         <Route path="/admin/staff" element={<Staff />} />
         <Route path="/admin/clients" element={<Clients />} />
         <Route path="/admin/calls" element={<Calls />} />
+        <Route path="/admin/onboarding" element={<Onboarding />} />
         <Route path="/admin/analytics" element={<Analytics />} />
       </Route>
       <Route path="/admin/login" element={<AdminLogin />} />

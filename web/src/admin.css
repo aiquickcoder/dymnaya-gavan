@@ -1513,3 +1513,23 @@
   background: var(--accent); color: #fff;
   padding: 8px 14px; border-radius: 999px; font-weight: 800; font-size: 13px;
 }
+
+/* ---- Онбординг: входящие брифы (/admin/onboarding) ---- */
+.ob-empty { padding: 40px; text-align: center; color: var(--muted, #8a8d96); }
+.ob-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+.ob-card { background: var(--surface, #fff); border: 1px solid var(--border, #e6e8ec); border-radius: 16px; overflow: hidden; }
+.ob-card.open { border-color: var(--accent, #f26722); }
+.ob-top { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: none; border: none; cursor: pointer; padding: 16px 18px; text-align: left; font: inherit; color: inherit; }
+.ob-venue { font-weight: 700; font-size: 16px; }
+.ob-meta { color: var(--muted, #8a8d96); font-size: 13px; margin-top: 2px; }
+.ob-right { display: flex; align-items: center; gap: 12px; flex: none; }
+.ob-status { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: #fdece1; color: #c9531a; }
+.ob-date { color: var(--muted, #8a8d96); font-size: 13px; }
+.ob-chev { color: var(--muted, #8a8d96); font-size: 11px; }
+.ob-body { border-top: 1px solid var(--border, #e6e8ec); padding: 8px 18px 16px; }
+.ob-row { display: grid; grid-template-columns: 210px 1fr; gap: 14px; padding: 9px 0; border-bottom: 1px solid #f2f4f6; }
+.ob-row:last-child { border-bottom: none; }
+.ob-k { color: var(--muted, #8a8d96); font-size: 14px; font-weight: 600; }
+.ob-v { font-size: 14.5px; }
+.ob-sub { font-size: 14px; padding: 2px 0; }
+@media (max-width: 640px) { .ob-row { grid-template-columns: 1fr; } }

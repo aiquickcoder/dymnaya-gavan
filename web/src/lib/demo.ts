@@ -110,4 +110,5 @@ export const demoApi = {
 
   // ----- kitchen-bar (guest food menu) -----
   foodMenu: (restaurantId: string) => ok(demoStore.foodMenu(restaurantId)),
+  onboardingBriefs: () => ok(demoStore.onboardingBriefs()),
 };

@@ -20,6 +20,8 @@ type Querier interface {
 	AttachRecipe(ctx context.Context, arg AttachRecipeParams) (OrderRecipe, error)
 	CloseOrder(ctx context.Context, id uuid.UUID) (Order, error)
 	CountTables(ctx context.Context, restaurantID uuid.UUID) (int64, error)
+	// Store a filled onboarding brief. payload is the full form answers as JSON.
+	CreateBrief(ctx context.Context, arg CreateBriefParams) (OnboardingBrief, error)
 	// Guest taps "Позвать" at their table → a new call lands in /admin/calls.
 	CreateCall(ctx context.Context, arg CreateCallParams) (Call, error)
 	CreateComponent(ctx context.Context, arg CreateComponentParams) (Component, error)
@@ -42,6 +44,7 @@ type Querier interface {
 	DeleteTableAssignmentByOrder(ctx context.Context, orderID uuid.UUID) error
 	// Complete a call; backfill acked_at if it was never acknowledged.
 	DoneCall(ctx context.Context, id uuid.UUID) error
+	GetBrief(ctx context.Context, id uuid.UUID) (OnboardingBrief, error)
 	GetEmployeeAnyRestaurant(ctx context.Context, employeeID uuid.UUID) (uuid.UUID, error)
 	// Single master in a venue context (used to echo back the row after a write).
 	GetEmployeeFull(ctx context.Context, arg GetEmployeeFullParams) (GetEmployeeFullRow, error)
@@ -67,6 +70,8 @@ type Querier interface {
 	ListActiveOrderRecipes(ctx context.Context, orderID uuid.UUID) ([]ListActiveOrderRecipesRow, error)
 	// Completed calls, most recently done first.
 	ListArchiveCalls(ctx context.Context, restaurantID uuid.UUID) ([]Call, error)
+	// Newest briefs first (admin inbox).
+	ListBriefs(ctx context.Context) ([]OnboardingBrief, error)
 	ListComponentsByRecipeID(ctx context.Context, recipeID uuid.UUID) ([]Component, error)
 	ListComponentsByRecipeIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Component, error)
 	ListEmployeeRatings(ctx context.Context, employeeID uuid.UUID) ([]ListEmployeeRatingsRow, error)

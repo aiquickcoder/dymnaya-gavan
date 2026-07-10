@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Настройка HookahCRM под ваше заведение</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef0f3; --surface:#fff; --surface2:#f4f6f8; --surface3:#eef1f4;
+  --text:#1c1d22; --muted:#8a8d96; --muted2:#a9adb6;
+  --accent:#f26722; --accent-deep:#c9531a; --accent-soft:#fdece1;
+  --success:#2bb673; --border:#e6e8ec; --line:#eef0f3;
+  --disp:'Rubik',system-ui,sans-serif; --body:'Manrope',system-ui,sans-serif;
+  --r:20px; --r2:14px; --maxw:820px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--disp);margin:0;font-weight:700}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 18px}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:rgba(238,240,243,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.top .wrap{display:flex;align-items:center;gap:12px;padding:12px 18px}
+.logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(150deg,#ff8a4c,var(--accent-deep));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(242,103,34,.32);flex:none}
+.logo svg{width:22px;height:22px}
+.brand b{font-family:var(--disp);font-size:16px;font-weight:800;display:block;line-height:1.1}
+.brand span{font-size:12px;color:var(--muted)}
+.prog{margin-left:auto;font-size:12.5px;color:var(--muted);font-weight:600}
+
+/* hero */
+.hero{padding:34px 0 8px}
+.eyebrow{font-family:var(--disp);text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:700;color:var(--accent)}
+.hero h1{font-size:clamp(26px,5vw,38px);line-height:1.1;margin:10px 0 10px}
+.hero p{color:var(--muted);max-width:640px;font-size:16.5px}
+
+/* section card */
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin:16px 0;box-shadow:0 1px 2px rgba(20,20,30,.03)}
+.sec-h{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.sec-n{width:30px;height:30px;border-radius:9px;background:var(--accent-soft);color:var(--accent-deep);font-family:var(--disp);font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex:none}
+.sec-h h2{font-size:19px}
+.sec-sub{color:var(--muted);font-size:14px;margin:2px 0 16px 42px}
+
+/* fields */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.grid{grid-template-columns:1fr}}
+.f{display:flex;flex-direction:column;gap:6px;margin-bottom:2px}
+.f.col-2{grid-column:1/-1}
+label{font-size:13.5px;color:var(--muted);font-weight:600}
+input[type=text],input[type=tel],input[type=number],textarea,select{
+  width:100%;padding:12px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);
+  color:var(--text);font-size:15px;font-family:inherit;transition:border-color .15s,background .15s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);background:#fff}
+textarea{resize:vertical;min-height:78px}
+select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8d96' stroke-width='2.4' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
+
+/* chips (multi/single) */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 14px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:14px;font-weight:600;user-select:none;transition:all .12s}
+.chip:hover{border-color:var(--muted2)}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
+.chip.on::before{content:"✓ ";font-weight:800}
+
+/* segmented / radio row */
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg .chip{flex:1 1 auto;text-align:center;justify-content:center}
+
+/* switch */
+.sw{display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+.sw .track{width:46px;height:27px;border-radius:20px;background:var(--surface3);border:1px solid var(--border);position:relative;transition:.15s;flex:none}
+.sw .track::after{content:"";position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.15s}
+.sw.on .track{background:var(--accent);border-color:var(--accent)}
+.sw.on .track::after{left:21px}
+
+/* repeatable rows */
+.rows{display:flex;flex-direction:column;gap:10px}
+.row-item{display:grid;gap:8px;grid-template-columns:1fr;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:10px}
+.row-item .cols{display:grid;gap:8px}
+.zone .cols{grid-template-columns:2fr 1fr auto}
+.team .cols{grid-template-columns:1fr 1fr 1fr auto}
+@media(max-width:560px){.zone .cols,.team .cols{grid-template-columns:1fr}}
+.row-item .del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;align-self:center;padding:6px}
+.row-item .del:hover{color:#e0553d}
+.addrow{align-self:flex-start;background:none;border:1px dashed var(--muted2);color:var(--accent-deep);border-radius:11px;padding:9px 14px;font-weight:600;cursor:pointer;font-size:14px}
+.addrow:hover{border-color:var(--accent);background:var(--accent-soft)}
+
+.hint{font-size:12.5px;color:var(--muted2);margin-top:4px}
+.mt{margin-top:14px}
+.collapse{overflow:hidden;transition:max-height .25s ease,opacity .2s;max-height:0;opacity:0}
+.collapse.open{max-height:1200px;opacity:1;margin-top:14px}
+
+/* tariff */
+.tariffs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:560px){.tariffs{grid-template-columns:1fr}}
+.tariff{border:1.5px solid var(--border);border-radius:var(--r2);padding:16px;cursor:pointer;transition:.12s;background:var(--surface2)}
+.tariff:hover{border-color:var(--muted2)}
+.tariff.on{border-color:var(--accent);background:var(--accent-soft)}
+.tariff .tn{font-family:var(--disp);font-weight:800;font-size:16px}
+.tariff .tp{font-family:var(--disp);font-weight:800;font-size:22px;color:var(--accent-deep);margin:4px 0}
+.tariff .td{font-size:13px;color:var(--muted)}
+.tariff.pop{position:relative}
+.tariff.pop::after{content:"Популярный";position:absolute;top:-10px;right:10px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px}
+
+/* submit + success */
+.submit{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding:14px 0 22px;margin-top:8px}
+.btn{width:100%;padding:16px;border:none;border-radius:15px;background:var(--accent);color:#fff;font-family:var(--disp);font-weight:800;font-size:17px;cursor:pointer;box-shadow:0 10px 26px rgba(242,103,34,.34);transition:.12s}
+.btn:hover{background:var(--accent-deep)}
+.btn:disabled{opacity:.6;cursor:default}
+.btn.ghost{background:#fff;color:var(--accent-deep);border:1px solid var(--border);box-shadow:none}
+.foot{text-align:center;color:var(--muted);font-size:13px;margin-top:10px}
+.done{display:none;text-align:center;padding:40px 20px}
+.done .ok{width:76px;height:76px;border-radius:50%;background:var(--success);color:#fff;font-size:40px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.done h2{font-size:26px;margin-bottom:8px}
+.done p{color:var(--muted);max-width:460px;margin:0 auto 18px}
+.banner{display:none;background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent-deep);border-radius:var(--r2);padding:12px 14px;font-size:14px;font-weight:600;margin:12px 0}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="wrap">
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 4.2 1.2 6 2 6.8H4c.8-.8 2-2.6 2-6.8z"/><path d="M10.2 19a2 2 0 0 0 3.6 0"/></svg></div>
+  <div class="brand"><b>HookahCRM</b><span>Онбординг заведения</span></div>
+  <div class="prog" id="prog">0%</div>
+</div></div>
+
+<main class="wrap" id="form">
+  <section class="hero">
+    <div class="eyebrow">Настройка под вас</div>
+    <h1>Соберём приложение под ваше заведение</h1>
+    <p>15 минут — и мы настроим гостевое приложение, меню, брони, чаевые и QR именно под ваш зал. Заполняйте что знаете, остальное уточним на созвоне.</p>
+  </section>
+
+  <!-- 1. О заведении -->
+  <section class="sec">
+    <div class="sec-h"><div class="sec-n">1</div><h2>О заведении</h2></div>
+    <div class="sec-sub">Базовое — как к вам обращаться и связаться.</div>
+    <div class="grid">
+      <div class="f col-2"><label>Название заведения</label><input type="text" data-k="Название" placeholder="Напр. «Example lounge»"></div>
+      <div class="f"><label>Город</label><input type="text" data-k="Город" placeholder="Напр. Казань"></div>
+      <div class="f"><label>Сколько столов в зале</label><input type="number" data-k="Столов" placeholder="Напр. 15" min="1"></div>
+      <div class="f"><label>Контактное лицо</label><input type="text" data-k="Контакт" placeholder="Имя, должность"></div>
+      <div class="f"><label>Телефон / Telegram</label><input type="text" data-k="Связь" placeholder="+7… / @…"></div>
+      <div class="f col-2"><label>Часы работы</label><input type="text" data-k="Часы" placeholder="Напр. 14:00 – 02:00"></div>
+    </div>
+  </section>
+
+  <!-- 2. Меню -->
+  <section class="sec">
+    <div class="sec-h"><div class="sec-n">2</div><h2>Меню</h2></div>
+    <div class="sec-sub">Какие разделы показывать гостю и на каких табаках работаете.</div>
+    <label>Разделы меню</label>
+    <div class="chips mt" data-multi="Разделы меню">
+      <div class="chip">Стандартные кальяны</div><div class="chip">Авторские миксы</div><div class="chip">Кальян на фрукте</div>
+      <div class="chip">Кухня</div><div class="chip">Бар</div><div class="chip">Десерты</div><div class="chip">Вейп-зона</div>
+    </div>
+    <div class="f mt"><label>Свои разделы (через запятую)</label><input type="text" data-k="Разделы (свои)" placeholder="Напр. кальяны на молоке, чайная карта"></div>
+
+    <label class="mt" style="display:block">Табачные бренды</label>
+    <div class="chips mt" data-multi="Табаки">
+      <div class="chip">Musthave</div><div class="chip">Darkside</div><div class="chip">Blackburn</div><div class="chip">Element</div>
+      <div class="chip">Северный</div><div class="chip">Daily Hookah</div><div class="chip">Satyr</div><div class="chip">Sebero</div>
+      <div class="chip">Chabacco</div><div class="chip">Duft</div><div class="chip">Spectrum</div><div class="chip">Bonche</div>
+      <div class="chip">Brusko</div><div class="chip">Tangiers</div><div class="chip">Overdose</div>
+    </div>
+    <div class="f mt"><label>Другие бренды (через запятую)</label><input type="text" data-k="Табаки (свои)" placeholder="Напр. Sarma, WTO, Bonnie…"></div>
+
+    <div class="grid mt">
+      <div class="f"><label>Контент меню</label>
+        <select data-k="Контент меню"><option value="">— выберите —</option><option>Пришлём файлом</option><option>Ссылка на текущее меню</option><option>Соберём вместе на созвоне</option></select></div>
+      <div class="f"><label>Фото блюд и миксов</label>
+        <select data-k="Фото"><option value="">— выберите —</option><option>Свои фото есть</option><option>Часть есть, часть нужна</option><option>Фото нет — нужна помощь</option></select></div>
+    </div>
+  </section>
+
+  <!-- 3. Функции гостю -->
+  <section class="sec">
+    <div class="sec-h"><div class="sec-n">3</div><h2>Функции гостю</h2></div>
+    <div class="sec-sub">Что включить в гостевом приложении по QR.</div>
+    <div class="chips" data-multi="Функции">
+      <div class="chip on">Меню по QR</div><div class="chip on">Вызов персонала</div><div class="chip on">AI-подбор микса</div>
+      <div class="chip on">Чаевые мастеру</div><div class="chip">Избранное и бонусы</div><div class="chip on">Онлайн-бронь стола</div>
+      <div class="chip on">Обратная связь / оценки</div><div class="chip">«Секретный» микс</div>
+    </div>
+  </section>
+
+  <!-- 4. Бронирование -->
+  <section class="sec">
+    <div class="sec-h"><div class="sec-n">4</div><h2>Бронирование столов</h2></div>
+    <div class="sec-sub">Если гости бронируют онлайн — под какие правила.</div>
+    <div class="sw on" data-switch="Бронирование" data-target="bk"><div class="track"></div><span style="font-weight:600">Включить онлайн-бронирование</span></div>
+    <div class="collapse open" id="bk">
+      <div class="grid">
+        <div class="f"><label>Мин. гостей на бронь</label><input type="number" data-k="Бронь: мин гостей" placeholder="1" min="1"></div>
+        <div class="f"><label>Макс. гостей на бронь</label><input type="number" data-k="Бронь: макс гостей" placeholder="12" min="1"></div>
+        <div class="f"><label>За сколько бронировать заранее</label>
+          <select data-k="Бронь: заранее"><option value="">— выберите —</option><option>В любое время до визита</option><option>Только день в день</option><option>Минимум за 1 час</option><option>Минимум за 2 часа</option><option>Минимум за сутки</option></select></div>
+        <div class="f"><label>Депозит при брони</label>
+          <select data-k="Бронь: депозит"><option value="">— выберите —</option><option>Без депозита</option><option>Депозит по сумме</option><option>Только для VIP-зон</option></select></div>
+        <div class="f col-2"><label>Ограничение на столик по времени</label>
+          <select data-k="Бронь: лимит времени"><option value="">— выберите —</option><option>Без ограничения</option><option>1 час</option><option>1,5 часа</option><option>2 часа</option><option>3 часа</option><option>Зависит от зоны / дня</option></select></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Чаевые -->
+  <section class="sec">
+    <div class="sec-h"><div class="sec-n">5</div><h2>Чаевые</h2></div>
+    <div class="sec-sub">Кому уходят безналичные чаевые от гостя.</div>
+    <div class="seg" data-single="Чаевые">
+      <div class="chip on">Конкретному мастеру</div><div class="chip">В общий банк смены</div><div class="chip">Гость выбирает сам</div>
+    </div>
+  </section>
+
+  <!-- 6. Зоны -->
+  <section class="sec">
+    <div class="sec-h"><div class="sec-n">6</div><h2>Зоны и столы</h2></div>
+    <div class="sec-sub">Как разбит зал — для карты столов и броней.</div>
+    <div class="rows zone" id="zones"></div>
+    <button class="addrow mt" data-add="zone">＋ Добавить зону</button>
+  </section>
+
+  <!-- 7. Команда -->
+  <section class="sec">
+    <div class="sec-h"><div class="sec-n">7</div><h2>Команда</h2></div>
+    <div class="sec-sub">Мастера и персонал — заведём карточки и чаевые.</div>
+    <div class="rows team" id="team"></div>
+    <button class="addrow mt" data-add="team">＋ Добавить сотрудника</button>
+  </section>
+
+  <!-- 8. Стиль и QR -->
+  <section class="sec">
+    <div class="sec-h"><div class="sec-n">8</div><h2>Стиль и QR на столах</h2></div>
+    <div class="sec-sub">Как приложение выглядит и куда клеим QR.</div>
+    <div class="grid">
+      <div class="f"><label>Основной цвет бренда</label><input type="text" data-k="Цвет бренда" placeholder="Напр. тёмно-бордовый / #7a1f2b"></div>
+      <div class="f"><label>Тема приложения</label>
+        <select data-k="Тема" id="themeSel"><option value="">— выберите —</option><option>Светлая (как демо)</option><option>Тёмная</option><option>Под фирменные цвета</option><option value="text">Укажу текстом ↓</option></select></div>
+      <div class="f col-2"><label>Логотип</label>
+        <select data-k="Логотип"><option value="">— выберите —</option><option>Да, пришлём файл</option><option>Есть, но нужен в векторе — поможете</option><option>Логотипа нет, нужна помощь</option></select></div>
+      <div class="f col-2 collapse" id="styleText"><label>Пожелания по стилю</label><textarea data-k="Стиль (текстом)" placeholder="Настроение, референсы, цвета, шрифты, что нравится / не нравится."></textarea></div>
+      <div class="f"><label>Сколько QR напечатать</label><input type="number" data-k="QR: количество" placeholder="Напр. 15 (обычно = числу столов)"></div>
+      <div class="f"><label>На какие столы ставим QR</label>
+        <select data-k="QR: где" id="qrWhere"><option value="">— выберите —</option><option>На все столы</option><option value="some">Только на определённые</option></select></div>
+      <div class="f col-2 collapse" id="qrTables"><label>Номера столов (через запятую)</label><input type="text" data-k="QR: номера столов" placeholder="Напр. 1, 3, 9"></div>
+    </div>
+  </section>
+
+  <!-- 9. Тариф -->
+  <section class="sec">
+    <div class="sec-h"><div class="sec-n">9</div><h2>Тариф</h2></div>
+    <div class="sec-sub">Первые 2 недели — бесплатно. Финальную цену подберём под ваш зал.</div>
+    <div class="tariffs" data-tariff="Тариф">
+      <div class="tariff"><div class="tn">Старт</div><div class="tp">3 000 ₽</div><div class="td">Гостевое приложение по QR, один зал.</div></div>
+      <div class="tariff pop on"><div class="tn">Бизнес</div><div class="tp">4 990 ₽</div><div class="td">Приложение + CRM: столы, брони, аналитика.</div></div>
+      <div class="tariff"><div class="tn">Про</div><div class="tp">7 000 ₽</div><div class="td">Всё + сеть залов, роли, интеграции.</div></div>
+    </div>
+  </section>
+
+  <!-- 10. Примечания -->
+  <section class="sec">
+    <div class="sec-h"><div class="sec-n">10</div><h2>Примечания</h2></div>
+    <div class="f"><textarea data-k="Примечания" placeholder="Особенности зала, пожелания, вопросы — всё, что поможет настроить приложение точнее."></textarea></div>
+  </section>
+
+  <div class="banner" id="banner"></div>
+  <div class="submit">
+    <button class="btn" id="send">Отправить бриф →</button>
+    <div class="foot">Данные уйдут в панель HookahCRM. Ничего не потеряется — при сбое сети предложим сохранить копию.</div>
+  </div>
+</main>
+
+<main class="wrap done" id="done">
+  <div class="ok">✓</div>
+  <h2>Спасибо! Бриф у нас</h2>
+  <p>Мы получили ответы и уже настраиваем приложение под ваше заведение. Свяжемся по указанным контактам в ближайшее время.</p>
+  <button class="btn ghost" style="max-width:280px;margin:0 auto" id="dl">Скачать копию брифа</button>
+</main>
+
+<script>
+// Настройте на адрес вашего бэкенда (там, где крутится Go-API). Пусто = только фолбэк.
+var API_BASE = "";           // напр. "https://api.hookahcrm.ru"
+var CONTACT_EMAIL = "onboarding@hookahcrm.ru";
+
+var lastPayload = null;
+
+// chips: multi / single
+document.querySelectorAll('[data-multi]').forEach(function(box){
+  box.addEventListener('click', function(e){ if(e.target.classList.contains('chip')) e.target.classList.toggle('on'); updateProgress(); });
+});
+document.querySelectorAll('[data-single]').forEach(function(box){
+  box.addEventListener('click', function(e){ if(!e.target.classList.contains('chip'))return;
+    box.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on')}); e.target.classList.add('on'); updateProgress(); });
+});
+document.querySelectorAll('[data-tariff]').forEach(function(box){
+  box.addEventListener('click', function(e){ var t=e.target.closest('.tariff'); if(!t)return;
+    box.querySelectorAll('.tariff').forEach(function(c){c.classList.remove('on')}); t.classList.add('on'); });
+});
+// switch → collapse
+document.querySelectorAll('[data-switch]').forEach(function(sw){
+  sw.addEventListener('click', function(){ sw.classList.toggle('on');
+    var t=document.getElementById(sw.dataset.target); if(t) t.classList.toggle('open', sw.classList.contains('on')); });
+});
+// conditional collapses
+document.getElementById('themeSel').addEventListener('change', function(){
+  document.getElementById('styleText').classList.toggle('open', this.value==='text'); });
+document.getElementById('qrWhere').addEventListener('change', function(){
+  document.getElementById('qrTables').classList.toggle('open', this.value==='some'); });
+
+// repeatable rows
+function zoneRow(){ return '<div class="row-item"><div class="cols">'+
+  '<input type="text" data-z="name" placeholder="Название зоны (напр. Основной зал)">'+
+  '<input type="number" data-z="tables" placeholder="столов" min="1">'+
+  '<button class="del" title="Удалить">×</button></div></div>'; }
+function teamRow(){ return '<div class="row-item"><div class="cols">'+
+  '<input type="text" data-t="name" placeholder="Имя мастера / официанта">'+
+  '<input type="text" data-t="short" placeholder="Короткое имя (как зовут в зале)">'+
+  '<input type="text" data-t="role" placeholder="Роль (мастер / бариста / управляющий)">'+
+  '<button class="del" title="Удалить">×</button></div></div>'; }
+function addRow(kind){ var box=document.getElementById(kind==='zone'?'zones':'team');
+  var d=document.createElement('div'); d.innerHTML=(kind==='zone'?zoneRow():teamRow()); box.appendChild(d.firstChild); }
+document.querySelectorAll('[data-add]').forEach(function(b){ b.addEventListener('click',function(){addRow(b.dataset.add);}); });
+document.addEventListener('click', function(e){ if(e.target.classList.contains('del')){ e.target.closest('.row-item').remove(); }});
+addRow('zone'); addRow('team');
+
+// progress
+var totalInputs = document.querySelectorAll('input[data-k],select[data-k],textarea[data-k]').length + 2;
+function updateProgress(){
+  var filled=0;
+  document.querySelectorAll('input[data-k],select[data-k],textarea[data-k]').forEach(function(el){ if(el.value.trim())filled++; });
+  document.querySelectorAll('[data-multi],[data-single]').forEach(function(b){ if(b.querySelector('.chip.on'))filled++; });
+  var pct=Math.min(100,Math.round(filled/totalInputs*100));
+  document.getElementById('prog').textContent=pct+'%';
+}
+document.getElementById('form').addEventListener('input', updateProgress);
+
+// collect payload
+function collect(){
+  var p={};
+  document.querySelectorAll('input[data-k],select[data-k],textarea[data-k]').forEach(function(el){ if(el.value.trim()) p[el.dataset.k]=el.value.trim(); });
+  document.querySelectorAll('[data-multi]').forEach(function(b){ var v=[]; b.querySelectorAll('.chip.on').forEach(function(c){v.push(c.textContent.replace('✓ ','').trim());}); if(v.length)p[b.dataset.multi]=v; });
+  document.querySelectorAll('[data-single]').forEach(function(b){ var c=b.querySelector('.chip.on'); if(c)p[b.dataset.single]=c.textContent.trim(); });
+  document.querySelectorAll('[data-switch]').forEach(function(s){ p[s.dataset.switch]=s.classList.contains('on')?'Да':'Нет'; });
+  var t=document.querySelector('[data-tariff] .tariff.on'); if(t)p['Тариф']=t.querySelector('.tn').textContent+' ('+t.querySelector('.tp').textContent+')';
+  var zones=[]; document.querySelectorAll('#zones .row-item').forEach(function(r){ var n=r.querySelector('[data-z=name]').value.trim(), c=r.querySelector('[data-z=tables]').value.trim(); if(n||c)zones.push({зона:n,столов:c}); }); if(zones.length)p['Зоны']=zones;
+  var team=[]; document.querySelectorAll('#team .row-item').forEach(function(r){ var n=r.querySelector('[data-t=name]').value.trim(); if(n)team.push({имя:n,короткое:r.querySelector('[data-t=short]').value.trim(),роль:r.querySelector('[data-t=role]').value.trim()}); }); if(team.length)p['Команда']=team;
+  return p;
+}
+
+function download(){
+  if(!lastPayload)return;
+  var blob=new Blob([JSON.stringify(lastPayload,null,2)],{type:'application/json'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='hookahcrm-brief-'+((lastPayload['Название']||'venue').replace(/\s+/g,'-'))+'.json'; a.click();
+}
+document.getElementById('dl').addEventListener('click', download);
+
+function showDone(){ document.getElementById('form').style.display='none'; document.getElementById('done').style.display='block'; window.scrollTo(0,0); }
+function banner(msg){ var b=document.getElementById('banner'); b.textContent=msg; b.style.display='block'; }
+
+document.getElementById('send').addEventListener('click', async function(){
+  var p=collect(); lastPayload=p;
+  if(!p['Название']){ banner('Укажите хотя бы название заведения.'); document.querySelector('input[data-k=Название]').focus(); return; }
+  var btn=this; btn.disabled=true; btn.textContent='Отправляем…';
+  var body={venue:p['Название']||'', city:p['Город']||'', contact:p['Контакт']||'', phone:p['Связь']||'', payload:p};
+  var ok=false;
+  if(API_BASE){
+    try{ var r=await fetch(API_BASE.replace(/\/$/,'')+'/onboarding',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); ok=r.ok; }catch(e){ ok=false; }
+  }
+  if(ok){ showDone(); }
+  else{
+    // фолбэк: копия не потеряется
+    showDone();
+    var d=document.getElementById('done');
+    d.querySelector('p').innerHTML='Мы сохранили ваши ответы. Если не увидим их в панели — отправьте копию: скачайте файл ниже или напишите нам.';
+    download();
+    var m=document.createElement('a'); m.className='foot'; m.style.display='block'; m.style.marginTop='14px';
+    m.href='mailto:'+CONTACT_EMAIL+'?subject='+encodeURIComponent('Онбординг: '+(p['Название']||''))+'&body='+encodeURIComponent(JSON.stringify(p,null,2));
+    m.textContent='Отправить бриф на '+CONTACT_EMAIL; d.appendChild(m);
+  }
+});
+updateProgress();
+</script>
+</body>
+</html>

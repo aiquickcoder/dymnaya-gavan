@@ -3,6 +3,7 @@ import type {
   AnalyticsSummary,
   Call,
   CallType,
+  OnboardingBrief,
   Component,
   Employee,
   EmployeeFull,
@@ -275,6 +276,10 @@ const realApi = {
   // kitchen-bar (guest food menu)
   foodMenu: (restaurantId: string): Promise<MenuRecipeView[]> =>
     request<MenuRecipeView[]>("POST", "/menu/list-food", { restaurantId }),
+
+  // onboarding briefs inbox (filled setup forms)
+  onboardingBriefs: (): Promise<OnboardingBrief[]> =>
+    request<OnboardingBrief[]>("GET", "/onboarding"),
 };
 
 // In the GitHub Pages / demo build there is no backend — serve seeded mock data.
