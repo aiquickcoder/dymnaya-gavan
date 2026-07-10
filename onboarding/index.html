@@ -88,6 +88,17 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .addrow:hover{border-color:var(--accent);background:var(--accent-soft)}
 
 .hint{font-size:12.5px;color:var(--muted2);margin-top:4px}
+.note{background:var(--accent-soft);border:1px solid #f6d3b8;border-radius:12px;padding:11px 13px;font-size:13.5px;color:#8a4a1e}
+.note b{color:#7a3f14}
+.mixbox{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px}
+.mixbox-h{font-family:var(--disp);font-weight:700;font-size:16px}
+.mixbox-sub{color:var(--muted);font-size:13.5px;margin:4px 0 10px}
+.mixfields{margin:0 0 14px;padding-left:20px;font-size:14px}
+.mixfields li{margin:5px 0}
+.mixfields b{font-weight:600}
+.mix-item{background:#fff;gap:8px}
+.mix-cols1{display:grid;grid-template-columns:2fr 1.1fr 1fr auto;gap:8px}
+@media(max-width:560px){.mix-cols1{grid-template-columns:1fr 1fr}}
 .mt{margin-top:14px}
 .collapse{overflow:hidden;transition:max-height .25s ease,opacity .2s;max-height:0;opacity:0}
 .collapse.open{max-height:1200px;opacity:1;margin-top:14px}
@@ -171,7 +182,23 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <div class="f"><label>Контент меню</label>
         <select data-k="Контент меню"><option value="">— выберите —</option><option>Пришлём файлом</option><option>Ссылка на текущее меню</option><option>Соберём вместе на созвоне</option></select></div>
       <div class="f"><label>Фото блюд и миксов</label>
-        <select data-k="Фото"><option value="">— выберите —</option><option>Свои фото есть</option><option>Часть есть, часть нужна</option><option>Фото нет — нужна помощь</option></select></div>
+        <select data-k="Фото"><option value="">— выберите —</option><option>Свои фото есть</option><option>Часть есть, часть нужна</option><option>Фото нет — нужна помощь</option></select>
+        <div class="hint">📎 Фото блюд и миксов — файлом менеджеру (или поможем со съёмкой).</div></div>
+    </div>
+
+    <div class="mixbox mt">
+      <div class="mixbox-h">Что указать по каждому миксу</div>
+      <div class="mixbox-sub">Чтобы карточка микса работала как витрина, для каждого нужны эти поля. Впишите свои миксы ниже — или пришлите списком менеджеру, оформим сами.</div>
+      <ol class="mixfields">
+        <li><b>Крепость</b> — лёгкий / средний / крепкий</li>
+        <li><b>Компоненты (табак)</b> — бренд + вкус + %. Напр.: Musthave «Манго» 50% + Darkside «Банан» 50%</li>
+        <li><b>Теги</b> — «Сладкий», «Кислый», «Фруктовый»</li>
+        <li><b>Описание</b> — «Спелое манго с ноткой банана»</li>
+        <li><b>Цена</b> — можно разные для зон</li>
+        <li><b>Категория</b> — «Основное меню» или «Авторские миксы»</li>
+      </ol>
+      <div class="rows mixes" id="mixes"></div>
+      <button class="addrow mt" data-add="mix">＋ Добавить микс</button>
     </div>
   </section>
 
@@ -225,9 +252,10 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   <!-- 7. Команда -->
   <section class="sec">
     <div class="sec-h"><div class="sec-n">7</div><h2>Команда</h2></div>
-    <div class="sec-sub">Мастера и персонал — заведём карточки и чаевые.</div>
+    <div class="sec-sub">Именные профили с рейтингом — гость просит «своего» мастера и оставляет ему чаевые.</div>
     <div class="rows team" id="team"></div>
     <button class="addrow mt" data-add="team">＋ Добавить сотрудника</button>
+    <div class="note mt">📎 <b>Фото мастеров</b> пришлите файлом (с именами) менеджеру, который вас подключает — поставим их в профили.</div>
   </section>
 
   <!-- 8. Стиль и QR -->
@@ -239,7 +267,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <div class="f"><label>Тема приложения</label>
         <select data-k="Тема" id="themeSel"><option value="">— выберите —</option><option>Светлая (как демо)</option><option>Тёмная</option><option>Под фирменные цвета</option><option value="text">Укажу текстом ↓</option></select></div>
       <div class="f col-2"><label>Логотип</label>
-        <select data-k="Логотип"><option value="">— выберите —</option><option>Да, пришлём файл</option><option>Есть, но нужен в векторе — поможете</option><option>Логотипа нет, нужна помощь</option></select></div>
+        <select data-k="Логотип"><option value="">— выберите —</option><option>Да, пришлём файл</option><option>Есть, но нужен в векторе — поможете</option><option>Логотипа нет, нужна помощь</option></select>
+        <div class="hint">📎 Файл логотипа пришлите менеджеру, который вас подключает.</div></div>
       <div class="f col-2 collapse" id="styleText"><label>Пожелания по стилю</label><textarea data-k="Стиль (текстом)" placeholder="Настроение, референсы, цвета, шрифты, что нравится / не нравится."></textarea></div>
       <div class="f"><label>Сколько QR напечатать</label><input type="number" data-k="QR: количество" placeholder="Напр. 15 (обычно = числу столов)"></div>
       <div class="f"><label>На какие столы ставим QR</label>
@@ -280,8 +309,10 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 </main>
 
 <script>
-// Настройте на адрес вашего бэкенда (там, где крутится Go-API). Пусто = только фолбэк.
-var API_BASE = "";           // напр. "https://api.hookahcrm.ru"
+// Куда уходят заявки. SHEET_URL — Apps Script Web App (Google Sheets), приоритетно.
+// API_BASE — Go-бэкенд (когда поднимем). Пусто оба = только фолбэк (скачать/почта).
+var SHEET_URL = "";          // вставьте URL веб-приложения Apps Script (…/exec)
+var API_BASE  = "";          // напр. "https://api.hookahcrm.ru"
 var CONTACT_EMAIL = "onboarding@hookahcrm.ru";
 
 var lastPayload = null;
@@ -319,11 +350,22 @@ function teamRow(){ return '<div class="row-item"><div class="cols">'+
   '<input type="text" data-t="short" placeholder="Короткое имя (как зовут в зале)">'+
   '<input type="text" data-t="role" placeholder="Роль (мастер / бариста / управляющий)">'+
   '<button class="del" title="Удалить">×</button></div></div>'; }
-function addRow(kind){ var box=document.getElementById(kind==='zone'?'zones':'team');
-  var d=document.createElement('div'); d.innerHTML=(kind==='zone'?zoneRow():teamRow()); box.appendChild(d.firstChild); }
+function mixRow(){ return '<div class="row-item mix-item">'+
+  '<div class="mix-cols1">'+
+    '<input type="text" data-m="name" placeholder="Название микса">'+
+    '<select data-m="strength"><option value="">Крепость…</option><option>Лёгкий</option><option>Средний</option><option>Крепкий</option></select>'+
+    '<input type="number" data-m="price" placeholder="Цена ₽" min="0">'+
+    '<button class="del" title="Удалить">×</button>'+
+  '</div>'+
+  '<input type="text" data-m="comp" placeholder="Состав: бренд + вкус + % (напр. Musthave Манго 50% + Darkside Банан 50%)">'+
+  '<input type="text" data-m="desc" placeholder="Описание вкуса (необязательно)">'+
+'</div>'; }
+function boxFor(kind){ return document.getElementById(kind==='zone'?'zones':kind==='team'?'team':'mixes'); }
+function rowFor(kind){ return kind==='zone'?zoneRow():kind==='team'?teamRow():mixRow(); }
+function addRow(kind){ var d=document.createElement('div'); d.innerHTML=rowFor(kind); boxFor(kind).appendChild(d.firstChild); }
 document.querySelectorAll('[data-add]').forEach(function(b){ b.addEventListener('click',function(){addRow(b.dataset.add);}); });
 document.addEventListener('click', function(e){ if(e.target.classList.contains('del')){ e.target.closest('.row-item').remove(); }});
-addRow('zone'); addRow('team');
+addRow('zone'); addRow('team'); addRow('mix');
 
 // progress
 var totalInputs = document.querySelectorAll('input[data-k],select[data-k],textarea[data-k]').length + 2;
@@ -346,6 +388,7 @@ function collect(){
   var t=document.querySelector('[data-tariff] .tariff.on'); if(t)p['Тариф']=t.querySelector('.tn').textContent+' ('+t.querySelector('.tp').textContent+')';
   var zones=[]; document.querySelectorAll('#zones .row-item').forEach(function(r){ var n=r.querySelector('[data-z=name]').value.trim(), c=r.querySelector('[data-z=tables]').value.trim(); if(n||c)zones.push({зона:n,столов:c}); }); if(zones.length)p['Зоны']=zones;
   var team=[]; document.querySelectorAll('#team .row-item').forEach(function(r){ var n=r.querySelector('[data-t=name]').value.trim(); if(n)team.push({имя:n,короткое:r.querySelector('[data-t=short]').value.trim(),роль:r.querySelector('[data-t=role]').value.trim()}); }); if(team.length)p['Команда']=team;
+  var mixes=[]; document.querySelectorAll('#mixes .row-item').forEach(function(r){ var n=r.querySelector('[data-m=name]').value.trim(); if(n)mixes.push({название:n,крепость:r.querySelector('[data-m=strength]').value,состав:r.querySelector('[data-m=comp]').value.trim(),описание:r.querySelector('[data-m=desc]').value.trim(),цена:r.querySelector('[data-m=price]').value.trim()}); }); if(mixes.length)p['Миксы']=mixes;
   return p;
 }
 
@@ -366,7 +409,11 @@ document.getElementById('send').addEventListener('click', async function(){
   var btn=this; btn.disabled=true; btn.textContent='Отправляем…';
   var body={venue:p['Название']||'', city:p['Город']||'', contact:p['Контакт']||'', phone:p['Связь']||'', payload:p};
   var ok=false;
-  if(API_BASE){
+  if(SHEET_URL){
+    // Apps Script не отдаёт CORS-заголовки → no-cors (ответ не читаем, но строка уходит в таблицу).
+    try{ await fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(body)}); ok=true; }catch(e){ ok=false; }
+  }
+  if(!ok && API_BASE){
     try{ var r=await fetch(API_BASE.replace(/\/$/,'')+'/onboarding',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); ok=r.ok; }catch(e){ ok=false; }
   }
   if(ok){ showDone(); }
