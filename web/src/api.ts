@@ -165,8 +165,14 @@ const realApi = {
     request<Zone[]>("POST", "/tables/zones", { restaurantId }),
   adminTableAddMix: (tableId: string, menuId: string, employeeId: string): Promise<void> =>
     request<void>("POST", `/tables/${tableId}/mix`, { menuId, employeeId }),
-  adminTableAddCustomMix: (tableId: string, name: string, employeeId: string): Promise<void> =>
-    request<void>("POST", `/tables/${tableId}/custom-mix`, { name, employeeId }),
+  adminTableAddCustomMix: (
+    tableId: string,
+    name: string,
+    employeeId: string,
+    components: Component[],
+    comment: string,
+  ): Promise<void> =>
+    request<void>("POST", `/tables/${tableId}/custom-mix`, { name, employeeId, components, comment }),
   adminCloseTable: (tableId: string): Promise<void> =>
     request<void>("POST", `/tables/${tableId}/close`),
   adminTableStates: (restaurantId: string): Promise<TableState[]> =>
@@ -268,6 +274,8 @@ const realApi = {
     request<Call[]>("POST", "/calls/list", { restaurantId }),
   adminCallsArchive: (restaurantId: string): Promise<Call[]> =>
     request<Call[]>("POST", "/calls/archive", { restaurantId }),
+  adminSetMixNote: (orderId: string, orderRecipeId: string, note: string): Promise<void> =>
+    request<void>("PATCH", `/orders/${orderId}/recipes/${orderRecipeId}/note`, { note }),
   adminAckCall: (id: string): Promise<void> =>
     request<void>("POST", `/calls/${id}/ack`),
   adminDoneCall: (id: string): Promise<void> =>

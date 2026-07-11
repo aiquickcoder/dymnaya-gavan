@@ -11,6 +11,8 @@ import { Banner } from "../../components/ui";
 import { useRequireStaff } from "../../lib/guards";
 import { CALL_LABEL, CALL_STATUS_LABEL } from "../../lib/useCalls";
 import { CallIcon } from "../../components/admin/ToastHost";
+import PushToggle from "../../components/admin/PushToggle";
+import PushOnboarding from "../../components/admin/PushOnboarding";
 import type { Call, TableState, Zone } from "../../types";
 
 const REFRESH_MS = 4000;
@@ -129,6 +131,15 @@ export default function Calls() {
     }
   }
 
+  // Мастер оставляет комментарий гостю к миксу при отдаче — сохраняем и перечитываем зал.
+  const setMixNote = useCallback(
+    async (orderId: string, orderRecipeId: string, note: string) => {
+      await api.adminSetMixNote(orderId, orderRecipeId, note);
+      await load();
+    },
+    [load],
+  );
+
   const zoneName = (id?: string | null) =>
     (id && zones.find((z) => z.id === id)?.name) || "";
 
@@ -142,6 +153,8 @@ export default function Calls() {
         Состояние зала в реальном времени: кто за столом, что курят, кто зовёт мастера,
         просит угли или счёт. Новые вызовы подсвечены и сопровождаются звуком на любом экране CRM.
       </p>
+
+      <PushOnboarding />
 
       <div className="toolbar">
         <div className="seg" role="group" aria-label="Активные / Архив">
@@ -165,6 +178,7 @@ export default function Calls() {
         <div className="admin-sub grow">
           {loading ? "Загрузка…" : `${occupied} занято · ${activeCalls} активн. вызовов`}
         </div>
+        <PushToggle />
         <div className="admin-sub" style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
           <span
             aria-hidden
@@ -204,6 +218,7 @@ export default function Calls() {
                 busyId={busyId}
                 onAck={(id) => act(id, () => api.adminAckCall(id))}
                 onDone={(id) => act(id, () => api.adminDoneCall(id))}
+                onSetNote={setMixNote}
               />
             ))}
           </div>
@@ -241,12 +256,14 @@ function TableCard({
   busyId,
   onAck,
   onDone,
+  onSetNote,
 }: {
   state: TableState;
   zoneName: string;
   busyId: string | null;
   onAck: (id: string) => void;
   onDone: (id: string) => void;
+  onSetNote: (orderId: string, orderRecipeId: string, note: string) => Promise<void>;
 }) {
   const { occupied } = state;
   return (
@@ -294,10 +311,7 @@ function TableCard({
               <div className="ts-label">Курят</div>
               <div className="ts-mixes">
                 {state.mixes.map((m, i) => (
-                  <div key={i} className="ts-mix">
-                    <span className="tm-name">{m.name}</span>
-                    {m.master && <span className="tm-master">{m.master}</span>}
-                  </div>
+                  <MixNoteRow key={i} mix={m} onSave={onSetNote} />
                 ))}
               </div>
             </div>
@@ -326,6 +340,99 @@ function TableCard({
       ) : (
         occupied && <div className="ts-empty">Нет активных вызовов</div>
       )}
+    </div>
+  );
+}
+
+/* ---------- микс на столе + комментарий кальянщика гостю ---------- */
+function MixNoteRow({
+  mix,
+  onSave,
+}: {
+  mix: TableState["mixes"][number];
+  onSave: (orderId: string, orderRecipeId: string, note: string) => Promise<void>;
+}) {
+  const editable = !!(mix.orderId && mix.orderRecipeId);
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(mix.note ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    if (!editable) return;
+    setSaving(true);
+    try {
+      await onSave(mix.orderId!, mix.orderRecipeId!, val.trim());
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function startEdit() {
+    if (!editable) return;
+    setVal(mix.note ?? "");
+    setEditing(true);
+  }
+
+  return (
+    <div className="ts-mix">
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+        <span className="tm-name">{mix.name}</span>
+        {mix.master && <span className="tm-master">{mix.master}</span>}
+      </div>
+
+      {editing ? (
+        <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+          <input
+            autoFocus
+            value={val}
+            maxLength={80}
+            onChange={(e) => setVal(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void save();
+              if (e.key === "Escape") { setVal(mix.note ?? ""); setEditing(false); }
+            }}
+            placeholder="Комментарий гостю к миксу"
+            style={{
+              flex: 1, minWidth: 0, fontSize: 13, padding: "6px 8px",
+              border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface)",
+            }}
+          />
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void save()}
+            style={{
+              fontSize: 12, fontWeight: 600, padding: "6px 11px", borderRadius: 8,
+              border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer", flex: "none",
+            }}
+          >
+            {saving ? "…" : "OK"}
+          </button>
+        </div>
+      ) : mix.note ? (
+        <button
+          type="button"
+          onClick={startEdit}
+          title={editable ? "Изменить комментарий гостю" : undefined}
+          style={{
+            display: "block", textAlign: "left", marginTop: 5, fontSize: 12.5, fontStyle: "italic",
+            color: "var(--accent-deep)", background: "none", border: "none", padding: 0,
+            cursor: editable ? "pointer" : "default",
+          }}
+        >
+          💬 «{mix.note}»
+        </button>
+      ) : editable ? (
+        <button
+          type="button"
+          className="muted"
+          onClick={startEdit}
+          style={{ marginTop: 5, fontSize: 12, background: "none", border: "none", padding: 0, cursor: "pointer" }}
+        >
+          ＋ комментарий гостю
+        </button>
+      ) : null}
     </div>
   );
 }

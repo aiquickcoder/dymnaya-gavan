@@ -22,16 +22,24 @@ import (
 	"mixmaster/internal/push"
 )
 
+// WebPushNotifier fans a guest-call out to subscribed browsers (CRM/PWA).
+// Primitive-typed so calls doesn't import the webpush package's types.
+type WebPushNotifier interface {
+	Notify(ctx context.Context, title, body, targetURL, tag string)
+}
+
 // Handler groups the /calls endpoints.
 type Handler struct {
 	pool *pgxpool.Pool
 	q    *db.Queries
 	push push.Sender
+	wp   WebPushNotifier
 }
 
-// New creates a calls Handler. sender fans out guest-call pushes to staff devices.
-func New(pool *pgxpool.Pool, q *db.Queries, sender push.Sender) *Handler {
-	return &Handler{pool: pool, q: q, push: sender}
+// New creates a calls Handler. sender fans out guest-call pushes to staff devices
+// (FCM); wp fans out the same call to subscribed browsers (Web Push).
+func New(pool *pgxpool.Pool, q *db.Queries, sender push.Sender, wp WebPushNotifier) *Handler {
+	return &Handler{pool: pool, q: q, push: sender, wp: wp}
 }
 
 // Routes mounts the calls subtree (called via r.Route("/calls", …)).
@@ -129,6 +137,12 @@ func (h *Handler) notify(c db.Call) {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)
 		defer cancel()
+
+		// Web Push to subscribed browsers (CRM/PWA) — always attempt.
+		if h.wp != nil {
+			h.wp.Notify(ctx, push.Title(c.TableID), push.Body(c.Type), "/admin/calls", "call-"+c.ID.String())
+		}
+
 		tokens, err := h.q.ListOnShiftDeviceTokens(ctx, c.RestaurantID)
 		if err != nil {
 			log.Printf("[calls] push: list tokens: %v", err)

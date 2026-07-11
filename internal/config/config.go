@@ -14,6 +14,12 @@ type Config struct {
 	// id from the service-account file when set.
 	FCMCredentialsFile string
 	FCMProjectID       string
+
+	// Web Push (VAPID) for browser/PWA push. When the keys are empty, web push
+	// is disabled and the API still runs.
+	VAPIDPublicKey  string
+	VAPIDPrivateKey string
+	VAPIDSubject    string
 }
 
 // Load reads configuration from environment variables, applying defaults.
@@ -23,6 +29,9 @@ func Load() Config {
 		DatabaseURL:        env("DATABASE_URL", "postgres://mixmaster:mixmaster@localhost:5432/mixmaster?sslmode=disable"),
 		FCMCredentialsFile: env("FCM_CREDENTIALS_FILE", ""),
 		FCMProjectID:       env("FCM_PROJECT_ID", ""),
+		VAPIDPublicKey:     env("VAPID_PUBLIC_KEY", ""),
+		VAPIDPrivateKey:    env("VAPID_PRIVATE_KEY", ""),
+		VAPIDSubject:       env("VAPID_SUBJECT", "mailto:onboarding@hookahmania.ru"),
 	}
 }
 

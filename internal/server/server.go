@@ -22,6 +22,7 @@ import (
 	"mixmaster/internal/onboarding"
 	"mixmaster/internal/orders"
 	"mixmaster/internal/push"
+	"mixmaster/internal/webpush"
 	"mixmaster/internal/recipes"
 	"mixmaster/internal/reservations"
 	"mixmaster/internal/tables"
@@ -46,6 +47,18 @@ func New(pool *pgxpool.Pool, cfg config.Config) http.Handler {
 		}
 	}
 
+	// Web Push (VAPID) for browser/PWA notifications. Disabled when keys are absent.
+	var wpSender *webpush.Sender
+	if cfg.VAPIDPublicKey != "" && cfg.VAPIDPrivateKey != "" {
+		if s, err := webpush.NewSender(cfg.VAPIDPublicKey, cfg.VAPIDPrivateKey, cfg.VAPIDSubject); err != nil {
+			log.Printf("[webpush] disabled: %v", err)
+		} else {
+			wpSender = s
+			log.Printf("[webpush] enabled")
+		}
+	}
+	webpushH := webpush.New(pool, wpSender)
+
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
@@ -69,7 +82,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) http.Handler {
 	ordersH := orders.New(pool, queries)
 	menuH := menu.New(pool, queries)
 	reservationsH := reservations.New(pool, queries)
-	callsH := calls.New(pool, queries, sender)
+	callsH := calls.New(pool, queries, sender, webpushH)
 	tablesH := tables.New(pool, queries)
 	devicesH := devices.New(pool, queries)
 	onboardingH := onboarding.New(pool, queries)
@@ -84,6 +97,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) http.Handler {
 	r.Route("/tables", tablesH.Routes)
 	r.Route("/devices", devicesH.Routes)
 	r.Route("/onboarding", onboardingH.Routes)
+	r.Route("/webpush", webpushH.Routes)
 	employeesH.Mount(r) // mounts /employees and /restaurants
 
 	return r

@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
+import { initPWA } from "./lib/pwa";
 import { DEMO, DEMO_RID, DEMO_TABLE } from "./lib/demo";
 import { KEYS } from "./store";
 import "./fonts.css";
@@ -35,6 +36,9 @@ try {
 } catch {
   document.documentElement.setAttribute("data-theme", "light");
 }
+
+// PWA: манифест + service worker (для установки на «Домой» и Web Push).
+initPWA();
 
 // Under GitHub Pages the app is served from /<repo>/, so route relative to BASE_URL.
 const basename = import.meta.env.BASE_URL.replace(/\/$/, "") || "/";

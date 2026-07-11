@@ -45,7 +45,28 @@ export const TIP_PRESETS = [100, 200, 500];
 
 // Venue identity. TODO(api): no guest-facing "get restaurant" endpoint — name
 // and address are the app's own brand, table number comes from the QR deep-link.
-export const VENUE = { name: "Example lounge", address: "ул. Камала, 4а" };
+export const VENUE = {
+  name: "Example lounge",
+  category: "Лаундж-бар",
+  address: "ул. Галиаскара Камала, 4а",
+  addressFull: "ул. Галиаскара Камала, 4а, мансардный этаж · Вахитовский район, Казань, 420021",
+  city: "Казань",
+  description:
+    "Уютная лаундж-кальянная в центре Казани: авторские миксы, «секретное» меню и тёплая атмосфера. Плотный дым, свежие фрукты и мастера, которые помнят ваши вкусы.",
+  hours: [{ d: "Ежедневно", t: "12:00 – 02:00" }],
+  // окно «открыто» для бейджа (часы; ночное закрытие после полуночи)
+  openFrom: 12,
+  openTo: 2,
+  rating: 4.6,
+  reviews: 330,
+  phone: "+7 (843) 290-09-07",
+  instagram: "examplekzn",
+  instagramUrl: "https://www.instagram.com/examplekzn",
+  // координаты для карты (OSM), ул. Галиаскара Камала, 4, Казань
+  mapLat: 55.787,
+  mapLon: 49.11238,
+  interior: ["venue/1.jpg", "venue/2.jpg", "venue/3.jpg", "venue/4.jpg", "venue/5.jpg", "venue/6.jpg"],
+};
 
 // TODO(api): no tobacco-stock endpoint — static list for the "в наличии" block.
 export interface Tobacco {

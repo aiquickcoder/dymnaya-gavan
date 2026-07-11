@@ -88,6 +88,7 @@ export interface OrderRecipeView {
   authorShortName: string;
   components: Component[];
   tags?: string[]; // optional flavour tags (demo session card)
+  masterNote?: string | null; // короткий комментарий кальянщика к миксу гостя
 }
 
 export interface Order {
@@ -341,7 +342,8 @@ export interface TableState {
   guests?: number | null;
   masterName?: string | null; // hookah master (author of the order's mixes), short name
   waiterName?: string | null; // assigned waiter, short name
-  mixes: { name: string; master?: string | null }[]; // mixes currently on the table
+  // mixes currently on the table; orderId/orderRecipeId let the master attach a note to a specific mix
+  mixes: { name: string; master?: string | null; orderId?: string; orderRecipeId?: string; note?: string | null }[];
   calls: Call[]; // active (new/ack) calls on this table
   total?: number | null; // running bill
 }

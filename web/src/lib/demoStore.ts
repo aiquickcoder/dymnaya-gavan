@@ -20,6 +20,7 @@ import type {
   HourLoad,
   LoginResponse,
   MenuRecipeView,
+  Component,
   Order,
   OrderRecipeView,
   RatingAgg,
@@ -272,6 +273,7 @@ let tables: TableView[] = TABLE_SEEDS.map((s) => {
             { brand: "MustHave", flavour: "Pineapple Rings", percent: 40 },
           ],
           tags: ["Сладкий", "Тропический"],
+          masterNote: "Тропики для милых дам!",
         },
       ],
     };
@@ -938,7 +940,13 @@ export const demoStore = {
     }
   },
   // Free-text mix — the master types a one-off name instead of picking from menu.
-  adminTableAddCustomMix(tableId: string, name: string, employeeId: string): void {
+  adminTableAddCustomMix(
+    tableId: string,
+    name: string,
+    employeeId: string,
+    components: Component[] = [],
+    comment = "",
+  ): void {
     const t = tableById(tableId);
     if (!t) return;
     const o = ensureOpenOrder(t);
@@ -951,7 +959,8 @@ export const demoStore = {
       isSecret: false,
       authorFullName: master ? fullName(master) : "Мастер смены",
       authorShortName: master ? master.shortName : "—",
-      components: [],
+      components,
+      masterNote: comment.trim() || null,
     });
   },
   adminCloseTable(tableId: string): void {
@@ -960,6 +969,15 @@ export const demoStore = {
     if (t.orderId) closeOrderInternal(t.orderId);
     freeTable(t);
   },
+  // Мастер оставляет короткий комментарий гостю к конкретному миксу при отдаче.
+  // Пустая строка снимает комментарий. Виден гостю в карточке «Сейчас вы курите».
+  setOrderRecipeNote(orderId: string, orderRecipeId: string, note: string): void {
+    const o = orders[orderId];
+    if (!o) return;
+    const r = o.recipes.find((x) => x.orderRecipeId === orderRecipeId);
+    if (r) r.masterNote = note.trim() || null;
+  },
+
   // Live snapshot of ALL tables (occupied flag distinguishes them) with master,
   // waiter, mixes and active (new/ack) calls — backs the admin "Состояние столов"
   // view and the Dashboard "Активные столы" drill-in card.
@@ -970,7 +988,13 @@ export const demoStore = {
       .map((t) => {
         const o = t.orderId ? orders[t.orderId] : undefined;
         const recs = o && !o.closedAt ? o.recipes : [];
-        const mixes = recs.map((r) => ({ name: r.recipeName ?? "Микс", master: r.authorShortName ?? null }));
+        const mixes = recs.map((r) => ({
+          name: r.recipeName ?? "Микс",
+          master: r.authorShortName ?? null,
+          orderId: o!.id,
+          orderRecipeId: r.orderRecipeId,
+          note: r.masterNote ?? null,
+        }));
         const occupied = t.status === "occupied";
         const activeCalls = calls
           .filter((c) => c.status !== "done" && callMatchesTable(c, t))

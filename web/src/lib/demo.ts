@@ -67,7 +67,8 @@ export const demoApi = {
   adminDeleteTable: (id: string) => ok(demoStore.adminDeleteTable(id)),
   adminZones: (restaurantId: string) => ok(demoStore.adminZones(restaurantId)),
   adminTableAddMix: (tableId: string, menuId: string, employeeId: string) => ok(demoStore.adminTableAddMix(tableId, menuId, employeeId)),
-  adminTableAddCustomMix: (tableId: string, name: string, employeeId: string) => ok(demoStore.adminTableAddCustomMix(tableId, name, employeeId)),
+  adminTableAddCustomMix: (tableId: string, name: string, employeeId: string, components: Component[], comment: string) =>
+    ok(demoStore.adminTableAddCustomMix(tableId, name, employeeId, components, comment)),
   adminCloseTable: (tableId: string) => ok(demoStore.adminCloseTable(tableId)),
   adminTableStates: (restaurantId: string) => ok(demoStore.adminTableStates(restaurantId)),
 
@@ -105,6 +106,8 @@ export const demoApi = {
   createCall: (input: { restaurantId: string; tableId: string; type: CallType }) => ok(demoStore.createCall(input)),
   adminCalls: (restaurantId: string) => ok(demoStore.adminCalls(restaurantId)),
   adminCallsArchive: (restaurantId: string) => ok(demoStore.adminCallsArchive(restaurantId)),
+  adminSetMixNote: (orderId: string, orderRecipeId: string, note: string) =>
+    ok(demoStore.setOrderRecipeNote(orderId, orderRecipeId, note)),
   adminAckCall: (id: string) => ok(demoStore.adminAckCall(id)),
   adminDoneCall: (id: string) => ok(demoStore.adminDoneCall(id)),
 

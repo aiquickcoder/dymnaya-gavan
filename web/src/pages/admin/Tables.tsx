@@ -5,7 +5,9 @@ import Modal from "../../components/admin/Modal";
 import FloorMap from "../../components/admin/FloorMap";
 import QrModal from "../../components/admin/QrModal";
 import { useRequireStaff } from "../../lib/guards";
-import type { Call, MenuRecipeView, Order, TableView } from "../../types";
+import type { Call, Component, MenuRecipeView, Order, TableView } from "../../types";
+import { TOBACCOS } from "../../lib/mocks";
+import { PALETTE } from "../../lib/flavours";
 
 const SHAPES: { value: TableView["shape"]; label: string }[] = [
   { value: "round", label: "Круглый" },
@@ -40,7 +42,10 @@ export default function Tables() {
 
   const [mixMenuId, setMixMenuId] = useState("");
   const [mixMode, setMixMode] = useState<"menu" | "custom">("menu");
-  const [customMix, setCustomMix] = useState("");
+  // конструктор своего микса: необязательное название + компоненты (табак/вкус/%) + комментарий
+  const [customName, setCustomName] = useState("");
+  const [customComps, setCustomComps] = useState<Component[]>([{ brand: "", flavour: "", percent: 0 }]);
+  const [customComment, setCustomComment] = useState("");
 
   // Только кальянные позиции доступны для «добавить микс» (еда/бар — kind:"kitchen").
   const hookahMenu = useMemo(() => menu.filter((m) => m.kind !== "kitchen"), [menu]);
@@ -219,13 +224,29 @@ export default function Tables() {
     });
   }
 
+  const customTotal = customComps.reduce((s, c) => s + (c.percent || 0), 0);
+  const customValid =
+    customTotal === 100 && customComps.every((c) => c.brand && c.flavour.trim() && c.percent > 0);
+
+  function setComp(i: number, patch: Partial<Component>) {
+    setCustomComps((cs) => cs.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  }
+  function addComp() {
+    setCustomComps((cs) => [...cs, { brand: "", flavour: "", percent: 0 }]);
+  }
+  function removeComp(i: number) {
+    setCustomComps((cs) => (cs.length > 1 ? cs.filter((_, j) => j !== i) : cs));
+  }
+
   function addCustomMix() {
-    const name = customMix.trim();
-    if (!selected || !name || !empId) return;
+    if (!selected || !empId || !customValid) return;
     const tableId = selected.id;
+    const comps = customComps.map((c) => ({ ...c, flavour: c.flavour.trim() }));
     void run(async () => {
-      await api.adminTableAddCustomMix(tableId, name, empId);
-      setCustomMix("");
+      await api.adminTableAddCustomMix(tableId, customName.trim(), empId, comps, customComment.trim());
+      setCustomName("");
+      setCustomComps([{ brand: "", flavour: "", percent: 0 }]);
+      setCustomComment("");
       await refresh();
     });
   }
@@ -482,24 +503,93 @@ export default function Tables() {
               ) : (
                 <>
                   <div className="field">
-                    <label>Название микса</label>
+                    <label>Название микса (необязательно)</label>
                     <input
-                      value={customMix}
-                      onChange={(e) => setCustomMix(e.target.value)}
+                      value={customName}
+                      onChange={(e) => setCustomName(e.target.value)}
                       placeholder="Напр. Северное сияние"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addCustomMix();
-                        }
-                      }}
                     />
                   </div>
+
+                  <label className="admin-sub" style={{ fontWeight: 600, display: "block", marginTop: 10, marginBottom: 6 }}>
+                    Состав
+                  </label>
+                  {customComps.map((c, i) => (
+                    <div key={i} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
+                      <select value={c.brand} onChange={(e) => setComp(i, { brand: e.target.value })} style={{ flex: "1 1 33%", minWidth: 0 }}>
+                        <option value="">Табак</option>
+                        {TOBACCOS.map((t) => (
+                          <option key={t.brand} value={t.brand}>{t.brand}</option>
+                        ))}
+                      </select>
+                      <input
+                        list="tbl-flavours"
+                        value={c.flavour}
+                        onChange={(e) => setComp(i, { flavour: e.target.value })}
+                        placeholder="Вкус"
+                        style={{ flex: "1 1 37%", minWidth: 0 }}
+                      />
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={5}
+                        value={c.percent || ""}
+                        onChange={(e) => setComp(i, { percent: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
+                        placeholder="%"
+                        style={{ width: 62, flex: "none", textAlign: "center" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeComp(i)}
+                        aria-label="Убрать компонент"
+                        disabled={customComps.length <= 1}
+                        style={{ flex: "none", width: 30, height: 30, border: "none", background: "none", color: "var(--muted)", fontSize: 20, lineHeight: 1, cursor: customComps.length <= 1 ? "default" : "pointer", opacity: customComps.length <= 1 ? 0.3 : 1 }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <datalist id="tbl-flavours">
+                    {PALETTE.map((f) => (
+                      <option key={f.name} value={f.name} />
+                    ))}
+                  </datalist>
+
+                  <button
+                    type="button"
+                    onClick={addComp}
+                    style={{ marginTop: 2, width: "100%", background: "none", border: "1px dashed var(--border)", borderRadius: 10, padding: "8px 12px", color: "var(--accent)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}
+                  >
+                    + Добавить компонент
+                  </button>
+
+                  <div className="admin-sub" style={{ marginTop: 10, fontSize: 13 }}>
+                    Итого:{" "}
+                    <b style={{ color: customTotal === 100 ? "var(--success)" : "var(--danger)" }}>{customTotal}%</b>
+                    {customTotal !== 100 && (
+                      <span className="muted">
+                        {" · нужно ровно 100%"}
+                        {customTotal < 100 ? ` (осталось ${100 - customTotal}%)` : ` (лишние ${customTotal - 100}%)`}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="field" style={{ marginTop: 10 }}>
+                    <label>Комментарий гостю (необязательно)</label>
+                    <textarea
+                      value={customComment}
+                      onChange={(e) => setCustomComment(e.target.value)}
+                      placeholder="Напр. Тропики для милых дам!"
+                      rows={2}
+                    />
+                  </div>
+
                   <button
                     type="button"
                     className="sm primary"
                     onClick={addCustomMix}
-                    disabled={busy || !customMix.trim() || !empId}
+                    disabled={busy || !customValid || !empId}
                     style={{ marginTop: 10 }}
                   >
                     Добавить свой микс

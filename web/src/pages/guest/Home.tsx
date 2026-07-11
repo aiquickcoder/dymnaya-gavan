@@ -9,6 +9,7 @@ import ActionCard, { SparkleIcon, MenuIcon, SecretIcon, CalendarIcon } from "../
 import BannerCarousel from "../../components/BannerCarousel";
 import BestMixesCarousel from "../../components/BestMixesCarousel";
 import SkeletonCard from "../../components/SkeletonCard";
+import VenueSheet from "../../components/VenueSheet";
 import { useRequireTable, useGuest } from "../../lib/guards";
 import { useTheme } from "../../theme";
 import { flavourColor } from "../../lib/flavours";
@@ -28,6 +29,7 @@ export default function Home() {
   const [menu, setMenu] = useState<MenuRecipeView[]>([]);
   const [masters, setMasters] = useState<ShiftMaster[]>([]);
   const [order, setOrder] = useState<Order | null>(null);
+  const [venueOpen, setVenueOpen] = useState(false);
   const [names, setNames] = useState<Record<string, string>>({});
   const [home, setHome] = useState<HomeConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -181,6 +183,19 @@ export default function Home() {
             })}
           </div>
         )}
+        {activeMix.masterNote && (
+          <div style={{ marginTop: 14, paddingLeft: 12, borderLeft: "3px solid var(--accent)" }}>
+            <div
+              className="muted"
+              style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 5 }}
+            >
+              Сообщение от персонала
+            </div>
+            <div style={{ fontSize: 14, fontStyle: "italic", color: "var(--text)", lineHeight: 1.4 }}>
+              «{activeMix.masterNote}»
+            </div>
+          </div>
+        )}
       </div>
     ) : null,
 
@@ -213,19 +228,30 @@ export default function Home() {
   return (
     <Shell nav>
       <div className="gh fade-in">
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <button
+          type="button"
+          onClick={() => setVenueOpen(true)}
+          aria-label="Информация о заведении"
+          style={{ display: "flex", alignItems: "center", gap: 12, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", minWidth: 0 }}
+        >
           <img
             src={asset("brand/logo.png")}
             alt=""
             style={{ width: 46, height: 46, borderRadius: "50%", objectFit: "cover", background: "#fff", border: "1px solid var(--border)", flex: "none" }}
           />
-          <div>
-            <div className="venue display">{VENUE.name}</div>
+          <div style={{ minWidth: 0 }}>
+            <div className="venue display" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {VENUE.name}
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, flex: "none" }}>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" />
+              </svg>
+            </div>
             <div className="sub">
               {VENUE.address} · Стол {table.tableId}
             </div>
           </div>
-        </div>
+        </button>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
           <button
             className="theme-toggle"
@@ -245,6 +271,8 @@ export default function Home() {
         .map((b) => (
           <Fragment key={b.key}>{blocks[b.key]}</Fragment>
         ))}
+
+      <VenueSheet open={venueOpen} onClose={() => setVenueOpen(false)} />
     </Shell>
   );
 }

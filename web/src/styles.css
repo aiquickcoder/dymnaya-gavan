@@ -666,15 +666,16 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius
 .bottomnav .tab svg { width: 23px; height: 23px; }
 
 /* ---- bottom sheet ---- */
-.sheet-backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.5); display: flex; align-items: flex-end; justify-content: center; }
+.sheet-backdrop { position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, 0.5); display: flex; align-items: flex-end; justify-content: center; }
 .sheet {
   width: 100%; max-width: 480px;
+  max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
   background: var(--surface); border-top-left-radius: 22px; border-top-right-radius: 22px;
   border: 1px solid var(--border); border-bottom: none;
   padding: 20px 18px calc(24px + env(safe-area-inset-bottom));
   animation: sheetUp .28s cubic-bezier(.2, .8, .2, 1);
 }
-.sheet .grabber { width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
+.sheet .grabber { position: sticky; top: 0; width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
 
 /* ---- misc reused ---- */
 .banner { padding: 11px 13px; border-radius: 11px; font-size: 14px; margin-bottom: 12px; }
