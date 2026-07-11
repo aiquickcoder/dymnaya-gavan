@@ -21,27 +21,34 @@ import { asset } from "../../lib/asset";
 export default function Sidebar({
   restaurantName,
   onLogout,
+  open,
+  onClose,
 }: {
   restaurantName?: string;
   onLogout?: () => void;
+  open?: boolean;
+  onClose?: () => void;
 }) {
   return (
-    <aside className="admin-sidebar">
+    <aside className={"admin-sidebar" + (open ? " open" : "")}>
       <div className="admin-brand">
         <div className="abr-mark" style={{ background: "#fff", padding: 0, overflow: "hidden", borderRadius: "50%" }}>
           <img src={asset("brand/logo.png")} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <div className="abr-name">Example lounge</div>
           <div className="abr-sub">CRM</div>
         </div>
+        <button type="button" className="admin-drawer-close" onClick={onClose} aria-label="Закрыть меню">
+          ✕
+        </button>
       </div>
 
       <nav className="admin-nav">
         {NAV.map((item) => {
           const Icon = item.icon;
           return (
-            <NavLink key={item.to} to={item.to} end={item.end} title={item.label}>
+            <NavLink key={item.to} to={item.to} end={item.end} title={item.label} onClick={onClose}>
               <Icon />
               <span>{item.label}</span>
             </NavLink>

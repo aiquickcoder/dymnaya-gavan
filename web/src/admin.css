@@ -18,8 +18,9 @@
 .admin {
   display: grid;
   grid-template-columns: 236px minmax(0, 1fr);
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: var(--bg);
   color: var(--text);
 }
@@ -102,7 +103,7 @@
   color: var(--text);
 }
 
-.admin-main { display: flex; flex-direction: column; min-width: 0; }
+.admin-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
 
 .admin-topbar {
   position: sticky; top: 0; z-index: 20;
@@ -111,6 +112,23 @@
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
+/* гамбургер и элементы drawer — на десктопе скрыты, включаются в мобильном @media */
+.admin-hamburger {
+  display: none;
+  width: 46px; height: 46px; flex: none;
+  align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--surface); color: var(--text); cursor: pointer;
+}
+.admin-hamburger:active { background: var(--surface-2, rgba(0,0,0,0.05)); }
+.admin-drawer-close {
+  display: none;
+  width: 32px; height: 32px; flex: none;
+  align-items: center; justify-content: center;
+  border: none; background: none; color: var(--muted); font-size: 17px; cursor: pointer;
+}
+.admin-drawer-backdrop { position: fixed; inset: 0; z-index: 55; background: rgba(0, 0, 0, 0.5); }
+
 .admin-topbar .atb-user { display: flex; align-items: center; gap: 10px; }
 .admin-topbar .atb-avatar {
   width: 34px; height: 34px; border-radius: 50%;
@@ -122,6 +140,11 @@
 }
 
 .admin-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   width: 100%;
   max-width: 1340px;
   margin: 0 auto;
@@ -1104,28 +1127,27 @@
 /* ================================================= 9. АДАПТИВ (< 900px) */
 @media (max-width: 900px) {
   .admin { grid-template-columns: 1fr; }
+  /* сайдбар → выезжающее боковое меню (drawer) */
   .admin-sidebar {
-    position: sticky; top: 0; z-index: 30;
-    height: auto;
-    flex-direction: row; align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 60;
+    width: 264px; max-width: 82vw; height: 100%;
+    flex-direction: column; align-items: stretch; gap: 2px;
+    padding: calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
   }
-  .admin-brand { padding: 0 8px 0 2px; }
-  .admin-brand .abr-sub { display: none; }
-  .admin-nav { flex-direction: row; margin-top: 0; }
-  .admin-nav a span { display: none; }
-  .admin-nav a { padding: 10px; }
-  .admin-sidebar-foot {
-    margin-top: 0; margin-left: auto;
-    flex-direction: row; align-items: center;
-    padding-top: 0; border-top: none;
-  }
-  .admin-sidebar-foot .admin-venue { display: none; }
-  .admin-topbar { padding: 10px 16px; }
+  .admin-sidebar.open { transform: none; }
+  .admin-nav { flex-direction: column; margin-top: 8px; gap: 2px; }
+  .admin-nav a { padding: 11px 12px; }
+  .admin-nav a span { display: inline; }
+  .admin-sidebar-foot { margin-top: auto; }
+  .admin-drawer-close { display: inline-flex; }
+  .admin-hamburger { display: inline-flex; }
+  .admin-topbar { padding: calc(10px + env(safe-area-inset-top)) 16px 10px; gap: 12px; }
   .admin-content { padding: 18px 16px 48px; }
   .page-title { font-size: 25px; }
 }

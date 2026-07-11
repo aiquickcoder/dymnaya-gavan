@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useRequireStaff } from "../../lib/guards";
 import Sidebar from "../../components/admin/Sidebar";
 import ToastHost from "../../components/admin/ToastHost";
+import PushOnboarding from "../../components/admin/PushOnboarding";
+import { setPWATarget } from "../../lib/pwa";
 import "../../admin.css";
 
 /**
@@ -12,6 +15,13 @@ import "../../admin.css";
 export default function AdminLayout() {
   const session = useRequireStaff();
   const navigate = useNavigate();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Пока открыта админка — контекст PWA «HookahMania Admin» (для установки на «Домой»).
+  useEffect(() => {
+    setPWATarget(true);
+    return () => setPWATarget(false);
+  }, []);
 
   if (!session) return null;
 
@@ -37,9 +47,25 @@ export default function AdminLayout() {
 
   return (
     <div className="admin">
-      <Sidebar restaurantName={session.restaurantName} onLogout={logout} />
+      <Sidebar
+        restaurantName={session.restaurantName}
+        onLogout={logout}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      />
+      {drawerOpen && <div className="admin-drawer-backdrop" onClick={() => setDrawerOpen(false)} />}
       <div className="admin-main">
         <header className="admin-topbar">
+          <button
+            type="button"
+            className="admin-hamburger"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Меню"
+          >
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
+              <path d="M2.5 6h19M2.5 12h19M2.5 18h19" />
+            </svg>
+          </button>
           <div className="admin-sub atb-date" style={{ textTransform: "capitalize" }}>
             {today}
           </div>
@@ -49,6 +75,7 @@ export default function AdminLayout() {
           </div>
         </header>
         <div className="admin-content">
+          <PushOnboarding />
           <Outlet />
         </div>
       </div>

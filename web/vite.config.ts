@@ -6,4 +6,15 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // React-экосистему — в отдельный долгоживущий чанк: при обновлениях
+        // приложения он не меняется и берётся из кэша браузера.
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+        },
+      },
+    },
+  },
 });

@@ -87,6 +87,7 @@
 
 * { box-sizing: border-box; }
 
+html, body { overscroll-behavior: none; }
 body {
   margin: 0;
   background: #e4e7ec;
@@ -125,7 +126,7 @@ a { color: var(--accent); text-decoration: none; cursor: pointer; }
   overflow-x: hidden;
   position: relative;
   z-index: 1;
-  padding: 24px 16px calc(18px + env(safe-area-inset-bottom));
+  padding: calc(24px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
   -webkit-overflow-scrolling: touch;
 }
 .screen.has-nav { padding-bottom: 92px; }
@@ -157,6 +158,11 @@ a { color: var(--accent); text-decoration: none; cursor: pointer; }
 .gh { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 18px; }
 .gh .venue { font-family: var(--display); font-weight: 800; letter-spacing: -0.02em; font-size: 23px; line-height: 1.1; }
 .gh .sub { color: var(--muted); font-size: 13px; margin-top: 3px; }
+/* узкие экраны: даём место названию + пилюле «С возвращением» (без переноса) */
+@media (max-width: 430px) {
+  .gh .venue { font-size: 20px; }
+  .gh .pill.accent { font-size: 10.5px; padding: 4px 9px; letter-spacing: 0.02em; }
+}
 .back-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .back-header .back {
   display: inline-flex; align-items: center; justify-content: center;
