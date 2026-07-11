@@ -296,20 +296,9 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
     </div>
   </section>
 
-  <!-- 9. Тариф -->
+  <!-- 9. Примечания -->
   <section class="sec">
-    <div class="sec-h"><div class="sec-n">9</div><h2>Тариф</h2></div>
-    <div class="sec-sub">Первые 2 недели — бесплатно. Финальную цену подберём под ваш зал.</div>
-    <div class="tariffs" data-tariff="Тариф">
-      <div class="tariff"><div class="tn">Старт</div><div class="tp">3 000 ₽</div><div class="td">Гостевое приложение по QR, один зал.</div></div>
-      <div class="tariff pop on"><div class="tn">Бизнес</div><div class="tp">4 990 ₽</div><div class="td">Приложение + CRM: столы, брони, аналитика.</div></div>
-      <div class="tariff"><div class="tn">Про</div><div class="tp">7 000 ₽</div><div class="td">Всё + сеть залов, роли, интеграции.</div></div>
-    </div>
-  </section>
-
-  <!-- 10. Примечания -->
-  <section class="sec">
-    <div class="sec-h"><div class="sec-n">10</div><h2>Примечания</h2></div>
+    <div class="sec-h"><div class="sec-n">9</div><h2>Примечания</h2></div>
     <div class="f"><textarea data-k="Примечания" placeholder="Особенности зала, пожелания, вопросы — всё, что поможет настроить приложение точнее."></textarea></div>
   </section>
 
@@ -343,10 +332,6 @@ document.querySelectorAll('[data-multi]').forEach(function(box){
 document.querySelectorAll('[data-single]').forEach(function(box){
   box.addEventListener('click', function(e){ if(!e.target.classList.contains('chip'))return;
     box.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on')}); e.target.classList.add('on'); updateProgress(); });
-});
-document.querySelectorAll('[data-tariff]').forEach(function(box){
-  box.addEventListener('click', function(e){ var t=e.target.closest('.tariff'); if(!t)return;
-    box.querySelectorAll('.tariff').forEach(function(c){c.classList.remove('on')}); t.classList.add('on'); });
 });
 // switch → collapse
 document.querySelectorAll('[data-switch]').forEach(function(sw){
@@ -438,7 +423,6 @@ function collect(){
   document.querySelectorAll('[data-multi]').forEach(function(b){ var v=[]; b.querySelectorAll('.chip.on').forEach(function(c){v.push(c.textContent.replace('✓ ','').trim());}); if(v.length)p[b.dataset.multi]=v; });
   document.querySelectorAll('[data-single]').forEach(function(b){ var c=b.querySelector('.chip.on'); if(c)p[b.dataset.single]=c.textContent.trim(); });
   document.querySelectorAll('[data-switch]').forEach(function(s){ p[s.dataset.switch]=s.classList.contains('on')?'Да':'Нет'; });
-  var t=document.querySelector('[data-tariff] .tariff.on'); if(t)p['Тариф']=t.querySelector('.tn').textContent+' ('+t.querySelector('.tp').textContent+')';
   var zones=[]; document.querySelectorAll('#zones .row-item').forEach(function(r){ var n=r.querySelector('[data-z=name]').value.trim(), c=r.querySelector('[data-z=tables]').value.trim(); if(n||c)zones.push({зона:n,столов:c}); }); if(zones.length)p['Зоны']=zones;
   var team=[]; document.querySelectorAll('#team .row-item').forEach(function(r){ var n=r.querySelector('[data-t=name]').value.trim(); if(n)team.push({имя:n,короткое:r.querySelector('[data-t=short]').value.trim(),роль:r.querySelector('[data-t=role]').value.trim()}); }); if(team.length)p['Команда']=team;
   var mixes=[]; document.querySelectorAll('#mixes .row-item').forEach(function(r){ var n=r.querySelector('[data-m=name]').value.trim(); if(n)mixes.push({название:n,крепость:r.querySelector('[data-m=strength]').value,состав:r.querySelector('[data-m=comp]').value.trim(),описание:r.querySelector('[data-m=desc]').value.trim(),цена:r.querySelector('[data-m=price]').value.trim()}); }); if(mixes.length)p['Миксы']=mixes;
