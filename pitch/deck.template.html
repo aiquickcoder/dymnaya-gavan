@@ -64,6 +64,7 @@ p{margin:0}
 .btn-ghost{background:rgba(22,24,38,.04);border-color:var(--line-2);color:var(--paper)}
 .btn-ghost:hover{background:rgba(22,24,38,.09);transform:translateY(-2px)}
 .bar .btn{padding:9px 16px;font-size:14px}
+.bar .btn .lbl-short{display:none}
 
 /* ---- hero ---- */
 .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);
@@ -439,6 +440,11 @@ table.roi tr.base td:first-child::after{content:" · ходовой";font-family
   .g4{grid-template-columns:1fr 1fr}
   .mods{grid-template-columns:repeat(3,1fr)}
   .bar .brand small{display:none}
+  .bar .brand{font-size:16px}
+  .bar .wrap{gap:10px}
+  .bar .btn{padding:8px 12px;font-size:13px;flex:none}
+  .bar .btn .lbl-full{display:none}
+  .bar .btn .lbl-short{display:inline}
   .hero-cta .btn{flex:1 1 auto;justify-content:center}
 }
 @media(prefers-reduced-motion:reduce){
@@ -458,7 +464,7 @@ table.roi tr.base td:first-child::after{content:" · ходовой";font-family
       <span>HookahMania<small>CRM для кальянных заведений</small></span>
     </a>
     <a class="btn btn-primary" href="{{DEMO_URL}}" target="_blank" rel="noopener">
-      Открыть живое демо
+      <span class="lbl-full">Открыть живое демо</span><span class="lbl-short">Демо</span>
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
     </a>
   </div>
@@ -963,11 +969,10 @@ table.roi tr.base td:first-child::after{content:" · ходовой";font-family
       <p class="eyebrow" style="justify-content:center">Тарифы</p>
       <h2 class="h-lg">Платите за результат, а не за кнопку</h2>
     </div>
-    <p class="anchor-note reveal">Конкурент берёт <b>3 000 ₽</b> за одну функцию. Здесь за сопоставимые деньги — <b>вся кальянная</b>.</p>
+    <p class="anchor-note reveal">Конкурент берёт полноценную плату за одну функцию. Здесь за сопоставимые деньги — <b>вся кальянная</b>.</p>
     <div class="tiers reveal">
       <div class="tier">
         <div class="nm">Старт</div>
-        <div class="pr">3 000 ₽<small> /мес</small></div>
         <div class="sub">Гостевое приложение по QR. Для одного зала — быстрый старт.</div>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Цифровое меню: миксы, кухня и бар с фото</li>
@@ -978,7 +983,6 @@ table.roi tr.base td:first-child::after{content:" · ходовой";font-family
       </div>
       <div class="tier pop">
         <div class="nm">Бизнес</div>
-        <div class="pr">4 990 ₽<small> /мес</small></div>
         <div class="sub">Управление залом и гостями. Самый ходовой.</div>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><b>Всё из «Старт», плюс:</b></li>
@@ -991,7 +995,6 @@ table.roi tr.base td:first-child::after{content:" · ходовой";font-family
       </div>
       <div class="tier">
         <div class="nm">Сеть · Про</div>
-        <div class="pr">7 000 ₽<small> /мес</small></div>
         <div class="sub">Для сетей и точек с амбициями.</div>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><b>Всё из «Бизнес», плюс:</b></li>

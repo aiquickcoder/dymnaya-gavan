@@ -68,7 +68,7 @@ export default function AdminLogin() {
             className="display"
             style={{ fontSize: 30, lineHeight: 1.05 }}
           >
-            <span style={{ color: "var(--accent)" }}>Дымная</span> Гавань
+            <span style={{ color: "var(--accent)" }}>Hookah</span>Mania
           </div>
           <div className="muted small" style={{ letterSpacing: "0.18em", textTransform: "uppercase", marginTop: 6 }}>
             Панель управления · CRM

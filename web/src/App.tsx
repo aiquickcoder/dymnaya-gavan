@@ -38,7 +38,7 @@ function StaffLayout() {
     <>
       <div className="topbar">
         <span className="brand" onClick={() => navigate("/staff")} style={{ cursor: "pointer" }}>
-          <span className="mix">Дымная</span> Гавань · staff
+          <span className="mix">Hookah</span>Mania · staff
         </span>
         <a className="pill" onClick={() => navigate("/guest")} style={{ cursor: "pointer" }}>
           Гостевой веб
