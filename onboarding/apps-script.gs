@@ -1,5 +1,5 @@
 /**
- * HookahCRM — приём онбординг-брифов в Google Sheets.
+ * HookahMania — приём онбординг-брифов в Google Sheets.
  *
  * Установка:
  *  1) Создайте Google-таблицу (sheets.new).

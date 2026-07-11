@@ -10,8 +10,8 @@ SC    = "/private/tmp/claude-501/-Users-maksimpozdnysev-Desktop-HookahMania/be2f
 TPL   = f"{ROOT}/pitch/deck.template.html"
 OUT   = f"{ROOT}/pitch/deck.html"
 
-DEMO_URL   = "https://aiquickcoder.github.io/dymnaya-gavan/"
-DEMO_SHORT = "aiquickcoder.github.io/dymnaya-gavan"
+DEMO_URL   = "https://hookahmania.ru/"
+DEMO_SHORT = "hookahmania.ru"
 
 def b64(path):
     with open(path, "rb") as f:

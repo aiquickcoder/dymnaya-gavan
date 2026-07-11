@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Настройка HookahCRM под ваше заведение</title>
+<title>Настройка HookahMania под ваше заведение</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -140,7 +140,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 
 <div class="top"><div class="wrap">
   <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 4.2 1.2 6 2 6.8H4c.8-.8 2-2.6 2-6.8z"/><path d="M10.2 19a2 2 0 0 0 3.6 0"/></svg></div>
-  <div class="brand"><b>HookahCRM</b><span>Онбординг заведения</span></div>
+  <div class="brand"><b>HookahMania</b><span>Онбординг заведения</span></div>
   <div class="prog" id="prog">0%</div>
 </div></div>
 
@@ -305,7 +305,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   <div class="banner" id="banner"></div>
   <div class="submit">
     <button class="btn" id="send">Отправить бриф →</button>
-    <div class="foot">Данные уйдут в панель HookahCRM. Ничего не потеряется — при сбое сети предложим сохранить копию.</div>
+    <div class="foot">Данные уйдут в панель HookahMania. Ничего не потеряется — при сбое сети предложим сохранить копию.</div>
   </div>
 </main>
 
@@ -321,7 +321,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 // API_BASE — Go-бэкенд (когда поднимем). Пусто оба = только фолбэк (скачать/почта).
 var SHEET_URL = "";          // вставьте URL веб-приложения Apps Script (…/exec)
 var API_BASE  = "https://api.hookahmania.ru";  // Go-бэкенд на quillon-vps-01 (nginx + Let's Encrypt)
-var CONTACT_EMAIL = "onboarding@hookahcrm.ru";
+var CONTACT_EMAIL = "onboarding@hookahmania.ru";
 
 var lastPayload = null;
 
@@ -434,7 +434,7 @@ function download(){
   if(!lastPayload)return;
   var blob=new Blob([JSON.stringify(lastPayload,null,2)],{type:'application/json'});
   var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='hookahcrm-brief-'+((lastPayload['Название']||'venue').replace(/\s+/g,'-'))+'.json'; a.click();
+  a.download='hookahmania-brief-'+((lastPayload['Название']||'venue').replace(/\s+/g,'-'))+'.json'; a.click();
 }
 document.getElementById('dl').addEventListener('click', download);
 
