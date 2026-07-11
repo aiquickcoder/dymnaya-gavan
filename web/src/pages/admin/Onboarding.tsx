@@ -13,8 +13,28 @@ function fmtDate(iso: string): string {
   return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 }
 
+const isImg = (v: unknown): v is string => typeof v === "string" && v.startsWith("data:image");
+
 function renderValue(v: unknown): ReactNode {
+  if (isImg(v)) {
+    return (
+      <a href={v} target="_blank" rel="noreferrer">
+        <img className="ob-img" src={v} alt="" />
+      </a>
+    );
+  }
   if (Array.isArray(v)) {
+    if (v.length > 0 && isImg(v[0])) {
+      return (
+        <div className="ob-imgs">
+          {(v as string[]).map((s, i) => (
+            <a key={i} href={s} target="_blank" rel="noreferrer">
+              <img className="ob-img" src={s} alt="" />
+            </a>
+          ))}
+        </div>
+      );
+    }
     if (v.length > 0 && typeof v[0] === "object" && v[0] !== null) {
       return (
         <div className="ob-list">

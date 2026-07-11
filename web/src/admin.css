@@ -1533,3 +1533,5 @@
 .ob-v { font-size: 14.5px; }
 .ob-sub { font-size: 14px; padding: 2px 0; }
 @media (max-width: 640px) { .ob-row { grid-template-columns: 1fr; } }
+.ob-imgs { display: flex; flex-wrap: wrap; gap: 8px; }
+.ob-img { width: 76px; height: 76px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border, #e6e8ec); display: block; cursor: zoom-in; }

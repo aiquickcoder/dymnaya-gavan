@@ -99,6 +99,13 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .mix-item{background:#fff;gap:8px}
 .mix-cols1{display:grid;grid-template-columns:2fr 1.1fr 1fr auto;gap:8px}
 @media(max-width:560px){.mix-cols1{grid-template-columns:1fr 1fr}}
+.uploader{margin-top:8px}
+.up-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border:1px dashed var(--muted2);border-radius:11px;color:var(--accent-deep);font-weight:600;font-size:14px;cursor:pointer;background:var(--surface2)}
+.up-btn:hover{border-color:var(--accent);background:var(--accent-soft)}
+.up-prev{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.up-thumb{position:relative;width:84px;height:84px;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.up-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.up-del{position:absolute;top:3px;right:3px;width:22px;height:22px;border:none;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .mt{margin-top:14px}
 .collapse{overflow:hidden;transition:max-height .25s ease,opacity .2s;max-height:0;opacity:0}
 .collapse.open{max-height:1200px;opacity:1;margin-top:14px}
@@ -186,6 +193,11 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <div class="hint">📎 Фото блюд и миксов — файлом менеджеру (или поможем со съёмкой).</div></div>
     </div>
 
+    <div class="uploader mt" data-imgkey="Фото блюд и миксов (файлы)" data-multi="true">
+      <label class="up-btn">📎 Прикрепить фото блюд / миксов<input type="file" accept="image/*" multiple hidden></label>
+      <div class="up-prev"></div>
+    </div>
+
     <div class="mixbox mt">
       <div class="mixbox-h">Что указать по каждому миксу</div>
       <div class="mixbox-sub">Чтобы карточка микса работала как витрина, для каждого нужны эти поля. Впишите свои миксы ниже — или пришлите списком менеджеру, оформим сами.</div>
@@ -255,7 +267,11 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
     <div class="sec-sub">Именные профили с рейтингом — гость просит «своего» мастера и оставляет ему чаевые.</div>
     <div class="rows team" id="team"></div>
     <button class="addrow mt" data-add="team">＋ Добавить сотрудника</button>
-    <div class="note mt">📎 <b>Фото мастеров</b> пришлите файлом (с именами) менеджеру, который вас подключает — поставим их в профили.</div>
+    <div class="uploader mt" data-imgkey="Фото мастеров (файлы)" data-multi="true">
+      <label class="up-btn">📎 Прикрепить фото мастеров<input type="file" accept="image/*" multiple hidden></label>
+      <div class="up-prev"></div>
+    </div>
+    <div class="hint">Можно несколько. Или пришлите файлом (с именами) менеджеру.</div>
   </section>
 
   <!-- 8. Стиль и QR -->
@@ -268,7 +284,10 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <select data-k="Тема" id="themeSel"><option value="">— выберите —</option><option>Светлая (как демо)</option><option>Тёмная</option><option>Под фирменные цвета</option><option value="text">Укажу текстом ↓</option></select></div>
       <div class="f col-2"><label>Логотип</label>
         <select data-k="Логотип"><option value="">— выберите —</option><option>Да, пришлём файл</option><option>Есть, но нужен в векторе — поможете</option><option>Логотипа нет, нужна помощь</option></select>
-        <div class="hint">📎 Файл логотипа пришлите менеджеру, который вас подключает.</div></div>
+        <div class="uploader" data-imgkey="Логотип (файл)" data-multi="false">
+          <label class="up-btn">📎 Прикрепить логотип<input type="file" accept="image/*" hidden></label>
+          <div class="up-prev"></div>
+        </div></div>
       <div class="f col-2 collapse" id="styleText"><label>Пожелания по стилю</label><textarea data-k="Стиль (текстом)" placeholder="Настроение, референсы, цвета, шрифты, что нравится / не нравится."></textarea></div>
       <div class="f"><label>Сколько QR напечатать</label><input type="number" data-k="QR: количество" placeholder="Напр. 15 (обычно = числу столов)"></div>
       <div class="f"><label>На какие столы ставим QR</label>
@@ -367,6 +386,40 @@ document.querySelectorAll('[data-add]').forEach(function(b){ b.addEventListener(
 document.addEventListener('click', function(e){ if(e.target.classList.contains('del')){ e.target.closest('.row-item').remove(); }});
 addRow('zone'); addRow('team'); addRow('mix');
 
+// ---- загрузка фото (сжатие на клиенте → data-URI в payload) ----
+var uploads = {};
+function compress(file, cb){
+  var img=new Image();
+  img.onload=function(){ var max=1000, s=Math.min(1, max/Math.max(img.width,img.height));
+    var c=document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height); cb(c.toDataURL('image/jpeg',0.62)); };
+  img.onerror=function(){ cb(null); };
+  img.src=URL.createObjectURL(file);
+}
+document.querySelectorAll('.uploader').forEach(function(u){
+  var key=u.dataset.imgkey, multi=u.dataset.multi==='true';
+  var input=u.querySelector('input[type=file]'), prev=u.querySelector('.up-prev');
+  input.addEventListener('change', function(){
+    Array.prototype.forEach.call(input.files, function(f){
+      if(!/^image\//.test(f.type)) return;
+      compress(f, function(uri){
+        if(!uri) return;
+        if(multi){ (uploads[key]=uploads[key]||[]).push(uri); } else { uploads[key]=uri; prev.innerHTML=''; }
+        var t=document.createElement('div'); t.className='up-thumb';
+        var im=document.createElement('img'); im.src=uri; t.appendChild(im);
+        var del=document.createElement('button'); del.className='up-del'; del.type='button'; del.textContent='×'; t.appendChild(del);
+        del.addEventListener('click', function(){
+          if(multi){ var i=uploads[key].indexOf(uri); if(i>=0)uploads[key].splice(i,1); if(!uploads[key].length)delete uploads[key]; }
+          else delete uploads[key];
+          t.remove();
+        });
+        prev.appendChild(t);
+      });
+    });
+    input.value='';
+  });
+});
+
 // progress
 var totalInputs = document.querySelectorAll('input[data-k],select[data-k],textarea[data-k]').length + 2;
 function updateProgress(){
@@ -389,6 +442,7 @@ function collect(){
   var zones=[]; document.querySelectorAll('#zones .row-item').forEach(function(r){ var n=r.querySelector('[data-z=name]').value.trim(), c=r.querySelector('[data-z=tables]').value.trim(); if(n||c)zones.push({зона:n,столов:c}); }); if(zones.length)p['Зоны']=zones;
   var team=[]; document.querySelectorAll('#team .row-item').forEach(function(r){ var n=r.querySelector('[data-t=name]').value.trim(); if(n)team.push({имя:n,короткое:r.querySelector('[data-t=short]').value.trim(),роль:r.querySelector('[data-t=role]').value.trim()}); }); if(team.length)p['Команда']=team;
   var mixes=[]; document.querySelectorAll('#mixes .row-item').forEach(function(r){ var n=r.querySelector('[data-m=name]').value.trim(); if(n)mixes.push({название:n,крепость:r.querySelector('[data-m=strength]').value,состав:r.querySelector('[data-m=comp]').value.trim(),описание:r.querySelector('[data-m=desc]').value.trim(),цена:r.querySelector('[data-m=price]').value.trim()}); }); if(mixes.length)p['Миксы']=mixes;
+  Object.keys(uploads).forEach(function(k){ p[k]=uploads[k]; });
   return p;
 }
 
