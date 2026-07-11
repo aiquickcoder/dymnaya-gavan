@@ -1,0 +1,49 @@
+# Прод-стек HookahCRM: Postgres + Go API + Caddy (авто-HTTPS).
+# На сервере:  docker compose -f docker-compose.prod.yml up -d --build
+# API наружу не торчит — только через Caddy по HTTPS (api.hookahmania.ru).
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hookahcrm-postgres
+    environment:
+      POSTGRES_USER: mixmaster
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mixmaster}
+      POSTGRES_DB: mixmaster
+    volumes:
+      - mixmaster_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mixmaster"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build: .
+    container_name: hookahcrm-api
+    environment:
+      DATABASE_URL: postgres://mixmaster:${POSTGRES_PASSWORD:-mixmaster}@postgres:5432/mixmaster?sslmode=disable
+      PORT: "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: hookahcrm-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  mixmaster_pg:
+  caddy_data:
+  caddy_config:

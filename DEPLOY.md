@@ -46,3 +46,41 @@ curl -s localhost:8080/onboarding      # список брифов
 - `DATABASE_URL` — строка подключения Postgres (обязательно).
 - `PORT` — порт (по умолчанию 8080).
 - `FCM_CREDENTIALS_FILE`, `FCM_PROJECT_ID` — для staff-app пушей (опционально).
+
+---
+
+## Прод: сервер 155.212.156.162 + api.hookahmania.ru (ранбук)
+
+**0. DNS (в панели регистратора hookahmania.ru):** A-запись
+`api.hookahmania.ru → 155.212.156.162`. Дождаться, пока `dig api.hookahmania.ru`
+вернёт этот IP (иначе Caddy не выпустит сертификат).
+
+**1. На сервере (Ubuntu 24.04), под root:**
+```bash
+# Docker (если ещё нет)
+curl -fsSL https://get.docker.com | sh
+
+# Код
+apt-get update && apt-get install -y git
+git clone https://github.com/aiquickcoder/dymnaya-gavan.git /opt/hookahcrm
+cd /opt/hookahcrm
+
+# Пароль БД (замените на свой) и запуск прод-стека
+echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)" > .env
+docker compose -f docker-compose.prod.yml up -d --build
+```
+Caddy сам получит HTTPS-сертификат для `api.hookahmania.ru`.
+
+**2. Проверка:**
+```bash
+curl -s https://api.hookahmania.ru/health           # {"data":...} 200
+curl -s https://api.hookahmania.ru/onboarding        # [] пусто
+```
+
+**3. Фаервол:** открыть 80 и 443 (Caddy), 22 (SSH). Порт 8080 наружу НЕ нужен.
+
+**4. Последний штрих (сделаю я):** в `onboarding/index.html`
+`var API_BASE = "https://api.hookahmania.ru";` → передеплой брифа. После этого
+заявки летят в Postgres → раздел «Онбординг».
+
+Обновление версии: `git pull && docker compose -f docker-compose.prod.yml up -d --build`.

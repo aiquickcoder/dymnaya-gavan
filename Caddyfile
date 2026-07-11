@@ -1,0 +1,5 @@
+# HTTPS-фронт для бэкенда HookahCRM. Caddy сам получит сертификат Let's Encrypt,
+# как только домен резолвится на этот сервер и открыты порты 80/443.
+api.hookahmania.ru {
+	reverse_proxy api:8080
+}
