@@ -6,7 +6,7 @@ ROOT  = "/Users/maksimpozdnysev/Downloads/mixMaster"
 FONTS = f"{ROOT}/web/src/assets/fonts"
 BEST  = f"{ROOT}/web/public/best"
 SHOTS = f"{ROOT}/pitch/shots"
-SC    = "/private/tmp/claude-501/-Users-maksimpozdnysev-Desktop-HookahCRM/be2fa613-c8cc-4fa0-a491-3c2217001165/scratchpad"
+SC    = "/private/tmp/claude-501/-Users-maksimpozdnysev-Desktop-HookahMania/be2fa613-c8cc-4fa0-a491-3c2217001165/scratchpad"
 TPL   = f"{ROOT}/pitch/deck.template.html"
 OUT   = f"{ROOT}/pitch/deck.html"
 
