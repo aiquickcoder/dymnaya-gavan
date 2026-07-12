@@ -6,7 +6,7 @@ import { Shell, BackHeader } from "../../components/Shell";
 import { badgeClass } from "../../components/MixCard";
 import StrengthScale from "../../components/StrengthScale";
 import StarRating from "../../components/StarRating";
-import { useRequireTable, useGuest } from "../../lib/guards";
+import { useGuest } from "../../lib/guards";
 import { heroBackground } from "../../lib/mixImages";
 import { flavourColor } from "../../lib/flavours";
 import { asset } from "../../lib/asset";
@@ -23,7 +23,6 @@ function PersonGlyph() {
 
 export default function Mix() {
   const { id } = useParams();
-  const table = useRequireTable();
   const guest = useGuest();
   const navigate = useNavigate();
   const loggedIn = !!guest && !guest.anon && !!guest.userId;
@@ -33,16 +32,18 @@ export default function Mix() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
-  const [faved, setFaved] = useState(false);
+  const [favOrderId, setFavOrderId] = useState<string | null>(null); // orderRecipeId, если в избранном
+  const faved = favOrderId !== null;
 
+  // Рецепт ищем из ЛЮБОГО источника (меню/отзывы/избранное), стол не требуется —
+  // микс открывается и из профиля/истории/отзывов, и по общей ссылке.
   useEffect(() => {
-    if (!table) return;
     let alive = true;
+    setLoading(true);
     (async () => {
       try {
-        const list = await api.menuList(table.restaurantId);
+        const found = await api.recipeById(id!);
         if (!alive) return;
-        const found = list.find((m) => m.id === id) ?? null;
         setItem(found);
         if (found?.authorEmployeeId) {
           const [emp] = await api.employeesBatch([found.authorEmployeeId]).catch(() => []);
@@ -57,9 +58,41 @@ export default function Mix() {
     return () => {
       alive = false;
     };
-  }, [table, id]);
+  }, [id]);
 
-  if (!table) return null;
+  // В избранном ли этот микс (для тумблера).
+  useEffect(() => {
+    if (!loggedIn || !guest?.userId) {
+      setFavOrderId(null);
+      return;
+    }
+    api
+      .listFavourites(guest.userId)
+      .then((favs) => {
+        const f = favs.find((x) => x.recipeId === id);
+        setFavOrderId(f ? f.orderRecipeId : null);
+      })
+      .catch(() => {});
+  }, [loggedIn, guest?.userId, id]);
+
+  async function toggleFav() {
+    if (!guest?.userId || !item) return;
+    try {
+      if (faved) {
+        await api.removeFavourite(guest.userId, favOrderId!);
+        setFavOrderId(null);
+        setNote("");
+      } else {
+        await api.addFavourite(guest.userId, item.id);
+        const favs = await api.listFavourites(guest.userId).catch(() => []);
+        const f = favs.find((x) => x.recipeId === item.id);
+        setFavOrderId(f ? f.orderRecipeId : `fav-${item.id}`);
+        setNote(`«${item.name}» в избранном — смотрите в профиле.`);
+      }
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    }
+  }
 
   return (
     <Shell>
@@ -184,21 +217,8 @@ export default function Mix() {
 
           {/* Неавторизованный гость → на вход; авторизованный сохраняет микс в избранное. */}
           {loggedIn ? (
-            <button
-              className="ghost block"
-              disabled={faved}
-              onClick={async () => {
-                if (!guest?.userId || !item) return;
-                try {
-                  await api.addFavourite(guest.userId, item.id);
-                  setFaved(true);
-                  setNote(`«${item.name}» в избранном — смотрите в профиле.`);
-                } catch (e) {
-                  setError(e instanceof ApiError ? e.message : String(e));
-                }
-              }}
-            >
-              {faved ? "♥ В избранном" : "♡ В избранное"}
+            <button className="ghost block" onClick={toggleFav}>
+              {faved ? "♥ Убрать из избранного" : "♡ В избранное"}
             </button>
           ) : (
             <button className="ghost block" onClick={() => navigate("/guest/auth")}>

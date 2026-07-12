@@ -247,9 +247,8 @@ export default function Home() {
                 <path d="M12 16v-4M12 8h.01" />
               </svg>
             </div>
-            <div className="sub">
-              {VENUE.address} · Стол {table.tableId}
-            </div>
+            <div className="sub">{VENUE.address}</div>
+            <div className="sub" style={{ marginTop: 1 }}>Стол {table.tableId}</div>
           </div>
         </button>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
@@ -260,7 +259,7 @@ export default function Home() {
           >
             {theme === "dark" ? <SunIcon /> : <MoonIcon />}
           </button>
-          {recognised && <span className="pill accent">С возвращением</span>}
+          {recognised && <span className="pill accent" style={{ whiteSpace: "nowrap" }}>С возвращением</span>}
         </div>
       </div>
 

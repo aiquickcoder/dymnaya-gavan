@@ -148,10 +148,15 @@ export default function Master() {
             </div>
           ) : (
             reviews.map((r) => (
-              <div className="review-item" key={r.orderRecipeId}>
+              <div
+                className="review-item clickable"
+                key={r.orderRecipeId}
+                onClick={() => navigate(`/guest/mix/${r.recipeId}`)}
+                style={{ cursor: "pointer" }}
+              >
                 <div className="review-head">
                   <StarRating value={r.score ?? 0} size="sm" />
-                  {r.recipeName && <span className="muted small">{r.recipeName}</span>}
+                  {r.recipeName && <span style={{ color: "var(--accent)", fontWeight: 600, fontSize: 13 }}>{r.recipeName} →</span>}
                 </div>
                 {r.review && <p className="review-text">{r.review}</p>}
                 {r.components.length > 0 && (

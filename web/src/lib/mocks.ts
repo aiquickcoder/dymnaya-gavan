@@ -23,12 +23,13 @@ export interface Visit {
   mix: string;
   master: string;
   score: number;
+  recipeId: string; // для открытия карточки микса
 }
 
 export const HISTORY: Visit[] = [
-  { place: "Example lounge", date: "12 июн", mix: "Северное сияние", master: "Тимур", score: 5 },
-  { place: "Example lounge", date: "5 июн", mix: "Цитрус Стронг", master: "Алина", score: 4 },
-  { place: "Облако 9", date: "28 мая", mix: "Гранатовый дым", master: "Дин", score: 4 },
+  { place: "Example lounge", date: "12 июн", mix: "Северное сияние", master: "Тимур", score: 5, recipeId: "r-1" },
+  { place: "Example lounge", date: "5 июн", mix: "Цитрус Стронг", master: "Алина", score: 4, recipeId: "r-4" },
+  { place: "Облако 9", date: "28 мая", mix: "Гранатовый дым", master: "Дин", score: 4, recipeId: "r-2" },
 ];
 
 // Quick-feedback chips shown on the session screen (folded into the review text).

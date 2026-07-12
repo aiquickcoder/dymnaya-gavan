@@ -887,6 +887,33 @@ export const demoStore = {
     const i = favourites.findIndex((f) => f.orderRecipeId === orderRecipeId || f.recipeId === orderRecipeId);
     if (i >= 0) favourites.splice(i, 1);
   },
+  // Рецепт по id из ЛЮБОГО источника: меню, затем отзывы мастеров, затем избранное.
+  // Нужно, чтобы миксы из истории/отзывов/избранного (их нет в текущем меню) открывались.
+  recipeById(id: string): MenuRecipeView | null {
+    const inMenu = menu.find((m) => m.id === id);
+    if (inMenu) return { ...inMenu };
+    for (const [masterId, list] of Object.entries(feedbackByMaster)) {
+      const fb = list.find((f) => f.recipeId === id);
+      if (fb) {
+        return {
+          id, restaurantId: DEMO_RID, authorEmployeeId: masterId,
+          name: fb.recipeName ?? "Микс", description: fb.review ?? "",
+          strength: fb.strength ?? 5, price: 2500, rating: fb.score ?? null,
+          badge: null, tags: [], createdAt: NOW, components: fb.components, kind: "hookah",
+        };
+      }
+    }
+    const fav = favourites.find((f) => f.recipeId === id);
+    if (fav) {
+      return {
+        id, restaurantId: DEMO_RID, authorEmployeeId: "",
+        name: fav.recipeName ?? "Микс", description: "",
+        strength: fav.strength ?? 5, price: 2500, rating: fav.myScore ?? null,
+        badge: null, tags: [], createdAt: NOW, components: fav.components ?? [], kind: "hookah",
+      };
+    }
+    return null;
+  },
 
   // ----- admin CRM -----
   adminTables(_rid: string): TableView[] {

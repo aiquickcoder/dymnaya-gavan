@@ -33,6 +33,7 @@ export const demoApi = {
 
   // ----- menu -----
   menuList: (rid: string) => ok(demoStore.menuList(rid)),
+  recipeById: (id: string) => ok(demoStore.recipeById(id)),
   createMenu: (input: { restaurantId: string; authorEmployeeId: string; name: string; description: string; strength: number; price: number; rating?: number; badge?: string; tags: string[] }) =>
     ok(demoStore.createMenu(input)),
 

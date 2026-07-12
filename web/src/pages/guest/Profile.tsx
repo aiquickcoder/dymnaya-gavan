@@ -5,9 +5,8 @@ import { Banner } from "../../components/ui";
 import { Shell } from "../../components/Shell";
 import StarRating from "../../components/StarRating";
 import FavCardBody from "../../components/FavCardBody";
-import BottomSheet from "../../components/BottomSheet";
 import { KEYS, useStored, type GuestSession } from "../../store";
-import { ACHIEVEMENTS, HISTORY } from "../../lib/mocks";
+import { ACHIEVEMENTS, HISTORY, VENUE } from "../../lib/mocks";
 import type { Favourite, Reservation, ReservationStatus } from "../../types";
 
 const RES_LABEL: Record<ReservationStatus, string> = {
@@ -26,7 +25,6 @@ export default function Profile() {
   const [favs, setFavs] = useState<Favourite[]>([]);
   const [bookings, setBookings] = useState<Reservation[]>([]);
   const [error, setError] = useState("");
-  const [sheet, setSheet] = useState(false);
 
   const loggedIn = !!guest && !guest.anon && !!guest.userId;
 
@@ -86,6 +84,7 @@ export default function Profile() {
                     <div className="display" style={{ fontSize: 17 }}>{bookDate(b.date)} · {b.time}</div>
                     <span className={`pill res-${b.status}`}>{RES_LABEL[b.status]}</span>
                   </div>
+                  <div style={{ marginTop: 3, fontWeight: 600, fontSize: 14 }}>{VENUE.name}</div>
                   <div className="muted small" style={{ marginTop: 2 }}>
                     {b.guests} {guestsWord(b.guests)}{b.tableLabel ? ` · стол ${b.tableLabel}` : ""}
                   </div>
@@ -102,7 +101,7 @@ export default function Profile() {
           {favs[0] && (
             <>
               <div className="section-title display">Последний микс</div>
-              <div className="card">
+              <div className="card clickable" onClick={() => navigate(`/guest/mix/${favs[0].recipeId}`)}>
                 <div className="row between">
                   <div className="display" style={{ fontSize: 18 }}>{favs[0].recipeName || "Микс"}</div>
                   {favs[0].myScore != null && <StarRating value={favs[0].myScore} size="sm" />}
@@ -165,7 +164,7 @@ export default function Profile() {
           {/* TODO(api): нет эндпоинта истории визитов — моковые данные */}
           <div className="section-title display">История</div>
           {HISTORY.map((h, i) => (
-            <div className="card row between" key={i}>
+            <div className="card row between clickable" key={i} onClick={() => navigate(`/guest/mix/${h.recipeId}`)}>
               <div>
                 <div>{h.mix}</div>
                 <div className="muted small">
@@ -181,25 +180,6 @@ export default function Profile() {
         </>
       )}
 
-      <div className="card clickable glow" style={{ marginTop: 16 }} onClick={() => setSheet(true)}>
-        <div className="row between">
-          <span>↓ Скачать приложение</span>
-          <span className="pill accent">iOS · Android</span>
-        </div>
-      </div>
-
-      <BottomSheet open={sheet} onClose={() => setSheet(false)}>
-        <div className="display" style={{ fontSize: 22 }}>Example lounge в кармане</div>
-        <p className="muted small">Избранное, история и заказы — всегда с собой.</p>
-        <button className="primary block lg" style={{ marginTop: 12 }} onClick={() => setSheet(false)}>App Store</button>
-        <div style={{ height: 10 }} />
-        <button className="block" onClick={() => setSheet(false)}>Google Play</button>
-        <div style={{ height: 10 }} />
-        <button className="ghost block" onClick={() => setSheet(false)}>Позже</button>
-        <p className="muted small center" style={{ marginTop: 10 }}>
-          Это кликабельный прототип — ссылки на сторы пока не активны.
-        </p>
-      </BottomSheet>
     </Shell>
   );
 }

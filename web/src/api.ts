@@ -89,6 +89,7 @@ const realApi = {
   // menu — venue positions
   menuList: (restaurantId: string) =>
     request<MenuRecipeView[]>("POST", "/menu/list", { restaurantId }),
+  recipeById: (id: string) => request<MenuRecipeView | null>("GET", `/recipes/${id}`),
   createMenu: (input: {
     restaurantId: string;
     authorEmployeeId: string;

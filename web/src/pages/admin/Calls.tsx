@@ -12,7 +12,6 @@ import { useRequireStaff } from "../../lib/guards";
 import { CALL_LABEL, CALL_STATUS_LABEL } from "../../lib/useCalls";
 import { CallIcon } from "../../components/admin/ToastHost";
 import PushToggle from "../../components/admin/PushToggle";
-import PushOnboarding from "../../components/admin/PushOnboarding";
 import type { Call, TableState, Zone } from "../../types";
 
 const REFRESH_MS = 4000;
@@ -153,8 +152,6 @@ export default function Calls() {
         Состояние зала в реальном времени: кто за столом, что курят, кто зовёт мастера,
         просит угли или счёт. Новые вызовы подсвечены и сопровождаются звуком на любом экране CRM.
       </p>
-
-      <PushOnboarding />
 
       <div className="toolbar">
         <div className="seg" role="group" aria-label="Активные / Архив">
