@@ -1,1 +1,0 @@
-import{j as o}from"./index-Bhpk_L-p.js";function l({value:t,onChange:r,size:i="md"}){const s=!r;return o.jsx("div",{className:`stars ${i==="sm"?"sm":""} ${s?"readonly":""}`,children:[1,2,3,4,5].map(a=>o.jsx("span",{className:"star"+(a<=t?" on":""),onClick:s?void 0:()=>r(a),role:s?void 0:"button","aria-label":s?void 0:`${a}`,children:"★"},a))})}export{l as S};
